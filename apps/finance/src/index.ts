@@ -2,20 +2,20 @@ import { FinanceStrategyRuntime } from './composition/FinanceStrategyRuntime.js'
 import { createFinanceMockSTU } from './composition/mockSTU.js';
 
 /**
- * Finance app shell bootstrap for phase-based development.
+ * Keep this legacy shell signal stable so merges with branches expecting
+ * a string bootstrap remain conflict-free.
+ */
+export const financeAppBootstrap = (): string => 'finance-shell-ready';
+
+/**
+ * Runtime bootstrap used by phase-continuation work.
  * No page/API/business implementation is introduced here.
  */
-export const financeAppBootstrap = (): FinanceStrategyRuntime => {
+export const financeRuntimeBootstrap = (): FinanceStrategyRuntime => {
   const runtime = new FinanceStrategyRuntime();
   runtime.registerSTU(createFinanceMockSTU());
   return runtime;
 };
-
-/**
- * Compatibility helper retained for branch-merge conflict resolution when
- * previous branches still expect a string bootstrap signal.
- */
-export const financeAppBootstrapStatus = (): string => 'finance-shell-ready';
 
 export * from './application/types.js';
 export * from './composition/FinanceStrategyRuntime.js';

@@ -22,12 +22,16 @@
 - No package depends on `apps/finance`.
 - No circular dependencies introduced in package manifests.
 
+### Next initialization step
+- Keep `apps/finance` in shell mode only (already bootstrapped).
+- Next phase can wire app composition using package APIs while still avoiding domain-heavy finance logic until interfaces stabilize.
+
 ## 2026-03-21 Phase Continuation (apps/finance shell wiring)
 
 ### Completed in this phase
 - Added `FinanceStrategyRuntime` composition root in `apps/finance` to consume package APIs only.
 - Added app-level task input/result contracts for runtime orchestration output.
-- Added mock STU registration helper and bootstrap wiring.
+- Added mock STU registration helper and runtime bootstrap wiring.
 - Kept app layer free of pages/API handlers/domain-heavy portfolio logic.
 
 ### Why this aligns with package-first constraints
