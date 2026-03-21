@@ -1,7 +1,4 @@
-import type { FinanceTaskResult } from '../types.js';
-import type { FinanceTaskRequest, FinanceTaskResponse } from '../adapters/types.js';
-import { mapTaskRequest } from '../adapters/taskRequestMapper.js';
-import { mapTaskResponse } from '../adapters/taskResponseMapper.js';
+import type { FinanceTaskInput, FinanceTaskResult } from '../types.js';
 import { financeRuntimeBootstrap } from '../../bootstrap/runtimeBootstrap.js';
 
 /**
@@ -12,28 +9,15 @@ import { financeRuntimeBootstrap } from '../../bootstrap/runtimeBootstrap.js';
 export class FinanceTaskService {
   constructor(private readonly runtime = financeRuntimeBootstrap()) {}
 
-  async runReportGeneration(request: FinanceTaskRequest): Promise<FinanceTaskResponse> {
-    const raw = await this.runRaw(mapTaskRequest(request, 'report_generation'));
-    return mapTaskResponse(raw);
+  runReportGeneration(input: Omit<FinanceTaskInput, 'taskType'>): Promise<FinanceTaskResult> {
+    return this.runtime.run({ ...input, taskType: 'report_generation' });
   }
 
-  async runReviewGeneration(request: FinanceTaskRequest): Promise<FinanceTaskResponse> {
-    const raw = await this.runRaw(mapTaskRequest(request, 'review_generation'));
-    return mapTaskResponse(raw);
+  runReviewGeneration(input: Omit<FinanceTaskInput, 'taskType'>): Promise<FinanceTaskResult> {
+    return this.runtime.run({ ...input, taskType: 'review_generation' });
   }
 
-  async runExperimentEvaluation(request: FinanceTaskRequest): Promise<FinanceTaskResponse> {
-    const raw = await this.runRaw(mapTaskRequest(request, 'experiment_evaluation'));
-    return mapTaskResponse(raw);
-  }
-
-  private runRaw(input: {
-    taskType: string;
-    thesisType: string;
-    riskLevel: 'low' | 'medium' | 'high';
-    ticker?: string;
-    metadata?: Record<string, unknown>;
-  }): Promise<FinanceTaskResult> {
-    return this.runtime.run(input);
+  runExperimentEvaluation(input: Omit<FinanceTaskInput, 'taskType'>): Promise<FinanceTaskResult> {
+    return this.runtime.run({ ...input, taskType: 'experiment_evaluation' });
   }
 }

@@ -8,5 +8,5 @@ export const runFinanceTaskServiceDemo = async (): Promise<string> => {
     ticker: 'DEMO'
   });
 
-  return `${result.taskType}:${result.provider}`;
+  return `${result.context.taskType}:${result.modelResponse.provider}`;
 };
