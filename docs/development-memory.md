@@ -22,10 +22,6 @@
 - No package depends on `apps/finance`.
 - No circular dependencies introduced in package manifests.
 
-### Next initialization step
-- Keep `apps/finance` in shell mode only (already bootstrapped).
-- Next phase can wire app composition using package APIs while still avoiding domain-heavy finance logic until interfaces stabilize.
-
 ## 2026-03-21 Phase Continuation (apps/finance shell wiring)
 
 ### Completed in this phase
@@ -38,6 +34,12 @@
 - Runtime only orchestrates `core`, `stu-registry`, `strategy-compiler`, `rule-engine`, and `model-gateway`.
 - No framework logic copied into `apps/finance`; all reusable behavior stays in packages.
 - Uses mock provider and mock STU for testability and deterministic bootstrapping.
+
+## 2026-03-21 Conflict-resolution note
+
+- Consolidated memory entries into chronologically append-only sections to reduce repeated merge collisions.
+- Retained package initialization facts and phase continuation facts in a single document.
+- Next entries should append new dated sections only, and avoid rewriting previous sections.
 
 ### Next step
 - Add lightweight application service boundaries for report-generation/review/evaluation task entrypoints while continuing to consume package interfaces.

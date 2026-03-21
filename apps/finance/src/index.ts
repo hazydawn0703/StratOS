@@ -11,5 +11,11 @@ export const financeAppBootstrap = (): FinanceStrategyRuntime => {
   return runtime;
 };
 
+/**
+ * Compatibility helper retained for branch-merge conflict resolution when
+ * previous branches still expect a string bootstrap signal.
+ */
+export const financeAppBootstrapStatus = (): string => 'finance-shell-ready';
+
 export * from './application/types.js';
 export * from './composition/FinanceStrategyRuntime.js';
