@@ -1,8 +1,8 @@
 # Development Memory — Phase Continuation Notes
 
-## Phase 2 (completed) — apps/finance shell wiring
+## 2026-03-21 Phase 2 (completed) — apps/finance shell wiring
 
-### Completed
+### Completed in this phase
 - Added `FinanceStrategyRuntime` composition root in `apps/finance` to consume package APIs only.
 - Added app-level task input/result contracts for runtime orchestration output.
 - Added mock STU registration helper and runtime bootstrap wiring.
@@ -13,9 +13,9 @@
 - No framework logic copied into `apps/finance`; all reusable behavior stays in packages.
 - Uses mock provider and mock STU for testability and deterministic bootstrapping.
 
-## Phase 3 (completed) — application service boundaries
+## 2026-03-21 Phase 3 (completed) — application service boundaries
 
-### Completed
+### Completed in this phase
 - Added `financeRuntimeBootstrap` under `apps/finance/src/bootstrap` to expose runtime bootstrapping without touching `index.ts` merge hotspot.
 - Added `FinanceTaskService` with app entrypoints:
   - `runReportGeneration`
