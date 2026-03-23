@@ -1,13 +1,15 @@
 # Development Memory — Phase 4 Merge Strategy
 
-To avoid recurring merge hotspots in:
-- `apps/finance/src/application/index.ts`
-- `apps/finance/src/application/services/FinanceTaskService.ts`
-- `apps/finance/src/application/services/mockDemo.ts`
+## 2026-03-23 update
 
-Phase-4 mapped APIs are moved to standalone files:
-- `apps/finance/src/application/services/FinanceTaskServiceMapped.ts`
-- `apps/finance/src/application/services/mockMappedDemo.ts`
-- `apps/finance/src/application/phase4/index.ts`
+User chose option 2: keep Phase-4 mapper consumption directly in `FinanceTaskService`.
 
-This keeps phase-3 files stable for branch merges while preserving phase-4 functionality.
+### Current strategy
+- `FinanceTaskService` now contains both:
+  - phase-3 stable methods (`runReportGeneration`, `runReviewGeneration`, `runExperimentEvaluation`)
+  - phase-4 mapped methods (`runReportGenerationMapped`, `runReviewGenerationMapped`, `runExperimentEvaluationMapped`)
+- `mockDemo.ts` exposes both legacy and mapped demo paths.
+- Standalone mapped files are retained for transition compatibility:
+  - `FinanceTaskServiceMapped.ts`
+  - `mockMappedDemo.ts`
+  - `application/phase4/index.ts`
