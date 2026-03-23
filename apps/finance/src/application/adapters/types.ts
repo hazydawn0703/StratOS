@@ -13,3 +13,9 @@ export interface FinanceTaskResponse {
   ruleLogCount: number;
   hasError: boolean;
 }
+
+export interface AdapterValidationIssue {
+  field: string;
+  code: 'required' | 'format' | 'range';
+  message: string;
+}

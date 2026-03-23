@@ -2,6 +2,7 @@ import type { FinanceTaskInput, FinanceTaskResult } from '../types.js';
 import type { FinanceTaskRequest, FinanceTaskResponse } from '../adapters/types.js';
 import { mapTaskRequest } from '../adapters/taskRequestMapper.js';
 import { mapTaskResponse } from '../adapters/taskResponseMapper.js';
+import { assertValidTaskRequest } from '../adapters/validation.js';
 import { financeRuntimeBootstrap } from '../../bootstrap/runtimeBootstrap.js';
 
 /**
@@ -27,16 +28,19 @@ export class FinanceTaskService {
 
   // phase-4 mapped surface
   async runReportGenerationMapped(request: FinanceTaskRequest): Promise<FinanceTaskResponse> {
+    assertValidTaskRequest(request);
     const raw = await this.runReportGeneration(mapTaskRequest(request, 'report_generation'));
     return mapTaskResponse(raw);
   }
 
   async runReviewGenerationMapped(request: FinanceTaskRequest): Promise<FinanceTaskResponse> {
+    assertValidTaskRequest(request);
     const raw = await this.runReviewGeneration(mapTaskRequest(request, 'review_generation'));
     return mapTaskResponse(raw);
   }
 
   async runExperimentEvaluationMapped(request: FinanceTaskRequest): Promise<FinanceTaskResponse> {
+    assertValidTaskRequest(request);
     const raw = await this.runExperimentEvaluation(mapTaskRequest(request, 'experiment_evaluation'));
     return mapTaskResponse(raw);
   }
