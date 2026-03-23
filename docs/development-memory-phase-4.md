@@ -5,7 +5,7 @@
 ### Completed in this phase
 - Added request adapter `mapTaskRequest` to normalize app requests into `FinanceTaskInput`.
 - Added response adapter `mapTaskResponse` to convert runtime output into app-facing `FinanceTaskResponse`.
-- Updated mapped service layer for report/review/evaluation entrypoints.
+- Updated `FinanceTaskService` to consume mapper layer for report/review/evaluation entrypoints.
 - Kept finance domain logic out of adapters and service layer (shape mapping only).
 
 ### Next planned phase
