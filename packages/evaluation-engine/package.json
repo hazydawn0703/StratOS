@@ -1,0 +1,17 @@
+{
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "name": "@stratos/evaluation-engine",
+  "dependencies": {
+    "@stratos/shared-types": "workspace:*",
+    "@stratos/core": "workspace:*",
+    "@stratos/strategy-compiler": "workspace:*",
+    "@stratos/rule-engine": "workspace:*"
+  }
+}
