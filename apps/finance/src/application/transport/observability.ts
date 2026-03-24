@@ -1,4 +1,4 @@
-import type { TransportMeta, TransportStage } from './types.js';
+import type { TraceIds, TransportMeta, TransportStage } from './types.js';
 
 export interface TransportTimer {
   stage: TransportStage;
@@ -10,12 +10,18 @@ export const startTransportTimer = (stage: TransportStage): TransportTimer => ({
   startedAtMs: Date.now()
 });
 
-export const finishTransportTimer = (timer: TransportTimer): TransportMeta => {
+export const buildTraceIds = (requestId: string, stage: TransportStage): TraceIds => ({
+  strategyTraceId: `${stage}-strategy-${requestId}`,
+  ruleTraceId: `${stage}-rule-${requestId}`
+});
+
+export const finishTransportTimer = (timer: TransportTimer, traceIds: TraceIds): TransportMeta => {
   const endedAtMs = Date.now();
   return {
     stage: timer.stage,
     startedAt: new Date(timer.startedAtMs).toISOString(),
     endedAt: new Date(endedAtMs).toISOString(),
-    durationMs: Math.max(endedAtMs - timer.startedAtMs, 0)
+    durationMs: Math.max(endedAtMs - timer.startedAtMs, 0),
+    traceIds
   };
 };

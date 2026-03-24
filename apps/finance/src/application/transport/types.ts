@@ -2,11 +2,17 @@ import type { AdapterValidationIssue, FinanceTaskResponse } from '../adapters/ty
 
 export type TransportStage = 'report' | 'review' | 'evaluation';
 
+export interface TraceIds {
+  strategyTraceId: string;
+  ruleTraceId: string;
+}
+
 export interface TransportMeta {
   stage: TransportStage;
   startedAt: string;
   endedAt: string;
   durationMs: number;
+  traceIds: TraceIds;
 }
 
 export interface TaskTransportSuccess {
