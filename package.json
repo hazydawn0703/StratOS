@@ -1,0 +1,13 @@
+{
+  "name": "stratos-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "pnpm -r typecheck"
+  }
+}
