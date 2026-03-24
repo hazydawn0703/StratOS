@@ -1,8 +1,8 @@
 import type { FinanceTaskInput, FinanceTaskResult } from '../types.js';
-import type { FinanceTaskRequest, FinanceTaskResponse } from '../adapters/types.js';
+import type { FinanceTaskRequest, FinanceTaskResponse, MappedExecutionResult } from '../adapters/types.js';
 import { mapTaskRequest } from '../adapters/taskRequestMapper.js';
 import { mapTaskResponse } from '../adapters/taskResponseMapper.js';
-import { assertValidTaskRequest } from '../adapters/validation.js';
+import { assertValidTaskRequest, validateTaskRequestResult } from '../adapters/validation.js';
 import { financeRuntimeBootstrap } from '../../bootstrap/runtimeBootstrap.js';
 
 /**
@@ -44,4 +44,28 @@ export class FinanceTaskService {
     const raw = await this.runExperimentEvaluation(mapTaskRequest(request, 'experiment_evaluation'));
     return mapTaskResponse(raw);
   }
+  async runReportGenerationMappedSafe(request: FinanceTaskRequest): Promise<MappedExecutionResult> {
+    const validation = validateTaskRequestResult(request);
+    if (!validation.ok) return { ok: false, issues: validation.issues };
+
+    const response = await this.runReportGenerationMapped(request);
+    return { ok: true, response, issues: [] };
+  }
+
+  async runReviewGenerationMappedSafe(request: FinanceTaskRequest): Promise<MappedExecutionResult> {
+    const validation = validateTaskRequestResult(request);
+    if (!validation.ok) return { ok: false, issues: validation.issues };
+
+    const response = await this.runReviewGenerationMapped(request);
+    return { ok: true, response, issues: [] };
+  }
+
+  async runExperimentEvaluationMappedSafe(request: FinanceTaskRequest): Promise<MappedExecutionResult> {
+    const validation = validateTaskRequestResult(request);
+    if (!validation.ok) return { ok: false, issues: validation.issues };
+
+    const response = await this.runExperimentEvaluationMapped(request);
+    return { ok: true, response, issues: [] };
+  }
+
 }

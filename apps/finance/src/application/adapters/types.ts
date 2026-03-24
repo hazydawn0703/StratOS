@@ -19,3 +19,9 @@ export interface AdapterValidationIssue {
   code: 'required' | 'format' | 'range';
   message: string;
 }
+
+export interface MappedExecutionResult {
+  ok: boolean;
+  response?: FinanceTaskResponse;
+  issues: AdapterValidationIssue[];
+}

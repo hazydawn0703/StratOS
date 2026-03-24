@@ -21,3 +21,14 @@ export const runFinanceTaskServiceMappedDemo = async (): Promise<string> => {
 
   return `${result.taskType}:${result.provider}`;
 };
+
+export const runFinanceTaskServiceMappedSafeDemo = async (): Promise<string> => {
+  const service = new FinanceTaskService();
+  const result = await service.runReportGenerationMappedSafe({
+    thesisType: '',
+    riskLevel: 'medium',
+    ticker: 'INVALID*'
+  });
+
+  return result.ok ? 'ok' : `issues:${result.issues.length}`;
+};

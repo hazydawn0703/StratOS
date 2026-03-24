@@ -14,8 +14,18 @@ export const validateTaskRequest = (request: FinanceTaskRequest): AdapterValidat
   return issues;
 };
 
-export const assertValidTaskRequest = (request: FinanceTaskRequest): void => {
+export interface ValidationResult {
+  ok: boolean;
+  issues: AdapterValidationIssue[];
+}
+
+export const validateTaskRequestResult = (request: FinanceTaskRequest): ValidationResult => {
   const issues = validateTaskRequest(request);
+  return { ok: issues.length === 0, issues };
+};
+
+export const assertValidTaskRequest = (request: FinanceTaskRequest): void => {
+  const { issues } = validateTaskRequestResult(request);
   if (issues.length > 0) {
     const detail = issues.map((issue) => `${issue.field}:${issue.code}`).join(',');
     throw new Error(`Invalid FinanceTaskRequest (${detail})`);
