@@ -1,174 +1,266 @@
-# StratOS
+<p align="center">
+  <img src="docs/assets/stratos-logo.svg" alt="StratOS" width="360" />
+</p>
 
-**From tool-using agents to strategy-evolving systems.**
+<p align="center">
+  <strong>From tool-using agents to strategy-evolving systems.</strong>
+</p>
 
-**StratOS is a Strategy Operating System for Agents.**
+<p align="center">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License" />
+  </a>
+  <a href="docs/architecture.md">
+    <img src="https://img.shields.io/badge/Docs-Architecture-111827?style=for-the-badge" alt="Architecture" />
+  </a>
+  <a href="docs/integration.md">
+    <img src="https://img.shields.io/badge/Docs-Integration-1f2937?style=for-the-badge" alt="Integration" />
+  </a>
+  <a href="apps/finance">
+    <img src="https://img.shields.io/badge/App-Finance%20Reference-374151?style=for-the-badge" alt="Finance Reference" />
+  </a>
+</p>
 
-Most agent frameworks are built around:
+<p align="center">
+  <a href="docs/architecture.md">Architecture</a>
+  ·
+  <a href="docs/integration.md">Integration</a>
+  ·
+  <a href="apps/finance">Finance Reference</a>
+  ·
+  <a href="stu-packs">STU Packs</a>
+  ·
+  <a href="benchmarks">Benchmarks</a>
+</p>
 
-- **skills** — what an agent can do  
-- **tools** — what an agent can call  
-- **memory** — what an agent can retain  
+<p>
+  <strong>StratOS</strong> is a <em>Strategy Operating System for Agents</em>.
+</p>
 
-StratOS is built for the missing layer:
+<p>
+  Most agent frameworks are built around <strong>skills</strong>, <strong>tools</strong>, and <strong>memory</strong>.
+  StratOS is built for the missing layer:
+</p>
 
-> **Strategy — how an agent decides, learns from failure, and improves over time.**
+<blockquote>
+  <p><strong>Strategy — how an agent decides, learns from failure, and improves over time.</strong></p>
+</blockquote>
 
----
+<p>
+  It does not replace your agent framework.
+  It gives it a <strong>strategy runtime</strong>.
+</p>
 
-## Why StratOS
+<hr />
 
-Today, agents can act.  
-But when they fail, improvement is still mostly manual:
+<h2>Why StratOS exists</h2>
 
-- rewrite the prompt
-- add another rule
-- patch the workflow
-- try again
+<p>
+  Today, agents can act.
+  But when they fail, improvement is still mostly manual:
+</p>
 
-That does not scale.
+<ul>
+  <li>rewrite the prompt</li>
+  <li>add another rule</li>
+  <li>patch the workflow</li>
+  <li>try again</li>
+</ul>
 
-As agents become persistent, multi-step, and high-stakes, they need something stronger:
+<p>
+  That does not scale.
+</p>
 
-> a way to **observe failure, extract patterns, evolve strategy, and apply correction safely**.
+<p>
+  As agents become persistent, multi-step, and high-stakes, they need something stronger:
+</p>
 
-StratOS exists to make that loop a first-class system.
+<blockquote>
+  <p>
+    a system that can <strong>observe failure, extract patterns, evolve strategy, and apply correction safely</strong>.
+  </p>
+</blockquote>
 
----
+<p>
+  StratOS exists to make that loop a first-class system.
+</p>
 
-## What StratOS makes possible
+<hr />
 
-StratOS turns this into runtime infrastructure:
+<h2>What StratOS makes possible</h2>
 
-**Action → Outcome → Review → Error → Strategy → Next Action**
+<p>
+  StratOS turns this into runtime infrastructure:
+</p>
 
-It helps agents:
+<p>
+  <strong>Action → Outcome → Review → Error → Strategy → Next Action</strong>
+</p>
 
-- generate structured decisions
-- evaluate outcomes
-- extract recurring error patterns
-- convert lessons into reusable strategy units
-- test changes before rollout
-- improve behavior without losing control
+<p>
+  It helps agents:
+</p>
 
----
+<ul>
+  <li>generate structured decisions</li>
+  <li>evaluate outcomes</li>
+  <li>extract recurring error patterns</li>
+  <li>convert lessons into reusable strategy units</li>
+  <li>test changes before rollout</li>
+  <li>improve behavior without losing control</li>
+</ul>
 
-## Core idea
+<hr />
 
-Most frameworks focus on **capability**.
+<h2>Core idea</h2>
 
-StratOS focuses on **judgment**.
+<p>
+  Most frameworks focus on <strong>capability</strong>.
+  StratOS focuses on <strong>judgment</strong>.
+</p>
 
-### Skills
-**What an agent can do**
+<table>
+  <tr>
+    <td valign="top"><strong>Skills</strong></td>
+    <td valign="top">What an agent can do</td>
+  </tr>
+  <tr>
+    <td valign="top"><strong>Strategy</strong></td>
+    <td valign="top">How an agent decides and improves</td>
+  </tr>
+</table>
 
-### Strategy
-**How an agent decides and improves**
+<p>
+  StratOS is not another tool layer.
+  It is a <strong>strategy layer</strong> for intelligent systems.
+</p>
 
-StratOS is not another tool layer.  
-It is a **strategy layer** for intelligent systems.
+<hr />
 
----
+<h2>Core primitives</h2>
 
-## Core primitives
+<ul>
+  <li>
+    <strong>Self-Training Units (STU)</strong><br />
+    Versioned strategy units derived from failures, reviews, and behavioral patterns
+  </li>
+  <li>
+    <strong>STU Registry</strong><br />
+    Strategy loading, versioning, activation, and governance
+  </li>
+  <li>
+    <strong>Strategy Compiler</strong><br />
+    Compiles strategy into Prompt Layer, Rule Layer, and Routing Layer
+  </li>
+  <li>
+    <strong>Rule Execution Engine</strong><br />
+    Executes structured control logic before, during, and after generation
+  </li>
+  <li>
+    <strong>Evaluation & Experiment System</strong><br />
+    Tests strategy changes before production rollout
+  </li>
+  <li>
+    <strong>Bias Monitoring</strong><br />
+    Distinguishes real improvement from drift
+  </li>
+</ul>
 
-- **Self-Training Units (STU)**  
-  Versioned strategy units derived from failures, reviews, and behavioral patterns
+<hr />
 
-- **STU Registry**  
-  Strategy loading, versioning, activation, and governance
+<h2>How it fits</h2>
 
-- **Strategy Compiler**  
-  Compiles STUs into:
-  - Prompt Layer
-  - Rule Layer
-  - Routing Layer
-
-- **Rule Execution Engine**  
-  Executes structured control logic before / during / after generation
-
-- **Evaluation & Experiment System**  
-  Tests strategy changes before production rollout
-
-- **Bias Monitoring**  
-  Distinguishes real improvement from drift
-
----
-
-## Architecture
-
-```text
-Application Layer
- - Finance Assistant
- - Content Agent
- - Ads Optimization
- - Sales Agent
- - Ops Automation
+<pre><code>Application Layer
+ ├─ Finance Assistant
+ ├─ Content Agent
+ ├─ Ads Optimization
+ ├─ Sales Agent
+ └─ Ops Automation
 
 StratOS Core
- - STU Registry
- - Strategy Compiler
- - Rule Engine
- - Evaluation
- - Experiment
- - Bias Monitor
- - Routing
+ ├─ STU Registry
+ ├─ Strategy Compiler
+ ├─ Rule Engine
+ ├─ Evaluation
+ ├─ Experiment
+ ├─ Bias Monitor
+ └─ Routing
 
 Agent Layer
- - LLM
- - Skills / Tools
- - Memory
+ ├─ LLM
+ ├─ Skills / Tools
+ └─ Memory
 
 Infrastructure
- - Model Gateway
- - Storage
- - Queue
- - Config
+ ├─ Model Gateway
+ ├─ Storage
+ ├─ Queue
+ └─ Config
+</code></pre>
 
-```
+<p>
+  StratOS does not replace your orchestration layer.
+  It gives your system a <strong>strategy runtime</strong>.
+</p>
 
-> **StratOS does not replace your agent framework.
-> It gives it a **strategy runtime**.**
+<hr />
 
----
+<h2>First proving ground: Finance</h2>
 
-## First proving ground: Finance
+<p>
+  The first implementation of StratOS is a finance reasoning system with:
+</p>
 
-The first implementation of StratOS is a finance reasoning system with:
+<ul>
+  <li>portfolio tracking</li>
+  <li>prediction generation</li>
+  <li>timed review</li>
+  <li>error extraction</li>
+  <li>strategy evolution</li>
+  <li>bias monitoring</li>
+</ul>
 
-- portfolio tracking
-- prediction generation
-- timed review
-- error extraction
-- strategy evolution
-- bias monitoring
+<p>
+  Finance is the first reference implementation — not the limit of the framework.
+</p>
 
-Finance is the first reference implementation — not the limit of the framework.
+<hr />
 
----
+<h2>Open source philosophy</h2>
 
-## Open source philosophy
+<blockquote>
+  <p><strong>Private-instance evolution, open structural collaboration</strong></p>
+</blockquote>
 
-> **Private-instance evolution, open structural collaboration**
+<ul>
+  <li>run your own instance</li>
+  <li>keep your own data and API keys</li>
+  <li>share schemas, rules, STUs, and benchmarks with the community</li>
+</ul>
 
-- run your own instance
-- keep your own data and API keys
-- share schemas, rules, STUs, and benchmarks with the community
+<p>
+  StratOS is designed so that strategic structure can be shared
+  without centralizing private operational data.
+</p>
 
-StratOS is designed so that strategic structure can be shared without centralizing private operational data.
+<hr />
 
----
+<h2>Repository structure</h2>
 
-## Repository structure
+<ul>
+  <li><code>apps/</code> — domain implementations</li>
+  <li><code>packages/</code> — StratOS core</li>
+  <li><code>stu-packs/</code> — reusable strategy assets</li>
+  <li><code>benchmarks/</code> — evaluation datasets</li>
+</ul>
 
-- `apps/` — domain implementations
-- `packages/` — StratOS core
-- `stu-packs/` — reusable strategy assets
-- `benchmarks/` — evaluation datasets
+<hr />
 
----
+<h2>Guiding principle</h2>
 
-## Guiding principle
-
-> Agents should not only act.  
-> They should improve how they act.
+<blockquote>
+  <p>
+    Agents should not only act.<br />
+    They should improve how they act.
+  </p>
+</blockquote>
