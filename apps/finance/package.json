@@ -1,0 +1,21 @@
+{
+  "name": "@stratos/finance",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stratos/core": "workspace:*",
+    "@stratos/shared-types": "workspace:*",
+    "@stratos/model-gateway": "workspace:*",
+    "@stratos/stu-registry": "workspace:*",
+    "@stratos/strategy-compiler": "workspace:*",
+    "@stratos/rule-engine": "workspace:*",
+    "@stratos/evaluation-engine": "workspace:*",
+    "@stratos/experiment-engine": "workspace:*",
+    "@stratos/bias-monitor": "workspace:*",
+    "@stratos/ui": "workspace:*"
+  }
+}
