@@ -125,10 +125,10 @@ Infrastructure
  - Queue
  - Config
 
----
+```
 
-StratOS does not replace your agent framework.  
-It gives it a **strategy runtime**.
+> **StratOS does not replace your agent framework.
+> It gives it a **strategy runtime**.**
 
 ---
 
