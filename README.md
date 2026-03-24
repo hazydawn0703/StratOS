@@ -1,161 +1,266 @@
-# StratOS
+<p align="center">
+  <img src="docs/assets/stratos-logo.svg" alt="StratOS" width="360" />
+</p>
 
-**StratOS is a Strategy Operating System for Agents.**
+<p align="center">
+  <strong>From tool-using agents to strategy-evolving systems.</strong>
+</p>
 
-Most agent frameworks focus on **skills**, **tools**, and **memory**.  
-StratOS focuses on something equally important but often missing:
+<p align="center">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License" />
+  </a>
+  <a href="docs/architecture.md">
+    <img src="https://img.shields.io/badge/Docs-Architecture-111827?style=for-the-badge" alt="Architecture" />
+  </a>
+  <a href="docs/integration.md">
+    <img src="https://img.shields.io/badge/Docs-Integration-1f2937?style=for-the-badge" alt="Integration" />
+  </a>
+  <a href="apps/finance">
+    <img src="https://img.shields.io/badge/App-Finance%20Reference-374151?style=for-the-badge" alt="Finance Reference" />
+  </a>
+</p>
 
-> **Strategy — how an agent decides, learns from mistakes, and improves over time.**
+<p align="center">
+  <a href="docs/architecture.md">Architecture</a>
+  ·
+  <a href="docs/integration.md">Integration</a>
+  ·
+  <a href="apps/finance">Finance Reference</a>
+  ·
+  <a href="stu-packs">STU Packs</a>
+  ·
+  <a href="benchmarks">Benchmarks</a>
+</p>
 
----
+<p>
+  <strong>StratOS</strong> is a <em>Strategy Operating System for Agents</em>.
+</p>
 
-## 🧠 What is StratOS?
+<p>
+  Most agent frameworks are built around <strong>skills</strong>, <strong>tools</strong>, and <strong>memory</strong>.
+  StratOS is built for the missing layer:
+</p>
 
-StratOS is a framework that enables agents to:
+<blockquote>
+  <p><strong>Strategy — how an agent decides, learns from failure, and improves over time.</strong></p>
+</blockquote>
 
-- generate structured decisions
-- evaluate outcomes
-- extract error patterns
-- evolve strategies
-- apply behavioral corrections safely
+<p>
+  It does not replace your agent framework.
+  It gives it a <strong>strategy runtime</strong>.
+</p>
 
-It turns this loop into a first-class system:
-Action → Outcome → Review → Error → Strategy → Next Action
+<hr />
 
----
+<h2>Why StratOS exists</h2>
 
-## 🔥 Why StratOS?
+<p>
+  Today, agents can act.
+  But when they fail, improvement is still mostly manual:
+</p>
 
-LLMs can act, but they don’t reliably improve.
+<ul>
+  <li>rewrite the prompt</li>
+  <li>add another rule</li>
+  <li>patch the workflow</li>
+  <li>try again</li>
+</ul>
 
-StratOS introduces:
+<p>
+  That does not scale.
+</p>
 
-- **Self-Training Units (STU)**  
-  Versioned, structured strategy units derived from historical errors
+<p>
+  As agents become persistent, multi-step, and high-stakes, they need something stronger:
+</p>
 
-- **STU Registry**  
-  Strategy registration, loading, versioning, and activation
+<blockquote>
+  <p>
+    a system that can <strong>observe failure, extract patterns, evolve strategy, and apply correction safely</strong>.
+  </p>
+</blockquote>
 
-- **Strategy Compiler**  
-  Converts STUs into:
-  - Prompt Layer
-  - Rule Layer
-  - Routing Layer
+<p>
+  StratOS exists to make that loop a first-class system.
+</p>
 
-- **Rule Execution Engine**  
-  Executes structured rules before / during / after generation
+<hr />
 
-- **Evaluation & Experiment System**  
-  Tests strategies before rollout
+<h2>What StratOS makes possible</h2>
 
-- **Bias Monitoring**  
-  Distinguishes real improvement from behavioral drift
+<p>
+  StratOS turns this into runtime infrastructure:
+</p>
 
----
+<p>
+  <strong>Action → Outcome → Review → Error → Strategy → Next Action</strong>
+</p>
 
-## 🧩 Core Concept
+<p>
+  It helps agents:
+</p>
 
-StratOS separates:
+<ul>
+  <li>generate structured decisions</li>
+  <li>evaluate outcomes</li>
+  <li>extract recurring error patterns</li>
+  <li>convert lessons into reusable strategy units</li>
+  <li>test changes before rollout</li>
+  <li>improve behavior without losing control</li>
+</ul>
 
-### Skills
-> What an agent can do
+<hr />
 
-### Strategy
-> How an agent decides and improves
+<h2>Core idea</h2>
 
-StratOS is a **strategy layer**, not a tool layer.
+<p>
+  Most frameworks focus on <strong>capability</strong>.
+  StratOS focuses on <strong>judgment</strong>.
+</p>
 
----
+<table>
+  <tr>
+    <td valign="top"><strong>Skills</strong></td>
+    <td valign="top">What an agent can do</td>
+  </tr>
+  <tr>
+    <td valign="top"><strong>Strategy</strong></td>
+    <td valign="top">How an agent decides and improves</td>
+  </tr>
+</table>
 
-## 🏗️ Architecture
+<p>
+  StratOS is not another tool layer.
+  It is a <strong>strategy layer</strong> for intelligent systems.
+</p>
 
-Application Layer
- - ├─ Finance Assistant
- - ├─ Content Agent
- - ├─ Ads Optimization
- - ├─ Sales Agent
- - └─ Ops Automation
+<hr />
+
+<h2>Core primitives</h2>
+
+<ul>
+  <li>
+    <strong>Self-Training Units (STU)</strong><br />
+    Versioned strategy units derived from failures, reviews, and behavioral patterns
+  </li>
+  <li>
+    <strong>STU Registry</strong><br />
+    Strategy loading, versioning, activation, and governance
+  </li>
+  <li>
+    <strong>Strategy Compiler</strong><br />
+    Compiles strategy into Prompt Layer, Rule Layer, and Routing Layer
+  </li>
+  <li>
+    <strong>Rule Execution Engine</strong><br />
+    Executes structured control logic before, during, and after generation
+  </li>
+  <li>
+    <strong>Evaluation & Experiment System</strong><br />
+    Tests strategy changes before production rollout
+  </li>
+  <li>
+    <strong>Bias Monitoring</strong><br />
+    Distinguishes real improvement from drift
+  </li>
+</ul>
+
+<hr />
+
+<h2>How it fits</h2>
+
+<pre><code>Application Layer
+ ├─ Finance Assistant
+ ├─ Content Agent
+ ├─ Ads Optimization
+ ├─ Sales Agent
+ └─ Ops Automation
 
 StratOS Core
- - ├─ STU Registry
- - ├─ Strategy Compiler
- - ├─ Rule Engine
- - ├─ Evaluation Engine
- - ├─ Experiment Engine
- - ├─ Bias Monitor
- - └─ Routing
+ ├─ STU Registry
+ ├─ Strategy Compiler
+ ├─ Rule Engine
+ ├─ Evaluation
+ ├─ Experiment
+ ├─ Bias Monitor
+ └─ Routing
 
 Agent Layer
- - ├─ LLM
- - ├─ Skills / Tools
- - └─ Memory
+ ├─ LLM
+ ├─ Skills / Tools
+ └─ Memory
 
 Infrastructure
- - ├─ Model Gateway
- - ├─ Storage
- - ├─ Queue
- - └─ Config
+ ├─ Model Gateway
+ ├─ Storage
+ ├─ Queue
+ └─ Config
+</code></pre>
 
----
+<p>
+  StratOS does not replace your orchestration layer.
+  It gives your system a <strong>strategy runtime</strong>.
+</p>
 
-## 💼 First Use Case: Finance
+<hr />
 
-The first implementation of StratOS is a **finance reasoning system**:
+<h2>First proving ground: Finance</h2>
 
-- portfolio tracking
-- prediction generation
-- timed review
-- error extraction
-- strategy evolution
-- bias monitoring
+<p>
+  The first implementation of StratOS is a finance reasoning system with:
+</p>
 
-This is a **reference implementation**, not the framework itself.
+<ul>
+  <li>portfolio tracking</li>
+  <li>prediction generation</li>
+  <li>timed review</li>
+  <li>error extraction</li>
+  <li>strategy evolution</li>
+  <li>bias monitoring</li>
+</ul>
 
----
+<p>
+  Finance is the first reference implementation — not the limit of the framework.
+</p>
 
-## 🌍 Open Source Philosophy
+<hr />
 
-StratOS follows:
+<h2>Open source philosophy</h2>
 
-> **Private-instance evolution + open structural collaboration**
+<blockquote>
+  <p><strong>Private-instance evolution, open structural collaboration</strong></p>
+</blockquote>
 
-This means:
+<ul>
+  <li>run your own instance</li>
+  <li>keep your own data and API keys</li>
+  <li>share schemas, rules, STUs, and benchmarks with the community</li>
+</ul>
 
-- users run their own instances
-- users keep their own data and API keys
-- the community shares:
-  - schemas
-  - taxonomies
-  - rules
-  - strategies (STUs)
-  - benchmarks
+<p>
+  StratOS is designed so that strategic structure can be shared
+  without centralizing private operational data.
+</p>
 
-No centralized data dependency.
+<hr />
 
----
+<h2>Repository structure</h2>
 
-## 📦 Repository Structure
+<ul>
+  <li><code>apps/</code> — domain implementations</li>
+  <li><code>packages/</code> — StratOS core</li>
+  <li><code>stu-packs/</code> — reusable strategy assets</li>
+  <li><code>benchmarks/</code> — evaluation datasets</li>
+</ul>
 
-This is a **monorepo**:
-apps/ → domain implementations
-packages/ → core framework
-stu-packs/ → reusable strategies
-benchmarks/ → evaluation datasets
+<hr />
 
----
+<h2>Guiding principle</h2>
 
-## 🚀 Roadmap
-
-- STU standard & lifecycle
-- Strategy Compiler
-- Rule Execution Engine
-- Evaluation & Experiment system
-- Bias monitoring
-- Replay / auditability
-
----
-
-## 🧠 Guiding Principle
-
-> Agents should not only act.  
-> They should improve how they act.
+<blockquote>
+  <p>
+    Agents should not only act.<br />
+    They should improve how they act.
+  </p>
+</blockquote>
