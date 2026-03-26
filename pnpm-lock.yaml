@@ -1,0 +1,152 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  apps/finance:
+    dependencies:
+      '@stratos/bias-monitor':
+        specifier: workspace:*
+        version: link:../../packages/bias-monitor
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@stratos/evaluation-engine':
+        specifier: workspace:*
+        version: link:../../packages/evaluation-engine
+      '@stratos/experiment-engine':
+        specifier: workspace:*
+        version: link:../../packages/experiment-engine
+      '@stratos/model-gateway':
+        specifier: workspace:*
+        version: link:../../packages/model-gateway
+      '@stratos/rule-engine':
+        specifier: workspace:*
+        version: link:../../packages/rule-engine
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
+      '@stratos/strategy-compiler':
+        specifier: workspace:*
+        version: link:../../packages/strategy-compiler
+      '@stratos/stu-registry':
+        specifier: workspace:*
+        version: link:../../packages/stu-registry
+      '@stratos/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+
+  packages/bias-monitor:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/core:
+    dependencies:
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/evaluation-engine:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/rule-engine':
+        specifier: workspace:*
+        version: link:../rule-engine
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@stratos/strategy-compiler':
+        specifier: workspace:*
+        version: link:../strategy-compiler
+
+  packages/experiment-engine:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/evaluation-engine':
+        specifier: workspace:*
+        version: link:../evaluation-engine
+      '@stratos/infrastructure':
+        specifier: workspace:*
+        version: link:../infrastructure
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/infrastructure:
+    dependencies:
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/model-gateway:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/model-router:
+    dependencies:
+      '@stratos/strategy-compiler':
+        specifier: workspace:*
+        version: link:../strategy-compiler
+
+  packages/replay-debug:
+    dependencies:
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/rule-engine:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/shared-types: {}
+
+  packages/strategy-compiler:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@stratos/stu-registry':
+        specifier: workspace:*
+        version: link:../stu-registry
+
+  packages/stu-registry:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/ui:
+    dependencies:
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
