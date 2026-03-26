@@ -4,8 +4,15 @@ export interface TaskRuntimeLike {
   createTaskContext(seed: Partial<TaskContext>): TaskContext;
 }
 
+export interface RuntimeCompilationInput {
+  active_stus: STU[];
+  experiment_stus: STU[];
+  candidate_stus: STU[];
+}
+
 export interface STURegistryLike {
   getActive(taskContext: TaskContext): STU[];
+  getCompilationInput?(taskContext: TaskContext, options?: { includeCandidates?: boolean }): RuntimeCompilationInput;
 }
 
 export interface CompiledStrategyLike {
@@ -18,7 +25,7 @@ export interface CompiledStrategyLike {
 }
 
 export interface StrategyCompilerLike<TStrategy extends CompiledStrategyLike = CompiledStrategyLike> {
-  compile(stus: STU[], taskContext: TaskContext): TStrategy;
+  compile(stus: STU[] | RuntimeCompilationInput, taskContext: TaskContext): TStrategy;
 }
 
 export interface RuleExecutionResultLike<TEffects extends object, TLog> {
@@ -106,8 +113,10 @@ export class StrategyRuntimeKernel<
 
   createExecutionContext(input: RuntimeKernelInput): StrategyExecutionContext<TStrategy> {
     const context = this.taskRuntime.createTaskContext(input);
-    const activeStus = this.stuRegistry.getActive(context);
-    const strategy = this.strategyCompiler.compile(activeStus, context);
+    const compileInput =
+      this.stuRegistry.getCompilationInput?.(context, { includeCandidates: false }) ??
+      this.stuRegistry.getActive(context);
+    const strategy = this.strategyCompiler.compile(compileInput, context);
 
     return {
       taskContext: context,

@@ -353,3 +353,56 @@
   - 补齐 bias-monitor 与 replay/audit 跨周期窗口回溯分析。
 - 变更原因：落实 Phase K 要求，将错误利用、偏差检查、候选形成耦合为可运行骨架。
 - 影响范围：核心框架协议、finance 编排 facade、回放审计与测试矩阵。
+
+## 2026-03-26 Phase L — 晋升治理 + active STU 接回编译链路
+
+- 当前阶段名称：Phase L / Promotion Governance & Active STU Compile Reinjection
+- 完成内容：
+  - 在 framework 协议层新增晋升治理对象：`PromotionPolicy`、`EvaluationResult`、`ExperimentResult`、`PromotionDecision`、`PromotionAuditRecord`，并通过 `@stratos/shared-types` root API 导出。
+  - `@stratos/evaluation-engine` 增加 baseline 版本绑定的晋升评估输出；未绑定 baseline version 的评估结果会被拒绝。
+  - `@stratos/experiment-engine` 增加实验结果结构化输出（mode/bucket/version 绑定）与治理决策入口，支持 `promote/hold/rollback/manual_review` 决策分支；`StrategyLifecycleGuard` 增加 `deprecated` 生命周期。
+  - `@stratos/stu-registry` 从“仅 active 列表”升级为候选/实验/激活/弃用全生命周期查询模型，支持：
+    - 注册 candidate
+    - 按 app/task_type/artifact_type/version/status 查询
+    - 实验 bucket 与 candidate version 绑定校验
+    - 编译输入分层输出（active / experiment / candidate）
+  - `@stratos/strategy-compiler` 支持分层编译输入并写入审计字段，优先级显式包含 `active_stu > experiment_stu > candidate_stu`。
+  - `@stratos/replay-debug` 增加 promotion replay explain 能力与 fixture，可追踪 pattern 来源、baseline/candidate version、experiment mode/bucket、decision 与 active version。
+  - finance 侧仅新增 policy + 接入编排 `FinancePromotionService`，不下沉框架治理逻辑；打通：
+    `STUCandidate -> Evaluation -> Experiment -> PromotionDecision -> active STU -> compile audit`.
+- 修改文件：
+  - `packages/shared-types/src/promotion.ts`
+  - `packages/shared-types/src/index.ts`
+  - `packages/evaluation-engine/src/EvaluationEngine.ts`
+  - `packages/evaluation-engine/src/metrics/types.ts`
+  - `packages/experiment-engine/src/*`
+  - `packages/infrastructure/src/database/StrategyLifecycleStore.ts`
+  - `packages/stu-registry/src/STURegistry.ts`
+  - `packages/strategy-compiler/src/StrategyCompiler.ts`
+  - `packages/strategy-compiler/src/types.ts`
+  - `packages/replay-debug/src/index.ts`
+  - `packages/replay-debug/fixtures/promotion-decision-replay.json`
+  - `apps/finance/src/application/services/FinancePromotionService.ts`
+  - `apps/finance/src/application/index.ts`
+  - `apps/finance/src/application/phase7/index.ts`
+  - `tests/promotion-path.test.mjs`
+  - `tests/evaluation-baseline-binding.test.mjs`
+  - `tests/experiment-modes.test.mjs`
+  - `tests/registry-compiler-integration.test.mjs`
+  - `tests/promotion-replay-audit.test.mjs`
+  - `tests/finance-phase-l.smoke.test.mjs`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：
+  - `pnpm install --frozen-lockfile` ✅
+  - `pnpm clean` ✅
+  - `pnpm build` ✅
+  - `pnpm typecheck` ✅
+  - `pnpm test` ✅
+- 当前遗留风险：
+  - `deprecate` 决策分支已在协议层保留，当前默认治理策略仍偏保守且主要走 `hold/rollback/manual_review/promote`，后续需按 domain policy 增加触发条件。
+  - 编译优先级目前以审计字段与层级拼接实现，若进入多 STU 冲突场景需进一步增强冲突仲裁策略。
+- 下一阶段计划：
+  - 将 promotion audit 与 runtime event store 做持久化绑定，补齐跨 run 的回放与追责检索。
+  - 增加人工审批流（manual approval）与 feature flag 联动策略。
+- 变更原因：Phase K 已完成 candidate 形成，但尚未形成“可治理晋升 + active 回注编译主链路”的后半闭环。
+- 影响范围：晋升治理协议层、实验治理引擎、registry/compile 主链路、finance 接入 facade 与测试基线。

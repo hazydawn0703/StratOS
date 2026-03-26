@@ -1,0 +1,15 @@
+{
+  "candidate_id": "stu-candidate-pattern-1",
+  "source_error_pattern_id": "pattern-1",
+  "baseline_version": "finance-baseline-v1",
+  "candidate_version": "candidate-v2",
+  "experiment_mode": "canary",
+  "experiment_bucket": "finance-cohort-a",
+  "promotion_action": "promote",
+  "decision_reasons": [
+    "evaluation:promote",
+    "experiment_mode:canary",
+    "sample_size:25"
+  ],
+  "active_stu_version": "candidate-v2"
+}

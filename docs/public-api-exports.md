@@ -10,7 +10,7 @@ Date: 2026-03-26
 
 | Package | Public export | Private export policy |
 |---|---|---|
-| `@stratos/shared-types` | `.` -> `dist/index.*` (includes STUCandidate / EvaluationInput / ExperimentCandidate protocols) | `./internal/*` blocked (`null`) |
+| `@stratos/shared-types` | `.` -> `dist/index.*` (includes STUCandidate / EvaluationInput / ExperimentCandidate + PromotionPolicy / EvaluationResult / ExperimentResult / PromotionDecision / PromotionAuditRecord) | `./internal/*` blocked (`null`) |
 | `@stratos/claim-extractor` | `.` -> `dist/index.*` | `./internal/*` blocked (`null`) |
 | `@stratos/review-engine` | `.` -> `dist/index.*` | `./internal/*` blocked (`null`) |
 | `@stratos/error-utilization` | `.` -> `dist/index.*` | `./internal/*` blocked (`null`) |

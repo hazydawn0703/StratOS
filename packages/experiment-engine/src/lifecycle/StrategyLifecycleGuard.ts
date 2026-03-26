@@ -8,11 +8,12 @@ import {
 export type { StrategyLifecycleState, StrategyLifecycleSnapshot, StrategyLifecycleStore };
 
 const allowedTransitions: Record<StrategyLifecycleState, StrategyLifecycleState[]> = {
-  candidate: ['evaluated', 'rolled_back'],
-  evaluated: ['experimenting', 'rolled_back'],
-  experimenting: ['active', 'rolled_back'],
-  active: ['rolled_back'],
-  rolled_back: []
+  candidate: ['evaluated', 'rolled_back', 'deprecated'],
+  evaluated: ['experimenting', 'rolled_back', 'deprecated'],
+  experimenting: ['active', 'rolled_back', 'deprecated'],
+  active: ['rolled_back', 'deprecated'],
+  rolled_back: ['deprecated'],
+  deprecated: []
 };
 
 export class StrategyLifecycleGuard {
@@ -42,6 +43,10 @@ export class StrategyLifecycleGuard {
 
   rollback(candidateId: string, note = 'rolled back'): Promise<StrategyLifecycleSnapshot> {
     return this.transition(candidateId, 'rolled_back', note);
+  }
+
+  deprecate(candidateId: string, note = 'deprecated'): Promise<StrategyLifecycleSnapshot> {
+    return this.transition(candidateId, 'deprecated', note);
   }
 
   getSnapshot(candidateId: string): Promise<StrategyLifecycleSnapshot | undefined> {

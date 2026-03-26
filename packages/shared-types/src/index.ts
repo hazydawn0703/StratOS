@@ -7,3 +7,4 @@ export * from './model.js';
 export * from './mock.js';
 export * from './strategyArtifacts.js';
 export * from './candidate.js';
+export * from './promotion.js';

@@ -6,7 +6,8 @@ export type StrategyLifecycleState =
   | 'evaluated'
   | 'experimenting'
   | 'active'
-  | 'rolled_back';
+  | 'rolled_back'
+  | 'deprecated';
 
 export interface StrategyLifecycleSnapshot {
   candidateId: string;

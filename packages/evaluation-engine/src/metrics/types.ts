@@ -1,4 +1,5 @@
 import type { EvaluationInput } from '@stratos/shared-types';
+import type { EvaluationResult as PromotionEvaluationResult } from '@stratos/shared-types';
 
 export interface EvaluationMetrics {
   predictionValidity: number;
@@ -32,3 +33,4 @@ export interface CandidateEvaluationSummary {
 }
 
 export type FrameworkEvaluationInput = EvaluationInput;
+export type FrameworkEvaluationResult = PromotionEvaluationResult;
