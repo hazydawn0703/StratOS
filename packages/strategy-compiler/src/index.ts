@@ -5,3 +5,4 @@ export * from './mergers/mergePromptLayer.js';
 export * from './mergers/mergeRuleLayer.js';
 export * from './mergers/mergeRoutingLayer.js';
 export * from './mergers/detectConflicts.js';
+export * from './execution/StrategyExecutionContract.js';

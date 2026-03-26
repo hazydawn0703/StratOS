@@ -8,6 +8,8 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "tsc -b --pretty false tsconfig.json",
+    "build": "tsc -b tsconfig.json",
+    "clean": "tsc -b --clean tsconfig.json"
   }
 }
