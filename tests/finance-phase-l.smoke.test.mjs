@@ -27,7 +27,8 @@ test('finance Phase L smoke: Claim->Review->ErrorPattern->STUCandidate->Evaluati
     baselineVersion: 'finance-baseline-v1',
     candidateVersion: 'finance-candidate-v2',
     evaluationMetrics: { quality_delta: 0.3, risk_delta: 0.05 },
-    experimentMode: 'canary'
+    experimentMode: 'canary',
+    governance: { autoApproveManualReview: true, approver: 'finance-lead' }
   });
 
   assert.ok(['promote', 'hold', 'rollback', 'manual_review', 'deprecate'].includes(promotionFlow.audit.decision.action));

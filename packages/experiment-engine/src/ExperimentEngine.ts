@@ -4,10 +4,13 @@ import type {
   ExperimentCandidate,
   ExperimentMode,
   ExperimentResult,
+  ManualApprovalTicket,
   PromotionAuditRecord,
-  PromotionPolicy
+  PromotionPolicy,
+  RuntimeGovernanceEvent
 } from '@stratos/shared-types';
 import type { TaskContext } from '@stratos/shared-types';
+import { DatabaseGovernanceEventStore, type GovernanceEventStore } from '@stratos/infrastructure';
 import { decidePromotionAction } from './decision/promotionDecision.js';
 import { StrategyLifecycleGuard } from './lifecycle/StrategyLifecycleGuard.js';
 import { deterministicRollout } from './rollout/deterministicRollout.js';
@@ -16,6 +19,12 @@ import type { ExperimentRecord } from './types.js';
 export class ExperimentEngine {
   private readonly experiments = new Map<string, ExperimentRecord>();
   private readonly lifecycleGuard = new StrategyLifecycleGuard();
+  private readonly eventStore: GovernanceEventStore;
+  private readonly approvalTickets = new Map<string, ManualApprovalTicket>();
+
+  constructor(eventStore: GovernanceEventStore = new DatabaseGovernanceEventStore()) {
+    this.eventStore = eventStore;
+  }
 
   async registerCandidate(candidateId: string): Promise<void> {
     await this.lifecycleGuard.registerCandidate(candidateId);
@@ -122,12 +131,14 @@ export class ExperimentEngine {
   }
 
   async evaluatePromotion(input: {
+    runId?: string;
     policy: PromotionPolicy;
     evaluation: EvaluationResult;
     experiment: ExperimentResult;
     sourceErrorPatternId: string;
     impactedTaskType: string;
   }): Promise<{ decision: PromotionAuditRecord['decision']; audit: PromotionAuditRecord }> {
+    const runId = input.runId ?? `run-${input.evaluation.candidate_id}`;
     const action = decidePromotionAction({
       policy: input.policy,
       evaluation: input.evaluation,
@@ -143,7 +154,8 @@ export class ExperimentEngine {
         `experiment_mode:${input.experiment.mode}`,
         `sample_size:${input.experiment.sample_size}`
       ],
-      requires_manual_approval: input.policy.require_manual_approval
+      requires_manual_approval: action === 'manual_review' ? true : input.policy.require_manual_approval,
+      approval_status: action === 'manual_review' ? 'pending' : 'not_required'
     };
 
     if (action === 'promote') {
@@ -152,10 +164,42 @@ export class ExperimentEngine {
       await this.lifecycleGuard.rollback(input.evaluation.candidate_id, 'rollback/deprecate decision');
     }
 
+    if (decision.action === 'manual_review') {
+      const ticket: ManualApprovalTicket = {
+        ticket_id: `approval-${input.evaluation.candidate_id}`,
+        run_id: runId,
+        candidate_id: input.evaluation.candidate_id,
+        candidate_version: input.evaluation.candidate_version,
+        requested_action: 'promote',
+        status: 'pending',
+        requested_at: new Date().toISOString(),
+        sla_due_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      };
+      this.approvalTickets.set(ticket.ticket_id, ticket);
+      await this.appendEvent({
+        event_id: `${ticket.ticket_id}-requested`,
+        run_id: runId,
+        candidate_id: input.evaluation.candidate_id,
+        type: 'manual_approval_requested',
+        at: ticket.requested_at,
+        payload: { ticket_id: ticket.ticket_id, requested_action: ticket.requested_action }
+      });
+    }
+
+    await this.appendEvent({
+      event_id: `decision-${input.evaluation.candidate_id}-${Date.now()}`,
+      run_id: runId,
+      candidate_id: input.evaluation.candidate_id,
+      type: 'promotion_decision_evaluated',
+      at: new Date().toISOString(),
+      payload: { action: decision.action, requires_manual_approval: decision.requires_manual_approval }
+    });
+
     return {
       decision,
       audit: {
-        audit_id: `audit-${input.evaluation.candidate_id}`,
+        audit_id: `audit-${runId}-${input.evaluation.candidate_id}`,
+        run_id: runId,
         candidate_id: input.evaluation.candidate_id,
         source_error_pattern_id: input.sourceErrorPatternId,
         evaluation: input.evaluation,
@@ -166,5 +210,120 @@ export class ExperimentEngine {
         created_at: new Date().toISOString()
       }
     };
+  }
+
+  getManualApprovalTicket(candidateId: string): ManualApprovalTicket | undefined {
+    return this.approvalTickets.get(`approval-${candidateId}`);
+  }
+
+  async approvePromotion(input: {
+    runId?: string;
+    candidateId: string;
+    approver: string;
+    note?: string;
+    approve: boolean;
+    audit: PromotionAuditRecord;
+  }): Promise<PromotionAuditRecord> {
+    const runId = input.runId ?? `run-${input.candidateId}`;
+    const ticketId = `approval-${input.candidateId}`;
+    const ticket = this.approvalTickets.get(ticketId);
+    if (!ticket) {
+      throw new Error(`manual approval ticket not found for candidate: ${input.candidateId}`);
+    }
+    if (input.audit.candidate_id !== input.candidateId) {
+      throw new Error('candidateId does not match audit record');
+    }
+    if (input.audit.decision.action !== 'manual_review') {
+      throw new Error('approvePromotion can only be used for manual_review decisions');
+    }
+
+    const reviewedAt = new Date().toISOString();
+    ticket.status = input.approve ? 'approved' : 'rejected';
+    ticket.reviewed_at = reviewedAt;
+    ticket.reviewed_by = input.approver;
+    ticket.note = input.note;
+
+    if (input.approve) {
+      await this.lifecycleGuard.activate(input.candidateId, `manual approval by ${input.approver}`);
+    } else {
+      await this.lifecycleGuard.rollback(input.candidateId, `manual rejection by ${input.approver}`);
+    }
+
+    await this.appendEvent({
+      event_id: `${ticketId}-${input.approve ? 'approved' : 'rejected'}-${Date.now()}`,
+      run_id: runId,
+      candidate_id: input.candidateId,
+      type: input.approve ? 'manual_approval_approved' : 'manual_approval_rejected',
+      at: reviewedAt,
+      payload: { approver: input.approver, note: input.note ?? '' }
+    });
+
+    return {
+      ...input.audit,
+      decision: {
+        ...input.audit.decision,
+        action: input.approve ? 'promote' : 'rollback',
+        approval_status: input.approve ? 'approved' : 'rejected',
+        approved_by: input.approver,
+        approved_at: reviewedAt,
+        reasons: [
+          ...input.audit.decision.reasons,
+          input.approve ? `manual_approved_by:${input.approver}` : `manual_rejected_by:${input.approver}`,
+          ...(input.note ? [`manual_note:${input.note}`] : [])
+        ]
+      },
+      active_stu_version: input.approve ? input.audit.evaluation.candidate_version : undefined
+    };
+  }
+
+  async rejectPromotion(input: {
+    runId?: string;
+    candidateId: string;
+    approver: string;
+    note?: string;
+    audit: PromotionAuditRecord;
+  }): Promise<PromotionAuditRecord> {
+    return this.approvePromotion({
+      ...input,
+      approve: false
+    });
+  }
+
+  async listGovernanceEvents(candidateId: string): Promise<RuntimeGovernanceEvent[]> {
+    return this.eventStore.listByCandidate(candidateId);
+  }
+
+  async listGovernanceEventsByRunId(runId: string): Promise<RuntimeGovernanceEvent[]> {
+    return this.eventStore.listByRunId(runId);
+  }
+
+  async checkApprovalSLA(input: {
+    candidateId: string;
+    runId?: string;
+    now?: string;
+  }): Promise<{ breached: boolean; dueAt?: string }> {
+    const ticket = this.getManualApprovalTicket(input.candidateId);
+    if (!ticket || !ticket.sla_due_at || ticket.status !== 'pending') {
+      return { breached: false };
+    }
+
+    const nowIso = input.now ?? new Date().toISOString();
+    if (nowIso <= ticket.sla_due_at) {
+      return { breached: false, dueAt: ticket.sla_due_at };
+    }
+
+    await this.appendEvent({
+      event_id: `sla-${ticket.ticket_id}-${Date.now()}`,
+      run_id: input.runId ?? ticket.run_id,
+      candidate_id: input.candidateId,
+      type: 'approval_sla_breached',
+      at: nowIso,
+      payload: { due_at: ticket.sla_due_at, status: ticket.status }
+    });
+    return { breached: true, dueAt: ticket.sla_due_at };
+  }
+
+  private async appendEvent(event: RuntimeGovernanceEvent): Promise<void> {
+    await this.eventStore.append(event);
   }
 }
