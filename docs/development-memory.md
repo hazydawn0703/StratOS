@@ -406,3 +406,54 @@
   - 增加人工审批流（manual approval）与 feature flag 联动策略。
 - 变更原因：Phase K 已完成 candidate 形成，但尚未形成“可治理晋升 + active 回注编译主链路”的后半闭环。
 - 影响范围：晋升治理协议层、实验治理引擎、registry/compile 主链路、finance 接入 facade 与测试基线。
+
+## 2026-03-26 Phase M — Manual Approval + Runtime Governance Event Store
+
+- 当前阶段名称：Phase M / Governance Auditability Continuation
+- 完成内容：
+  - 在 `@stratos/shared-types` 扩展治理协议：
+    - 为 `PromotionDecision` 增加 `approval_status/approved_by/approved_at`。
+    - 新增 `ManualApprovalTicket` 与 `RuntimeGovernanceEvent`，统一表达“待审批”与“治理事件轨迹”。
+  - 在 `@stratos/infrastructure` 增加治理事件存储抽象：
+    - `GovernanceEventStore` + `InMemoryGovernanceEventStore`。
+    - `DatabaseGovernanceEventStore`（可选 driver + transaction 包裹）用于后续接入真实审计库。
+  - 在 `@stratos/experiment-engine` 落地审批与事件审计：
+    - `evaluatePromotion` 在 manual review 场景自动生成审批 ticket。
+    - 新增 `approvePromotion`，支持人工批准/拒绝并驱动 lifecycle state。
+    - 新增 `listGovernanceEvents`，支持按 candidate 查询治理轨迹。
+  - 在 finance 接入层新增 feature-flag 化审批策略：
+    - `FinancePromotionService` 支持 `governance.autoApproveManualReview`；
+      在策略要求人工审批时可由 flag 触发自动批准（便于灰度联调/回归）。
+  - 新增回归测试覆盖：
+    - manual approval promote 路径。
+    - governance event trail 存在性校验。
+- 修改文件：
+  - `packages/shared-types/src/promotion.ts`
+  - `packages/infrastructure/src/database/StrategyLifecycleStore.ts`
+  - `packages/experiment-engine/src/ExperimentEngine.ts`
+  - `apps/finance/src/application/services/FinancePromotionService.ts`
+  - `tests/promotion-path.test.mjs`
+  - `tests/finance-phase-l.smoke.test.mjs`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：`pnpm build` 与 `pnpm test` 已通过（本轮已先修复 workspace 安装/解析状态后再执行测试）。
+- 当前遗留风险：
+  - `autoApproveManualReview` 目前仅作为应用侧 feature flag，后续应与组织审批系统（RBAC/工单）对接。
+  - governance event store 目前为抽象与内存/bridge 实现，仍需落地外部审计库与 retention 策略。
+- 下一阶段计划（Phase N 候选）：
+  - 将审批 ticket 与事件轨迹写入统一审计数据模型（支持 runId/candidateId 交叉检索）。
+  - 补齐 manual approval 的 reject/deprecate 分支端到端测试，并增加审批 SLA 监控指标。
+- 变更原因：承接 Phase L 的“人工审批流 + feature flag 联动策略”遗留计划，补齐治理追踪最小闭环。
+- 影响范围：治理协议层、实验决策执行层、finance 接入编排与测试基线。
+
+### Phase M.1 补充（基于代码评审回合）
+
+- 修正 `manual_review` 审批状态语义：
+  - 仅当决策为 `manual_review` 时标记 `approval_status=pending`；
+  - `hold/rollback/promote` 不再误标 pending。
+- 修正审批触发条件：
+  - 即使 policy 未强制人工审批，只要决策进入 `manual_review`（如 risk note 触发）也会创建审批 ticket。
+- 增加审批 API 防御性校验：
+  - 无 ticket、candidate 与 audit 不匹配、非 `manual_review` 决策时会拒绝审批调用。
+- 新增回归测试：
+  - `manual_review`（risk note 触发）仍可创建审批 ticket。
+  - `approvePromotion` 非法输入拒绝路径。

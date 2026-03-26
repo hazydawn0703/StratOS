@@ -1,5 +1,6 @@
 import type { DatabaseAdapter } from './DatabaseAdapter.js';
 import { SQLiteDatabaseAdapter } from './SQLiteDatabaseAdapter.js';
+import type { RuntimeGovernanceEvent } from '@stratos/shared-types';
 
 export type StrategyLifecycleState =
   | 'candidate'
@@ -20,9 +21,19 @@ export interface StrategyLifecycleStore {
   get(candidateId: string): Promise<StrategyLifecycleSnapshot | undefined>;
 }
 
+export interface GovernanceEventStore {
+  append(event: RuntimeGovernanceEvent): Promise<void>;
+  listByCandidate(candidateId: string): Promise<RuntimeGovernanceEvent[]>;
+}
+
 export interface StrategyLifecyclePersistenceDriver {
   save(snapshot: StrategyLifecycleSnapshot): Promise<void>;
   get(candidateId: string): Promise<StrategyLifecycleSnapshot | undefined>;
+}
+
+export interface GovernanceEventPersistenceDriver {
+  append(event: RuntimeGovernanceEvent): Promise<void>;
+  listByCandidate(candidateId: string): Promise<RuntimeGovernanceEvent[]>;
 }
 
 export class InMemoryStrategyLifecycleStore implements StrategyLifecycleStore {
@@ -34,6 +45,18 @@ export class InMemoryStrategyLifecycleStore implements StrategyLifecycleStore {
 
   async get(candidateId: string): Promise<StrategyLifecycleSnapshot | undefined> {
     return this.data.get(candidateId);
+  }
+}
+
+export class InMemoryGovernanceEventStore implements GovernanceEventStore {
+  private readonly events: RuntimeGovernanceEvent[] = [];
+
+  async append(event: RuntimeGovernanceEvent): Promise<void> {
+    this.events.push(event);
+  }
+
+  async listByCandidate(candidateId: string): Promise<RuntimeGovernanceEvent[]> {
+    return this.events.filter((event) => event.candidate_id === candidateId);
   }
 }
 
@@ -67,6 +90,36 @@ export class DatabaseStrategyLifecycleStore implements StrategyLifecycleStore {
         return;
       }
       result = this.cache.get(candidateId);
+    });
+    return result;
+  }
+}
+
+export class DatabaseGovernanceEventStore implements GovernanceEventStore {
+  private readonly cache: RuntimeGovernanceEvent[] = [];
+
+  constructor(
+    private readonly database: DatabaseAdapter = new SQLiteDatabaseAdapter(),
+    private readonly driver?: GovernanceEventPersistenceDriver
+  ) {}
+
+  async append(event: RuntimeGovernanceEvent): Promise<void> {
+    await this.database.transaction(async () => {
+      if (this.driver) {
+        await this.driver.append(event);
+      }
+      this.cache.push(event);
+    });
+  }
+
+  async listByCandidate(candidateId: string): Promise<RuntimeGovernanceEvent[]> {
+    let result: RuntimeGovernanceEvent[] = [];
+    await this.database.transaction(async () => {
+      if (this.driver) {
+        result = await this.driver.listByCandidate(candidateId);
+        return;
+      }
+      result = this.cache.filter((event) => event.candidate_id === candidateId);
     });
     return result;
   }
