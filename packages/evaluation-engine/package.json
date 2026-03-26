@@ -5,7 +5,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b --pretty false",
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
   },
   "name": "@stratos/evaluation-engine",
   "dependencies": {
@@ -13,5 +15,11 @@
     "@stratos/core": "workspace:*",
     "@stratos/strategy-compiler": "workspace:*",
     "@stratos/rule-engine": "workspace:*"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   }
 }

@@ -5,7 +5,15 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b --pretty false",
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
   },
-  "name": "@stratos/shared-types"
+  "name": "@stratos/shared-types",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  }
 }

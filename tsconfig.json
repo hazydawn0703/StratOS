@@ -1,0 +1,41 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "apps/finance"
+    },
+    {
+      "path": "packages/bias-monitor"
+    },
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/evaluation-engine"
+    },
+    {
+      "path": "packages/experiment-engine"
+    },
+    {
+      "path": "packages/infrastructure"
+    },
+    {
+      "path": "packages/model-gateway"
+    },
+    {
+      "path": "packages/rule-engine"
+    },
+    {
+      "path": "packages/shared-types"
+    },
+    {
+      "path": "packages/strategy-compiler"
+    },
+    {
+      "path": "packages/stu-registry"
+    },
+    {
+      "path": "packages/ui"
+    }
+  ]
+}
