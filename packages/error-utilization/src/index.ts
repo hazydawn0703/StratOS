@@ -1,31 +1,9 @@
+import type { ErrorPatternProtocol, STUCandidate } from '@stratos/shared-types';
+export type { STUCandidate } from '@stratos/shared-types';
 import type { StructuredReview } from '@stratos/review-engine';
 
-export type ErrorPatternState =
-  | 'observed'
-  | 'clustered'
-  | 'named'
-  | 'validated'
-  | 'promoted_to_stu_candidate';
-
-export interface ErrorPattern {
-  pattern_id: string;
-  lifecycle_state: ErrorPatternState;
-  name: string;
-  review_ids: string[];
-  evidence_refs: string[];
-  count: number;
-}
-
-export interface STUCandidate {
-  candidate_id: string;
-  source_error_pattern_id: string;
-  review_refs: string[];
-  evidence_refs: string[];
-  scope_note: string;
-  strategy_summary: string;
-  schema_version: '1.0';
-  created_at: string;
-}
+export type ErrorPatternState = ErrorPatternProtocol['lifecycle_state'];
+export type ErrorPattern = ErrorPatternProtocol;
 
 export class ErrorUtilizationEngine {
   aggregate(reviews: StructuredReview[]): ErrorPattern[] {

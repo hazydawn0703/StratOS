@@ -1,3 +1,4 @@
+import type { EvaluationInput, EvaluationResult as PromotionEvaluationResult } from '@stratos/shared-types';
 import type {
   CandidateEvaluationInput,
   CandidateEvaluationSummary,
@@ -35,6 +36,26 @@ export class EvaluationEngine {
     };
   }
 
+  buildEvaluationInput(input: {
+    candidateId: string;
+    baselineId: string;
+    gateStatus: EvaluationInput['gate_status'];
+    biasReasons: string[];
+    supportCount: number;
+    candidateScore: number;
+    baselineScore: number;
+  }): EvaluationInput {
+    return {
+      candidate_id: input.candidateId,
+      baseline_id: input.baselineId,
+      gate_status: input.gateStatus,
+      bias_reasons: input.biasReasons,
+      support_count: input.supportCount,
+      candidate_score: input.candidateScore,
+      baseline_score: input.baselineScore
+    };
+  }
+
   evaluateCandidateAgainstBaseline(input: CandidateEvaluationInput): CandidateEvaluationSummary {
     const delta = input.candidateScore - input.baselineScore;
     const recommendation = delta > 0 && input.supportCount > 0 ? 'promote' : 'hold';
@@ -47,6 +68,42 @@ export class EvaluationEngine {
         recommendation === 'promote'
           ? 'candidate outperformed baseline with supporting review evidence'
           : 'insufficient candidate advantage or support evidence'
+    };
+  }
+
+  evaluateFromInput(input: EvaluationInput): CandidateEvaluationSummary {
+    return this.evaluateCandidateAgainstBaseline({
+      candidateId: input.candidate_id,
+      baselineId: input.baseline_id,
+      candidateScore: input.candidate_score,
+      baselineScore: input.baseline_score,
+      supportCount: input.support_count
+    });
+  }
+
+  evaluateForPromotion(input: {
+    candidateId: string;
+    candidateVersion: string;
+    baselineId: string;
+    baselineVersion?: string;
+    metricDeltas: Record<string, number>;
+    riskNotes: string[];
+    sampleFailures: string[];
+  }): PromotionEvaluationResult {
+    if (!input.baselineVersion) {
+      throw new Error('baseline_version is required for promotion evaluation');
+    }
+
+    const scoreDelta = Object.values(input.metricDeltas).reduce((sum, item) => sum + item, 0);
+    return {
+      candidate_id: input.candidateId,
+      candidate_version: input.candidateVersion,
+      baseline_id: input.baselineId,
+      baseline_version: input.baselineVersion,
+      metric_deltas: input.metricDeltas,
+      risk_notes: input.riskNotes,
+      sample_failures: input.sampleFailures,
+      recommendation: scoreDelta > 0 && input.sampleFailures.length === 0 ? 'promote' : 'hold'
     };
   }
 }

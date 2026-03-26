@@ -20,6 +20,18 @@ export interface ReplayDiff {
   payloadKeyDiff: string[];
 }
 
+export interface PromotionReplayFixture {
+  candidate_id: string;
+  source_error_pattern_id: string;
+  baseline_version: string;
+  candidate_version: string;
+  experiment_mode: string;
+  experiment_bucket: string;
+  promotion_action: string;
+  decision_reasons: string[];
+  active_stu_version?: string;
+}
+
 export class ReplayAuditEngine {
   replay(fixture: ReplayFixture): ReplayResult {
     const stages = fixture.events.map((event) => event.stage);
@@ -44,5 +56,21 @@ export class ReplayAuditEngine {
     );
 
     return { stageDiff, payloadKeyDiff };
+  }
+
+  explainPromotionChange(fixture: PromotionReplayFixture): string {
+    const activeInfo = fixture.active_stu_version
+      ? `active:${fixture.active_stu_version}`
+      : 'active:not_promoted';
+    return [
+      `candidate:${fixture.candidate_id}`,
+      `pattern:${fixture.source_error_pattern_id}`,
+      `baseline:${fixture.baseline_version}`,
+      `candidate_version:${fixture.candidate_version}`,
+      `experiment:${fixture.experiment_mode}/${fixture.experiment_bucket}`,
+      `decision:${fixture.promotion_action}`,
+      activeInfo,
+      `reasons:${fixture.decision_reasons.join('|')}`
+    ].join(';');
   }
 }

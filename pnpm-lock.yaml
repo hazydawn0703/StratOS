@@ -78,6 +78,9 @@ importers:
       '@stratos/review-engine':
         specifier: workspace:*
         version: link:../review-engine
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
 
   packages/evaluation-engine:
     dependencies:

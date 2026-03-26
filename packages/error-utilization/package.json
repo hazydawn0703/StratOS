@@ -18,6 +18,7 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@stratos/review-engine": "workspace:*"
+    "@stratos/review-engine": "workspace:*",
+    "@stratos/shared-types": "workspace:*"
   }
 }

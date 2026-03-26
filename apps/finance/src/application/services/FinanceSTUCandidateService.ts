@@ -4,6 +4,7 @@ import { ErrorUtilizationEngine, type STUCandidate } from '@stratos/error-utiliz
 import { EvaluationEngine } from '@stratos/evaluation-engine';
 import { ExperimentEngine } from '@stratos/experiment-engine';
 import { ReviewEngine, type OutcomeRecord } from '@stratos/review-engine';
+import type { ExperimentCandidate } from '@stratos/shared-types';
 
 export interface FinanceSTUInput {
   artifactId: string;
@@ -16,11 +17,7 @@ export interface FinanceSTUResult {
   candidate: STUCandidate;
   gateStatus: 'needs_bias_review' | 'ready_for_evaluation';
   evaluationRecommendation: 'promote' | 'hold';
-  experimentCandidate: {
-    candidate_id: string;
-    gate_status: 'needs_bias_review' | 'ready_for_evaluation';
-    evaluation_recommendation: 'promote' | 'hold';
-  };
+  experimentCandidate: ExperimentCandidate;
 }
 
 export class FinanceSTUCandidateService {
@@ -64,13 +61,17 @@ export class FinanceSTUCandidateService {
     });
 
     const gate = this.biasMonitor.gateCandidate(promoted.candidate.candidate_id, biasSnapshot);
-    const evaluation = this.evaluationEngine.evaluateCandidateAgainstBaseline({
+    const evaluationInput = this.evaluationEngine.buildEvaluationInput({
       candidateId: promoted.candidate.candidate_id,
       baselineId: 'baseline-default',
+      gateStatus: gate.gate_status,
+      biasReasons: gate.bias_reasons,
+      supportCount: promoted.candidate.review_refs.length,
       candidateScore: gate.gate_status === 'ready_for_evaluation' ? 0.7 : 0.4,
-      baselineScore: 0.5,
-      supportCount: promoted.candidate.review_refs.length
+      baselineScore: 0.5
     });
+
+    const evaluation = this.evaluationEngine.evaluateFromInput(evaluationInput);
 
     await this.experimentEngine.registerCandidate(promoted.candidate.candidate_id);
     await this.experimentEngine.markCandidateEvaluated(promoted.candidate.candidate_id, evaluation.rationale);
@@ -79,11 +80,10 @@ export class FinanceSTUCandidateService {
       candidate: promoted.candidate,
       gateStatus: gate.gate_status,
       evaluationRecommendation: evaluation.recommendation,
-      experimentCandidate: {
-        candidate_id: promoted.candidate.candidate_id,
-        gate_status: gate.gate_status,
-        evaluation_recommendation: evaluation.recommendation
-      }
+      experimentCandidate: this.experimentEngine.createExperimentCandidate(evaluationInput, {
+        recommendation: evaluation.recommendation,
+        delta: evaluation.delta
+      })
     };
   }
 }

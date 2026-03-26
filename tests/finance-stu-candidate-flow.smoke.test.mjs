@@ -19,4 +19,5 @@ test('finance STU candidate minimal loop: Claim->Review->ErrorPattern->STUCandid
 
   assert.ok(result.candidate.candidate_id.startsWith('stu-candidate-'));
   assert.ok(['needs_bias_review', 'ready_for_evaluation'].includes(result.gateStatus));
+  assert.equal(typeof result.experimentCandidate.evaluation_delta, 'number');
 });

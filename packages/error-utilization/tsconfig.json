@@ -9,7 +9,18 @@
     "incremental": true,
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
-  "include": ["src"],
-  "references": [{ "path": "../review-engine" }],
-  "exclude": ["src/**/__tests__/**"]
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../review-engine"
+    },
+    {
+      "path": "../shared-types"
+    }
+  ],
+  "exclude": [
+    "src/**/__tests__/**"
+  ]
 }
