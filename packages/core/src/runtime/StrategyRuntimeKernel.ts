@@ -11,6 +11,10 @@ export interface STURegistryLike {
 export interface CompiledStrategyLike {
   promptLayer: string[];
   ruleLayer: Rule[];
+  routingLayer?: {
+    providers?: string[];
+    hints?: string[];
+  };
 }
 
 export interface StrategyCompilerLike<TStrategy extends CompiledStrategyLike = CompiledStrategyLike> {
@@ -70,6 +74,15 @@ export interface RuntimeKernelResult<
   postLogs: TLog[];
 }
 
+
+export interface StrategyExecutionContext<TStrategy extends CompiledStrategyLike = CompiledStrategyLike> {
+  taskContext: TaskContext;
+  strategy: TStrategy;
+  promptLayer: string[];
+  ruleLayer: Rule[];
+  routingLayer?: TStrategy['routingLayer'];
+}
+
 /**
  * Cross-domain strategy runtime orchestration kernel.
  * App layers should provide domain-specific inputs/adapters but not re-implement this chain.
@@ -91,23 +104,36 @@ export class StrategyRuntimeKernel<
     }
   ) {}
 
-  async run(input: RuntimeKernelInput): Promise<RuntimeKernelResult<TStrategy, TEffects, TLog>> {
+  createExecutionContext(input: RuntimeKernelInput): StrategyExecutionContext<TStrategy> {
     const context = this.taskRuntime.createTaskContext(input);
     const activeStus = this.stuRegistry.getActive(context);
     const strategy = this.strategyCompiler.compile(activeStus, context);
 
-    const pre = this.ruleEngine.runPreGeneration(strategy.ruleLayer, context);
-    const modelResponse = await this.modelGateway.generateText(strategy.promptLayer.join('\n'), {
-      taskType: context.taskType,
+    return {
+      taskContext: context,
+      strategy,
+      promptLayer: strategy.promptLayer,
+      ruleLayer: strategy.ruleLayer,
+      routingLayer: strategy.routingLayer
+    };
+  }
+
+  async run(input: RuntimeKernelInput): Promise<RuntimeKernelResult<TStrategy, TEffects, TLog>> {
+    const execution = this.createExecutionContext(input);
+
+    const pre = this.ruleEngine.runPreGeneration(execution.ruleLayer, execution.taskContext);
+    const modelResponse = await this.modelGateway.generateText(execution.promptLayer.join('\n'), {
+      taskType: execution.taskContext.taskType,
       modelLayer: this.defaultRoute.modelLayer ?? 'default',
-      preferredProvider: this.defaultRoute.preferredProvider,
+      preferredProvider:
+        this.defaultRoute.preferredProvider ?? execution.routingLayer?.providers?.[0],
       fallbackProvider: this.defaultRoute.fallbackProvider
     });
-    const post = this.ruleEngine.runPostGeneration(strategy.ruleLayer, modelResponse, context);
+    const post = this.ruleEngine.runPostGeneration(execution.ruleLayer, modelResponse, execution.taskContext);
 
     return {
-      context,
-      strategy,
+      context: execution.taskContext,
+      strategy: execution.strategy,
       preEffects: pre.effects,
       preLogs: pre.logs,
       modelResponse,

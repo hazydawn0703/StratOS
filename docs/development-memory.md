@@ -95,3 +95,32 @@
   - 为 Prompt/Rule/Routing 三层增加更明确的编排输入契约。
 - 变更原因：在不改外部行为前提下，先降低类型与实现重复带来的维护风险。
 - 影响范围：app service 兼容入口与 runtime 泛型约束，无外部 API 变更。
+
+## 2026-03-26 Phase E — Lifecycle Guard & Prompt/Rule/Routing Contract
+
+- 当前阶段名称：Phase E / Runtime Governance Continuation
+- 完成内容：
+  - 在 `@stratos/experiment-engine` 增加 `StrategyLifecycleGuard`，显式限制候选策略状态流转：
+    `candidate -> evaluated -> experimenting -> active/rolled_back`。
+  - 在 `ExperimentEngine` 中接入 guard，并新增受控 API：
+    `registerCandidate`、`markCandidateEvaluated`、`startExperimentGuarded`；
+    同时保留 `startExperiment` 作为兼容桥接入口。
+  - 在 `@stratos/strategy-compiler` 增加 `StrategyExecutionContract`，明确 Prompt/Rule/Routing 三层的统一执行输入契约。
+  - 在 `@stratos/core` `StrategyRuntimeKernel` 增加 `createExecutionContext`，并将 routing provider 与 runtime route 选择串联，减少 routing layer 被忽略的风险。
+- 修改文件：
+  - `packages/experiment-engine/src/lifecycle/StrategyLifecycleGuard.ts`
+  - `packages/experiment-engine/src/ExperimentEngine.ts`
+  - `packages/experiment-engine/src/index.ts`
+  - `packages/strategy-compiler/src/execution/StrategyExecutionContract.ts`
+  - `packages/strategy-compiler/src/index.ts`
+  - `packages/core/src/runtime/StrategyRuntimeKernel.ts`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：待 typecheck 验证（环境无法拉取 pnpm 依赖）。
+- 当前遗留风险：
+  - lifecycle guard 当前为内存实现，尚未落盘持久化。
+  - legacy `startExperiment` 仍做自动评估桥接，后续需逐步下线。
+- 下一阶段计划：
+  - 引入 infrastructure 层存储接口以持久化 lifecycle snapshot。
+  - 在 app 层显式改造调用链到 guarded API（去除 legacy shortcut）。
+- 变更原因：落实“candidate 不可直接上线”和“Prompt/Rule/Routing 三层统一执行上下文”要求。
+- 影响范围：实验生命周期与 runtime 合约，兼容路径保留。
