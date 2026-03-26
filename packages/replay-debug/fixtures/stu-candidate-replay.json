@@ -1,0 +1,29 @@
+{
+  "runId": "stu-candidate-run-1",
+  "events": [
+    {
+      "at": "2026-03-26T01:00:00.000Z",
+      "stage": "candidate_generated",
+      "payload": {
+        "candidate_id": "stu-candidate-pattern-1",
+        "source_error_pattern_id": "pattern-1"
+      }
+    },
+    {
+      "at": "2026-03-26T01:00:01.000Z",
+      "stage": "bias_snapshot_attached",
+      "payload": {
+        "snapshot_id": "bias-snapshot-1",
+        "evidence_refs": ["review-1"]
+      }
+    },
+    {
+      "at": "2026-03-26T01:00:02.000Z",
+      "stage": "experiment_gate",
+      "payload": {
+        "gate_status": "ready_for_evaluation",
+        "reason": "no_significant_bias_risk"
+      }
+    }
+  ]
+}

@@ -309,3 +309,47 @@
   - 视基础设施资源决定是否扩展 remote DB 生产级 adapter。
 - 变更原因：在不偏离框架边界的前提下，把治理闭环升级为可运行的自我训练骨架。
 - 影响范围：核心协议层、finance 最小闭环、回放/路由解释能力、基础设施验真。
+
+## 2026-03-26 Phase K — STU Candidate Formation & Bias/Evaluation Coupling
+
+- 当前阶段名称：Phase K / STU Candidate Formation & Bias-Eval Coupling
+- 完成内容：
+  - 打通 `ErrorPattern -> STUCandidate -> evaluation/experiment input` 最小闭环：
+    - `@stratos/error-utilization` 扩展生命周期到 `validated`、`promoted_to_stu_candidate`。
+    - 增加 `STUCandidate` 协议与生成入口（稳定 schema、唯一 candidate_id、error pattern 来源、review/evidence refs、scope note、strategy summary）。
+  - 增强 `@stratos/bias-monitor`：
+    - 增加行为信号/结果信号聚合（confidence/rejection/riskHint/claimTilt + reviewPass/errorDirection/severeError/rollback）。
+    - 增加 bias alert 与 candidate gate 协议，支持 `needs_bias_review` 标记。
+  - finance 侧新增 `FinanceSTUCandidateService`，形成最小链路：
+    `Claim -> Review -> ErrorPattern -> STUCandidate -> EvaluationInput -> ExperimentCandidate`。
+  - replay/audit 深化：
+    - 增加 STUCandidate replay fixture（pattern 来源、bias snapshot refs、gate 结论）。
+    - replay-debug 维持可回放与差异解释能力。
+  - 公共导出边界：
+    - 新增协议继续通过 root public API 导出；internal 维持私有边界。
+- 修改文件：
+  - `packages/error-utilization/src/index.ts`
+  - `packages/bias-monitor/src/*`
+  - `apps/finance/src/application/services/FinanceSTUCandidateService.ts`
+  - `apps/finance/src/application/index.ts`
+  - `apps/finance/src/application/phase7/index.ts`
+  - `packages/replay-debug/fixtures/stu-candidate-replay.json`
+  - `tests/bias-monitor-gate.test.mjs`
+  - `tests/finance-stu-candidate-flow.smoke.test.mjs`
+  - `tests/stu-candidate-replay-fixture.test.mjs`
+  - `docs/core-loop-protocols.md`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：
+  - `pnpm install --frozen-lockfile` ✅
+  - `pnpm clean` ✅
+  - `pnpm build` ✅
+  - `pnpm typecheck` ✅
+  - `pnpm test` ✅
+- 当前遗留风险：
+  - STUCandidate 自动激活仍被显式禁用，后续需在更严格 gate 下推进。
+  - Bias 规则阈值当前为最小策略，后续需结合真实数据校准。
+- 下一阶段计划（Phase L 候选）：
+  - 将 STUCandidate 输出接入更完整 experiment promotion 评分模型。
+  - 补齐 bias-monitor 与 replay/audit 跨周期窗口回溯分析。
+- 变更原因：落实 Phase K 要求，将错误利用、偏差检查、候选形成耦合为可运行骨架。
+- 影响范围：核心框架协议、finance 编排 facade、回放审计与测试矩阵。

@@ -4,3 +4,4 @@ export * from './services/FinanceTaskService.js';
 export * from './services/mockDemo.js';
 export * from './services/FinanceStrategyLifecycleService.js';
 export * from './services/FinanceCoreLoopService.js';
+export * from './services/FinanceSTUCandidateService.js';
