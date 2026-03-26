@@ -17,7 +17,13 @@
       "path": "../../packages/bias-monitor"
     },
     {
+      "path": "../../packages/claim-extractor"
+    },
+    {
       "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/error-utilization"
     },
     {
       "path": "../../packages/evaluation-engine"
@@ -27,6 +33,15 @@
     },
     {
       "path": "../../packages/model-gateway"
+    },
+    {
+      "path": "../../packages/model-router"
+    },
+    {
+      "path": "../../packages/replay-debug"
+    },
+    {
+      "path": "../../packages/review-engine"
     },
     {
       "path": "../../packages/rule-engine"

@@ -19,6 +19,11 @@ export interface StrategyLifecycleStore {
   get(candidateId: string): Promise<StrategyLifecycleSnapshot | undefined>;
 }
 
+export interface StrategyLifecyclePersistenceDriver {
+  save(snapshot: StrategyLifecycleSnapshot): Promise<void>;
+  get(candidateId: string): Promise<StrategyLifecycleSnapshot | undefined>;
+}
+
 export class InMemoryStrategyLifecycleStore implements StrategyLifecycleStore {
   private readonly data = new Map<string, StrategyLifecycleSnapshot>();
 
@@ -33,16 +38,22 @@ export class InMemoryStrategyLifecycleStore implements StrategyLifecycleStore {
 
 /**
  * Database-backed lifecycle store facade.
- * Current implementation uses transaction boundaries and an internal cache as a bridge,
- * so workflow code can migrate to async persistence contract without waiting for a concrete DB driver.
+ * It can use a concrete persistence driver (e.g. sqlite/remote), while keeping
+ * transaction orchestration and governance contracts inside the framework layer.
  */
 export class DatabaseStrategyLifecycleStore implements StrategyLifecycleStore {
   private readonly cache = new Map<string, StrategyLifecycleSnapshot>();
 
-  constructor(private readonly database: DatabaseAdapter = new SQLiteDatabaseAdapter()) {}
+  constructor(
+    private readonly database: DatabaseAdapter = new SQLiteDatabaseAdapter(),
+    private readonly driver?: StrategyLifecyclePersistenceDriver
+  ) {}
 
   async save(snapshot: StrategyLifecycleSnapshot): Promise<void> {
     await this.database.transaction(async () => {
+      if (this.driver) {
+        await this.driver.save(snapshot);
+      }
       this.cache.set(snapshot.candidateId, snapshot);
     });
   }
@@ -50,6 +61,10 @@ export class DatabaseStrategyLifecycleStore implements StrategyLifecycleStore {
   async get(candidateId: string): Promise<StrategyLifecycleSnapshot | undefined> {
     let result: StrategyLifecycleSnapshot | undefined;
     await this.database.transaction(async () => {
+      if (this.driver) {
+        result = await this.driver.get(candidateId);
+        return;
+      }
       result = this.cache.get(candidateId);
     });
     return result;

@@ -10,6 +10,9 @@ Date: 2026-03-26
 
 | Package | Public export | Private export policy |
 |---|---|---|
+| `@stratos/claim-extractor` | `.` -> `dist/index.*` | `./internal/*` blocked (`null`) |
+| `@stratos/review-engine` | `.` -> `dist/index.*` | `./internal/*` blocked (`null`) |
+| `@stratos/error-utilization` | `.` -> `dist/index.*` | `./internal/*` blocked (`null`) |
 | `@stratos/model-router` | `.` -> `dist/index.*` | `./internal/*` blocked (`null`) |
 | `@stratos/replay-debug` | `.` -> `dist/index.*` | `./internal/*` blocked (`null`) |
 

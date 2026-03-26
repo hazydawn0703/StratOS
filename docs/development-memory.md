@@ -260,3 +260,52 @@
   - 扩展 replay-debug 到跨 runId 的差异回放与审计比对。
 - 变更原因：完成 Phase I 对“持久化、治理测试、回放验证、公共 API 边界”的交付要求。
 - 影响范围：基础设施 adapter、模型路由治理、回放审计、公共导出治理。
+
+## 2026-03-26 Phase J — Core Loop Deepening with Infra Validation Side Track
+
+- 当前阶段名称：Phase J / Core Loop Deepening with Infra Validation Side Track
+- 完成内容：
+  - 主线：补齐最小核心闭环骨架 `Artifact -> Claim -> Outcome -> Review -> ErrorPattern -> Evaluation -> Experiment`。
+    - 新增 `@stratos/claim-extractor`：实现 StrategyClaim 最小提取协议（happy/failure path、稳定 schema、唯一 claim_id）。
+    - 新增 `@stratos/review-engine`：实现结构化 Review 输出最小字段集。
+    - 新增 `@stratos/error-utilization`：实现 ErrorPattern 聚合与生命周期 `observed -> clustered -> named`。
+    - 增强 `@stratos/evaluation-engine`：增加 candidate/baseline 最小离线评估协议与晋升建议骨架。
+    - 在 finance 侧新增 `FinanceCoreLoopService`，形成单应用可运行最小闭环。
+  - replay/router 深化：
+    - `@stratos/replay-debug` 增加 diff 能力（stage / payload key 差异）。
+    - `@stratos/model-router` 增加 route metadata（deny/fallback/policyApplied）。
+  - 支线（Infra validation）：
+    - `DatabaseStrategyLifecycleStore` 增加可注入 persistence driver。
+    - 新增 SQLite 真实存储 smoke test（sqlite3 CLI 驱动）验证 persistence/读取路径可成立。
+  - 公共导出边界：
+    - 新增包统一 root public API，`./internal/*` 显式私有。
+    - 文档化 public/private exports 策略。
+- 修改文件：
+  - `packages/claim-extractor/*`
+  - `packages/review-engine/*`
+  - `packages/error-utilization/*`
+  - `packages/evaluation-engine/src/*`
+  - `packages/model-router/src/index.ts`
+  - `packages/replay-debug/src/index.ts`
+  - `packages/replay-debug/fixtures/minimal-replay.json`
+  - `packages/infrastructure/src/database/StrategyLifecycleStore.ts`
+  - `apps/finance/src/application/services/FinanceCoreLoopService.ts`
+  - `tests/*.test.mjs`, `tests/*.smoke.test.mjs`
+  - `docs/core-loop-protocols.md`
+  - `docs/public-api-exports.md`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：
+  - `pnpm install --frozen-lockfile` ✅
+  - `pnpm clean` ✅
+  - `pnpm build` ✅
+  - `pnpm typecheck` ✅
+  - `pnpm test` ✅
+- 当前遗留风险：
+  - SQLite 真实验真当前通过 CLI driver PoC 证明可接入，生产 driver/迁移体系仍需基础设施团队后续补齐。
+  - ErrorPattern -> STU candidate 自动生成仍未在本阶段完成（按非目标保留）。
+- 下一阶段计划（Phase K 候选）：
+  - 接入 bias-monitor 与 evaluation/experiment 耦合检查。
+  - 推进 ErrorPattern 到 STU candidate 形成与候选晋升闭环。
+  - 视基础设施资源决定是否扩展 remote DB 生产级 adapter。
+- 变更原因：在不偏离框架边界的前提下，把治理闭环升级为可运行的自我训练骨架。
+- 影响范围：核心协议层、finance 最小闭环、回放/路由解释能力、基础设施验真。

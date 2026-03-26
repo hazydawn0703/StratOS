@@ -13,9 +13,15 @@ importers:
       '@stratos/bias-monitor':
         specifier: workspace:*
         version: link:../../packages/bias-monitor
+      '@stratos/claim-extractor':
+        specifier: workspace:*
+        version: link:../../packages/claim-extractor
       '@stratos/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@stratos/error-utilization':
+        specifier: workspace:*
+        version: link:../../packages/error-utilization
       '@stratos/evaluation-engine':
         specifier: workspace:*
         version: link:../../packages/evaluation-engine
@@ -25,6 +31,15 @@ importers:
       '@stratos/model-gateway':
         specifier: workspace:*
         version: link:../../packages/model-gateway
+      '@stratos/model-router':
+        specifier: workspace:*
+        version: link:../../packages/model-router
+      '@stratos/replay-debug':
+        specifier: workspace:*
+        version: link:../../packages/replay-debug
+      '@stratos/review-engine':
+        specifier: workspace:*
+        version: link:../../packages/review-engine
       '@stratos/rule-engine':
         specifier: workspace:*
         version: link:../../packages/rule-engine
@@ -50,11 +65,19 @@ importers:
         specifier: workspace:*
         version: link:../shared-types
 
+  packages/claim-extractor: {}
+
   packages/core:
     dependencies:
       '@stratos/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+
+  packages/error-utilization:
+    dependencies:
+      '@stratos/review-engine':
+        specifier: workspace:*
+        version: link:../review-engine
 
   packages/evaluation-engine:
     dependencies:
@@ -112,6 +135,12 @@ importers:
       '@stratos/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+
+  packages/review-engine:
+    dependencies:
+      '@stratos/claim-extractor':
+        specifier: workspace:*
+        version: link:../claim-extractor
 
   packages/rule-engine:
     dependencies:

@@ -13,6 +13,6 @@ test('replay/audit fixture is replayable (not only compilable)', async () => {
   const result = engine.replay(fixture);
 
   assert.equal(result.replayable, true);
-  assert.equal(result.eventCount, 2);
-  assert.deepEqual(result.stages, ['strategy_compilation', 'model_generation']);
+  assert.equal(result.eventCount, 4);
+  assert.deepEqual(result.stages, ['strategy_compilation', 'router_decision', 'review_result', 'lifecycle_state']);
 });
