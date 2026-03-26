@@ -228,3 +228,35 @@
   - 增加 model-router 与 replay-debug 的治理链路测试覆盖。
 - 变更原因：完成治理链路闭环并把质量门禁固化到 CI merge gate。
 - 影响范围：实验治理路径、finance 受控流程、测试与 CI。
+
+## 2026-03-26 Phase I — Adapter Concretization, Replay Governance & Public API Clarification
+
+- 当前阶段名称：Phase I / Governance Extension
+- 完成内容：
+  - lifecycle persistence bridge 落地为可替换 adapter 组合：
+    - `SQLiteDatabaseAdapter`
+    - `RemoteDatabaseAdapter`
+    - `DatabaseStrategyLifecycleStore` 默认走 SQLite adapter 路径
+  - 为 model-router 增加最小治理链路能力与测试（policy deny -> fallback）。
+  - 新增 replay-debug 包并补 replay/audit 最小 fixture，验证“可回放而非只可编译”。
+  - 明确公共导出策略：新增 `docs/public-api-exports.md`，并在新包 `package.json` 中把 `./internal/*` 显式置为私有。
+- 修改文件：
+  - `packages/infrastructure/src/database/SQLiteDatabaseAdapter.ts`
+  - `packages/infrastructure/src/database/RemoteDatabaseAdapter.ts`
+  - `packages/infrastructure/src/database/StrategyLifecycleStore.ts`
+  - `packages/infrastructure/src/index.ts`
+  - `packages/model-router/*`
+  - `packages/replay-debug/*`
+  - `tests/model-router-governance.test.mjs`
+  - `tests/replay-debug-fixture.test.mjs`
+  - `docs/public-api-exports.md`
+  - `docs/development-memory.md`
+  - `tsconfig.json`
+- 当前系统是否可运行：`pnpm install --frozen-lockfile && pnpm clean && pnpm build && pnpm typecheck && pnpm test` 通过。
+- 当前遗留风险：
+  - SQLite/Remote adapter 当前为协议层实现，真实生产 driver 接入仍需基础设施团队按环境落库。
+- 下一阶段计划：
+  - 将 SQLite adapter 接入真实 driver（或 managed sqlite service）并增加失败注入测试。
+  - 扩展 replay-debug 到跨 runId 的差异回放与审计比对。
+- 变更原因：完成 Phase I 对“持久化、治理测试、回放验证、公共 API 边界”的交付要求。
+- 影响范围：基础设施 adapter、模型路由治理、回放审计、公共导出治理。

@@ -1,4 +1,5 @@
-import { MockDatabaseAdapter, type DatabaseAdapter } from './DatabaseAdapter.js';
+import type { DatabaseAdapter } from './DatabaseAdapter.js';
+import { SQLiteDatabaseAdapter } from './SQLiteDatabaseAdapter.js';
 
 export type StrategyLifecycleState =
   | 'candidate'
@@ -38,7 +39,7 @@ export class InMemoryStrategyLifecycleStore implements StrategyLifecycleStore {
 export class DatabaseStrategyLifecycleStore implements StrategyLifecycleStore {
   private readonly cache = new Map<string, StrategyLifecycleSnapshot>();
 
-  constructor(private readonly database: DatabaseAdapter = new MockDatabaseAdapter()) {}
+  constructor(private readonly database: DatabaseAdapter = new SQLiteDatabaseAdapter()) {}
 
   async save(snapshot: StrategyLifecycleSnapshot): Promise<void> {
     await this.database.transaction(async () => {

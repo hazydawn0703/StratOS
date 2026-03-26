@@ -23,6 +23,12 @@
       "path": "packages/model-gateway"
     },
     {
+      "path": "packages/model-router"
+    },
+    {
+      "path": "packages/replay-debug"
+    },
+    {
       "path": "packages/rule-engine"
     },
     {
