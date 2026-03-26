@@ -1,6 +1,8 @@
 import { MockTaskRuntime, StrategyRuntimeKernel } from '@stratos/core';
 import { ModelGateway, MockProviderAdapter } from '@stratos/model-gateway';
+import type { RuntimeEffects, RuleExecutionLog } from '@stratos/rule-engine';
 import { RuleExecutionEngine } from '@stratos/rule-engine';
+import type { CompiledStrategyBundle } from '@stratos/strategy-compiler';
 import { StrategyCompiler } from '@stratos/strategy-compiler';
 import { STURegistry } from '@stratos/stu-registry';
 import type { STU } from '@stratos/shared-types';
@@ -17,7 +19,7 @@ export class FinanceStrategyRuntime {
   private readonly ruleEngine = new RuleExecutionEngine();
   private readonly strategyCompiler = new StrategyCompiler();
   private readonly stuRegistry = new STURegistry();
-  private readonly kernel = new StrategyRuntimeKernel(
+  private readonly kernel = new StrategyRuntimeKernel<CompiledStrategyBundle, RuntimeEffects, RuleExecutionLog>(
     this.taskRuntime,
     this.stuRegistry,
     this.strategyCompiler,
@@ -29,15 +31,7 @@ export class FinanceStrategyRuntime {
     this.stuRegistry.register(stu);
   }
 
-  async run(input: FinanceTaskInput): Promise<FinanceTaskResult> {
-    const result = await this.kernel.run(input);
-    return {
-      ...result,
-      strategy: result.strategy as FinanceTaskResult['strategy'],
-      preEffects: result.preEffects as FinanceTaskResult['preEffects'],
-      preLogs: result.preLogs as FinanceTaskResult['preLogs'],
-      postEffects: result.postEffects as FinanceTaskResult['postEffects'],
-      postLogs: result.postLogs as FinanceTaskResult['postLogs']
-    };
+  run(input: FinanceTaskInput): Promise<FinanceTaskResult> {
+    return this.kernel.run(input);
   }
 }

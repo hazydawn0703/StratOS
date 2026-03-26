@@ -73,3 +73,25 @@
   - 将更多 package 内部消费迁移到 neutral alias。
 - 变更原因：优先抽取框架能力并保留 finance 功能。
 - 影响范围：运行时编排入口与类型导出，外部 API 预期不变。
+
+## 2026-03-26 Phase D — Runtime Typing Hardening & App Facade De-dup
+
+- 当前阶段名称：Phase D / Refactor Implementation Continuation
+- 完成内容：
+  - 强化 `StrategyRuntimeKernel` 泛型签名，去掉 app 层类型断言依赖，保留行为不变。
+  - 为 kernel 增加可配置路由默认值入口（默认仍为 `default`/`mock`），避免硬编码扩散。
+  - 将 `FinanceTaskServiceMapped` 收敛为兼容 facade，仅代理到 `FinanceTaskService`，消除重复实现。
+- 修改文件：
+  - `packages/core/src/runtime/StrategyRuntimeKernel.ts`
+  - `apps/finance/src/composition/FinanceStrategyRuntime.ts`
+  - `apps/finance/src/application/services/FinanceTaskServiceMapped.ts`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：待 typecheck 验证（受环境拉取 pnpm 限制）。
+- 当前遗留风险：
+  - `TaskContext` finance 字段仍在 shared-types 中作为主结构；尚未完成 context facet 抽离。
+  - experiment/evaluation 生命周期守卫仍需在更高层 orchestration 明确串联。
+- 下一阶段计划：
+  - 在 packages 层补充策略候选生命周期 guard 接口（candidate→evaluation→experiment→active/rollback）。
+  - 为 Prompt/Rule/Routing 三层增加更明确的编排输入契约。
+- 变更原因：在不改外部行为前提下，先降低类型与实现重复带来的维护风险。
+- 影响范围：app service 兼容入口与 runtime 泛型约束，无外部 API 变更。
