@@ -1,15 +1,11 @@
-export type StrategyLifecycleState =
-  | 'candidate'
-  | 'evaluated'
-  | 'experimenting'
-  | 'active'
-  | 'rolled_back';
+import {
+  InMemoryStrategyLifecycleStore,
+  type StrategyLifecycleSnapshot,
+  type StrategyLifecycleState,
+  type StrategyLifecycleStore
+} from '@stratos/infrastructure';
 
-export interface StrategyLifecycleSnapshot {
-  candidateId: string;
-  state: StrategyLifecycleState;
-  history: Array<{ at: string; state: StrategyLifecycleState; note?: string }>;
-}
+export type { StrategyLifecycleState, StrategyLifecycleSnapshot, StrategyLifecycleStore };
 
 const allowedTransitions: Record<StrategyLifecycleState, StrategyLifecycleState[]> = {
   candidate: ['evaluated', 'rolled_back'],
@@ -20,7 +16,7 @@ const allowedTransitions: Record<StrategyLifecycleState, StrategyLifecycleState[
 };
 
 export class StrategyLifecycleGuard {
-  private readonly snapshots = new Map<string, StrategyLifecycleSnapshot>();
+  constructor(private readonly store: StrategyLifecycleStore = new InMemoryStrategyLifecycleStore()) {}
 
   registerCandidate(candidateId: string): StrategyLifecycleSnapshot {
     const snapshot: StrategyLifecycleSnapshot = {
@@ -28,7 +24,7 @@ export class StrategyLifecycleGuard {
       state: 'candidate',
       history: [{ at: new Date().toISOString(), state: 'candidate' }]
     };
-    this.snapshots.set(candidateId, snapshot);
+    this.store.save(snapshot);
     return snapshot;
   }
 
@@ -49,7 +45,7 @@ export class StrategyLifecycleGuard {
   }
 
   getSnapshot(candidateId: string): StrategyLifecycleSnapshot | undefined {
-    return this.snapshots.get(candidateId);
+    return this.store.get(candidateId);
   }
 
   private transition(
@@ -57,7 +53,7 @@ export class StrategyLifecycleGuard {
     nextState: StrategyLifecycleState,
     note?: string
   ): StrategyLifecycleSnapshot {
-    const current = this.snapshots.get(candidateId);
+    const current = this.store.get(candidateId);
     if (!current) {
       throw new Error(`Candidate ${candidateId} is not registered.`);
     }
@@ -74,7 +70,7 @@ export class StrategyLifecycleGuard {
       state: nextState,
       history: [...current.history, { at: new Date().toISOString(), state: nextState, note }]
     };
-    this.snapshots.set(candidateId, updated);
+    this.store.save(updated);
     return updated;
   }
 }

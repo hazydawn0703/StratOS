@@ -21,12 +21,12 @@ export interface StrategyCompilerLike<TStrategy extends CompiledStrategyLike = C
   compile(stus: STU[], taskContext: TaskContext): TStrategy;
 }
 
-export interface RuleExecutionResultLike<TEffects extends Record<string, unknown>, TLog> {
+export interface RuleExecutionResultLike<TEffects extends object, TLog> {
   effects: TEffects;
   logs: TLog[];
 }
 
-export interface RuleEngineLike<TEffects extends Record<string, unknown>, TLog> {
+export interface RuleEngineLike<TEffects extends object, TLog> {
   runPreGeneration(
     rules: Rule[],
     context: TaskContext
@@ -62,7 +62,7 @@ export interface RuntimeKernelRouteConfig {
 
 export interface RuntimeKernelResult<
   TStrategy extends CompiledStrategyLike,
-  TEffects extends Record<string, unknown>,
+  TEffects extends object,
   TLog
 > {
   context: TaskContext;
@@ -89,7 +89,7 @@ export interface StrategyExecutionContext<TStrategy extends CompiledStrategyLike
  */
 export class StrategyRuntimeKernel<
   TStrategy extends CompiledStrategyLike = CompiledStrategyLike,
-  TEffects extends Record<string, unknown> = Record<string, unknown>,
+  TEffects extends object = Record<string, unknown>,
   TLog = unknown
 > {
   constructor(

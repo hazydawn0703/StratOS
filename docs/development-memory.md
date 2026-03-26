@@ -114,6 +114,7 @@
   - `packages/strategy-compiler/src/execution/StrategyExecutionContract.ts`
   - `packages/strategy-compiler/src/index.ts`
   - `packages/core/src/runtime/StrategyRuntimeKernel.ts`
+  - `docs/monorepo-dependency-audit.md`
   - `docs/development-memory.md`
 - 当前系统是否可运行：待 typecheck 验证（环境无法拉取 pnpm 依赖）。
 - 当前遗留风险：
@@ -124,3 +125,76 @@
   - 在 app 层显式改造调用链到 guarded API（去除 legacy shortcut）。
 - 变更原因：落实“candidate 不可直接上线”和“Prompt/Rule/Routing 三层统一执行上下文”要求。
 - 影响范围：实验生命周期与 runtime 合约，兼容路径保留。
+
+## 2026-03-26 Phase F — Persistence Hook-up & App Guarded Adoption
+
+- 当前阶段名称：Phase F / Governance Landing
+- 完成内容：
+  - 在 `@stratos/infrastructure` 新增 `StrategyLifecycleStore` 抽象与 `InMemoryStrategyLifecycleStore`，为 lifecycle 快照持久化预留统一入口。
+  - `StrategyLifecycleGuard` 改为依赖 `StrategyLifecycleStore`（默认内存实现），从“纯内存私有 map”升级为“可替换存储后端”模式。
+  - 在 `@stratos/experiment-engine` 补充 `@stratos/infrastructure` 依赖，使 guard 可通过基础设施层扩展到 DB/对象存储。
+  - 在 `apps/finance` 新增 `FinanceStrategyLifecycleService`，仅使用 guarded API（register/evaluate/startExperimentGuarded/finalize），避免 app 继续依赖 legacy shortcut。
+- 修改文件：
+  - `packages/infrastructure/src/database/StrategyLifecycleStore.ts`
+  - `packages/infrastructure/src/index.ts`
+  - `packages/experiment-engine/src/lifecycle/StrategyLifecycleGuard.ts`
+  - `packages/experiment-engine/package.json`
+  - `apps/finance/src/application/services/FinanceStrategyLifecycleService.ts`
+  - `apps/finance/src/application/index.ts`
+  - `apps/finance/src/application/phase7/index.ts`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：待 typecheck 验证（受环境 pnpm 拉取限制）。
+- 当前遗留风险：
+  - lifecycle store 当前默认仍是内存版，尚未连接真实数据库实现。
+  - app 内现有调用链尚未全面迁移到 `FinanceStrategyLifecycleService`。
+
+### 最初重构目标回顾（防偏离检查）
+- 目标1：**通用能力上提到 packages** —— 已将生命周期治理与执行契约持续放在 `packages/*`，未把通用逻辑落入 finance app。
+- 目标2：**finance 逻辑收敛到 apps/finance** —— 新增的是 finance-specific facade（`FinanceStrategyLifecycleService`），仅做领域调用编排。
+- 目标3：**依赖方向 apps → packages → infrastructure** —— 本阶段新增依赖保持该方向：`apps/finance -> experiment-engine -> infrastructure`。
+- 目标4：**兼容优先、避免大爆炸** —— 保留 legacy API，并新增 guarded 路径逐步迁移。
+- 结论：Phase F 的下一阶段计划未偏离初始目标。
+
+- 下一阶段计划（Phase G 候选）：
+  - 提供 `DatabaseStrategyLifecycleStore`（真实持久化实现）并通过配置注入 guard。
+  - 在 finance workflow 中替换 legacy experiment 调用点，统一走 guarded 服务。
+  - 增加回归测试，覆盖非法生命周期迁移与 rollback 路径。
+- 变更原因：将 lifecycle 治理从“内存原型”推进到“基础设施可落地”的可演进架构。
+- 影响范围：基础设施抽象、实验生命周期守卫、finance 应用编排入口。
+
+## 2026-03-26 Phase G — Monorepo TS Boundary & Build Graph Normalization
+
+- 当前阶段名称：Phase G / TS Workspace Engineering Hardening
+- 完成内容：
+  - 全仓统一为基于 **TypeScript project references** 的编译/类型检查链路，根级新增 `tsconfig.json` 引用图，覆盖 `packages/*` 与 `apps/finance`。
+  - 全部 `packages/*` 与 `apps/finance` 的 `tsconfig.json` 启用 composite 工程参数：`composite` / `declaration` / `declarationMap` / `incremental` / `tsBuildInfoFile`。
+  - 按内部依赖自动补全 `references`，使跨包类型解析走拓扑构建，不再依赖“裸跑 tsc --noEmit + NodeNext 包解析碰运气”。
+  - 统一各包 `package.json` 规范：补齐 `main`/`types`/`exports`、`scripts.build`/`scripts.typecheck`/`scripts.clean`，内部依赖统一 `workspace:*`。
+  - 根级脚本改为拓扑驱动：`build`/`typecheck`/`clean` 均走 `tsc -b` 模式。
+  - 修复 `StrategyRuntimeKernel` 泛型约束过严问题（`Record<string, unknown>` -> `object`），消除 build graph 下的真实类型错误。
+- 修改文件：
+  - `package.json`
+  - `tsconfig.json`（新增）
+  - `apps/finance/package.json`, `apps/finance/tsconfig.json`
+  - 所有 `packages/*/package.json`, `packages/*/tsconfig.json`
+  - `packages/core/src/runtime/StrategyRuntimeKernel.ts`
+  - `docs/monorepo-dependency-audit.md`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：
+  - `pnpm install` ✅
+  - `pnpm typecheck` ✅（根级 `tsc -b`）
+  - `pnpm build` ✅（根级 `tsc -b`）
+- 当前遗留风险：
+  - 目前采用单入口 exports（`.`），若未来需要 subpath export，应按稳定 API 再增量开放。
+  - 构建产物统一输出到 `dist`，后续可再补充包级发布策略（如果从 private 变为可发布）。
+
+### 对初始重构目标的再次复核（防偏离）
+- `packages/*` 仍承载框架能力，`apps/finance` 仍是领域接入层；本阶段仅修复工程边界与编译拓扑，不上移 finance 业务语义。
+- 依赖方向仍为 `apps -> packages -> infrastructure`，未引入 app 反向依赖。
+- 未通过删除导入/放宽类型来“假通过”；而是通过正规 monorepo 工程化（references + exports + workspace deps + tsc -b）修复。
+- 结论：Phase G 的结构化修复与 Framework PRD 初始目标保持一致。
+
+- 下一阶段计划（Phase H 候选）：
+  - 逐包补充 API 面向使用者的 `exports` 设计（必要时再引入受控 subpath exports）。
+  - 增加 CI 任务：`pnpm install && pnpm typecheck && pnpm build` 作为合并门槛。
+  - 针对 lifecycle guard 与 runtime kernel 增加单测，确保后续演进不回归。
