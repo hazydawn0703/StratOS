@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b --pretty false",
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
   },
   "dependencies": {
     "@stratos/core": "workspace:*",
@@ -16,6 +18,19 @@
     "@stratos/evaluation-engine": "workspace:*",
     "@stratos/experiment-engine": "workspace:*",
     "@stratos/bias-monitor": "workspace:*",
-    "@stratos/ui": "workspace:*"
+    "@stratos/ui": "workspace:*",
+    "@stratos/claim-extractor": "workspace:*",
+    "@stratos/review-engine": "workspace:*",
+    "@stratos/error-utilization": "workspace:*",
+    "@stratos/replay-debug": "workspace:*",
+    "@stratos/model-router": "workspace:*"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   }
 }

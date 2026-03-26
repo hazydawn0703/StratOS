@@ -1,15 +1,27 @@
 import type { TaskContext } from '@stratos/shared-types';
 import { decidePromotionState } from './decision/promotionDecision.js';
+import { StrategyLifecycleGuard } from './lifecycle/StrategyLifecycleGuard.js';
 import { deterministicRollout } from './rollout/deterministicRollout.js';
 import type { ExperimentRecord } from './types.js';
 
 export class ExperimentEngine {
   private readonly experiments = new Map<string, ExperimentRecord>();
+  private readonly lifecycleGuard = new StrategyLifecycleGuard();
 
-  startExperiment(candidate: { id: string }): ExperimentRecord {
+  async registerCandidate(candidateId: string): Promise<void> {
+    await this.lifecycleGuard.registerCandidate(candidateId);
+  }
+
+  async markCandidateEvaluated(candidateId: string, note?: string): Promise<void> {
+    await this.lifecycleGuard.markEvaluated(candidateId, note);
+  }
+
+  async startExperimentGuarded(candidateId: string): Promise<ExperimentRecord> {
+    await this.lifecycleGuard.markExperimenting(candidateId);
+
     const record: ExperimentRecord = {
-      id: `exp-${candidate.id}`,
-      candidateId: candidate.id,
+      id: `exp-${candidateId}`,
+      candidateId,
       state: 'shadow',
       metrics: []
     };
@@ -28,11 +40,19 @@ export class ExperimentEngine {
     exp.state = exp.metrics.length > 2 ? 'canary' : 'shadow';
   }
 
-  decidePromotion(experimentId: string): 'promoted' | 'rolled_back' {
+  async decidePromotion(experimentId: string): Promise<'promoted' | 'rolled_back'> {
     const exp = this.experiments.get(experimentId);
     if (!exp) return 'rolled_back';
+
     const decision = decidePromotionState(exp);
     exp.state = decision;
+
+    if (decision === 'promoted') {
+      await this.lifecycleGuard.activate(exp.candidateId, `promotion approved by ${experimentId}`);
+    } else {
+      await this.lifecycleGuard.rollback(exp.candidateId, `promotion rejected by ${experimentId}`);
+    }
+
     return decision;
   }
 }

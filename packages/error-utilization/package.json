@@ -1,0 +1,23 @@
+{
+  "name": "@stratos/error-utilization",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./internal/*": null
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty false",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@stratos/review-engine": "workspace:*"
+  }
+}

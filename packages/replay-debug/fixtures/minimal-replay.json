@@ -1,0 +1,35 @@
+{
+  "runId": "fixture-run-1",
+  "events": [
+    {
+      "at": "2026-03-26T00:00:00.000Z",
+      "stage": "strategy_compilation",
+      "payload": {
+        "taskType": "report_generation"
+      }
+    },
+    {
+      "at": "2026-03-26T00:00:01.000Z",
+      "stage": "router_decision",
+      "payload": {
+        "provider": "mock",
+        "fallbackUsed": true
+      }
+    },
+    {
+      "at": "2026-03-26T00:00:02.000Z",
+      "stage": "review_result",
+      "payload": {
+        "result_label": "partial",
+        "severity": "medium"
+      }
+    },
+    {
+      "at": "2026-03-26T00:00:03.000Z",
+      "stage": "lifecycle_state",
+      "payload": {
+        "state": "experimenting"
+      }
+    }
+  ]
+}
