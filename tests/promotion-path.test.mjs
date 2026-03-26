@@ -92,6 +92,7 @@ test('manual approval path can promote candidate and leaves governance event tra
   await engine.startExperimentGuarded('cand-manual');
 
   const { audit } = await engine.evaluatePromotion({
+    runId: 'run-manual-1',
     policy: {
       policy_id: 'p-manual',
       app: 'finance',
@@ -132,6 +133,7 @@ test('manual approval path can promote candidate and leaves governance event tra
   assert.equal(audit.decision.approval_status, 'pending');
 
   const approved = await engine.approvePromotion({
+    runId: 'run-manual-1',
     candidateId: 'cand-manual',
     approver: 'qa-owner',
     approve: true,
@@ -140,9 +142,12 @@ test('manual approval path can promote candidate and leaves governance event tra
   assert.equal(approved.decision.action, 'promote');
   assert.equal(approved.decision.approval_status, 'approved');
   assert.equal(approved.decision.approved_by, 'qa-owner');
+  assert.equal(approved.run_id, 'run-manual-1');
 
   const events = await engine.listGovernanceEvents('cand-manual');
   assert.ok(events.length >= 3);
+  const runEvents = await engine.listGovernanceEventsByRunId('run-manual-1');
+  assert.ok(runEvents.length >= 3);
 });
 
 test('manual review from risk notes creates approval ticket even if policy does not require manual approval', async () => {
@@ -152,6 +157,7 @@ test('manual review from risk notes creates approval ticket even if policy does 
   await engine.startExperimentGuarded('cand-risk');
 
   const { audit } = await engine.evaluatePromotion({
+    runId: 'run-risk-1',
     policy: {
       policy_id: 'p-risk',
       app: 'finance',
@@ -192,6 +198,15 @@ test('manual review from risk notes creates approval ticket even if policy does 
   assert.equal(audit.decision.requires_manual_approval, true);
   assert.equal(audit.decision.approval_status, 'pending');
   assert.ok(engine.getManualApprovalTicket('cand-risk'));
+
+  const sla = await engine.checkApprovalSLA({
+    candidateId: 'cand-risk',
+    runId: 'run-risk-1',
+    now: '2099-01-01T00:00:00.000Z'
+  });
+  assert.equal(sla.breached, true);
+  const runEvents = await engine.listGovernanceEventsByRunId('run-risk-1');
+  assert.ok(runEvents.some((item) => item.type === 'approval_sla_breached'));
 });
 
 test('approvePromotion rejects invalid inputs', async () => {
@@ -244,4 +259,62 @@ test('approvePromotion rejects invalid inputs', async () => {
       }),
     /manual approval ticket not found/
   );
+});
+
+test('rejectPromotion marks rollback and records rejection event with runId', async () => {
+  const engine = new ExperimentEngine(new InMemoryGovernanceEventStore());
+  await engine.registerCandidate('cand-reject');
+  await engine.markCandidateEvaluated('cand-reject');
+  await engine.startExperimentGuarded('cand-reject');
+
+  const { audit } = await engine.evaluatePromotion({
+    runId: 'run-reject-1',
+    policy: {
+      policy_id: 'p-reject',
+      app: 'finance',
+      min_sample_size: 10,
+      min_observation_window_hours: 24,
+      require_manual_approval: true,
+      promote_threshold: 0.5,
+      rollback_threshold: -0.5
+    },
+    evaluation: {
+      candidate_id: 'cand-reject',
+      candidate_version: 'v2',
+      baseline_id: 'baseline',
+      baseline_version: 'v1',
+      recommendation: 'promote',
+      metric_deltas: { quality_delta: 0.6 },
+      risk_notes: [],
+      sample_failures: []
+    },
+    experiment: {
+      experiment_id: 'exp-cand-reject',
+      candidate_id: 'cand-reject',
+      candidate_version: 'v2',
+      baseline_version: 'v1',
+      mode: 'canary',
+      bucket: 'b1',
+      sample_size: 20,
+      observation_window_hours: 48,
+      metrics: { quality_delta: 0.6 },
+      rollback_ready: true,
+      notes: []
+    },
+    sourceErrorPatternId: 'pattern-reject',
+    impactedTaskType: 'report_generation'
+  });
+
+  const rejected = await engine.rejectPromotion({
+    runId: 'run-reject-1',
+    candidateId: 'cand-reject',
+    approver: 'qa-owner',
+    note: 'quality-gate-failed',
+    audit
+  });
+  assert.equal(rejected.decision.action, 'rollback');
+  assert.equal(rejected.decision.approval_status, 'rejected');
+
+  const runEvents = await engine.listGovernanceEventsByRunId('run-reject-1');
+  assert.ok(runEvents.some((item) => item.type === 'manual_approval_rejected'));
 });

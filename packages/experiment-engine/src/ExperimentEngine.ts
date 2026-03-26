@@ -131,12 +131,14 @@ export class ExperimentEngine {
   }
 
   async evaluatePromotion(input: {
+    runId?: string;
     policy: PromotionPolicy;
     evaluation: EvaluationResult;
     experiment: ExperimentResult;
     sourceErrorPatternId: string;
     impactedTaskType: string;
   }): Promise<{ decision: PromotionAuditRecord['decision']; audit: PromotionAuditRecord }> {
+    const runId = input.runId ?? `run-${input.evaluation.candidate_id}`;
     const action = decidePromotionAction({
       policy: input.policy,
       evaluation: input.evaluation,
@@ -165,15 +167,18 @@ export class ExperimentEngine {
     if (decision.action === 'manual_review') {
       const ticket: ManualApprovalTicket = {
         ticket_id: `approval-${input.evaluation.candidate_id}`,
+        run_id: runId,
         candidate_id: input.evaluation.candidate_id,
         candidate_version: input.evaluation.candidate_version,
         requested_action: 'promote',
         status: 'pending',
-        requested_at: new Date().toISOString()
+        requested_at: new Date().toISOString(),
+        sla_due_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       };
       this.approvalTickets.set(ticket.ticket_id, ticket);
       await this.appendEvent({
         event_id: `${ticket.ticket_id}-requested`,
+        run_id: runId,
         candidate_id: input.evaluation.candidate_id,
         type: 'manual_approval_requested',
         at: ticket.requested_at,
@@ -183,6 +188,7 @@ export class ExperimentEngine {
 
     await this.appendEvent({
       event_id: `decision-${input.evaluation.candidate_id}-${Date.now()}`,
+      run_id: runId,
       candidate_id: input.evaluation.candidate_id,
       type: 'promotion_decision_evaluated',
       at: new Date().toISOString(),
@@ -192,7 +198,8 @@ export class ExperimentEngine {
     return {
       decision,
       audit: {
-        audit_id: `audit-${input.evaluation.candidate_id}`,
+        audit_id: `audit-${runId}-${input.evaluation.candidate_id}`,
+        run_id: runId,
         candidate_id: input.evaluation.candidate_id,
         source_error_pattern_id: input.sourceErrorPatternId,
         evaluation: input.evaluation,
@@ -210,12 +217,14 @@ export class ExperimentEngine {
   }
 
   async approvePromotion(input: {
+    runId?: string;
     candidateId: string;
     approver: string;
     note?: string;
     approve: boolean;
     audit: PromotionAuditRecord;
   }): Promise<PromotionAuditRecord> {
+    const runId = input.runId ?? `run-${input.candidateId}`;
     const ticketId = `approval-${input.candidateId}`;
     const ticket = this.approvalTickets.get(ticketId);
     if (!ticket) {
@@ -242,6 +251,7 @@ export class ExperimentEngine {
 
     await this.appendEvent({
       event_id: `${ticketId}-${input.approve ? 'approved' : 'rejected'}-${Date.now()}`,
+      run_id: runId,
       candidate_id: input.candidateId,
       type: input.approve ? 'manual_approval_approved' : 'manual_approval_rejected',
       at: reviewedAt,
@@ -267,6 +277,7 @@ export class ExperimentEngine {
   }
 
   async rejectPromotion(input: {
+    runId?: string;
     candidateId: string;
     approver: string;
     note?: string;
@@ -280,6 +291,36 @@ export class ExperimentEngine {
 
   async listGovernanceEvents(candidateId: string): Promise<RuntimeGovernanceEvent[]> {
     return this.eventStore.listByCandidate(candidateId);
+  }
+
+  async listGovernanceEventsByRunId(runId: string): Promise<RuntimeGovernanceEvent[]> {
+    return this.eventStore.listByRunId(runId);
+  }
+
+  async checkApprovalSLA(input: {
+    candidateId: string;
+    runId?: string;
+    now?: string;
+  }): Promise<{ breached: boolean; dueAt?: string }> {
+    const ticket = this.getManualApprovalTicket(input.candidateId);
+    if (!ticket || !ticket.sla_due_at || ticket.status !== 'pending') {
+      return { breached: false };
+    }
+
+    const nowIso = input.now ?? new Date().toISOString();
+    if (nowIso <= ticket.sla_due_at) {
+      return { breached: false, dueAt: ticket.sla_due_at };
+    }
+
+    await this.appendEvent({
+      event_id: `sla-${ticket.ticket_id}-${Date.now()}`,
+      run_id: input.runId ?? ticket.run_id,
+      candidate_id: input.candidateId,
+      type: 'approval_sla_breached',
+      at: nowIso,
+      payload: { due_at: ticket.sla_due_at, status: ticket.status }
+    });
+    return { breached: true, dueAt: ticket.sla_due_at };
   }
 
   private async appendEvent(event: RuntimeGovernanceEvent): Promise<void> {

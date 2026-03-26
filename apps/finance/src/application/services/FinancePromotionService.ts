@@ -17,6 +17,7 @@ export const financePromotionPolicy: PromotionPolicy = {
 };
 
 export interface FinancePromotionInput {
+  runId?: string;
   candidate: STUCandidate;
   taskType: string;
   baselineVersion: string;
@@ -88,6 +89,7 @@ export class FinancePromotionService {
     });
 
     const { audit } = await this.experimentEngine.evaluatePromotion({
+      runId: input.runId,
       policy: this.policy,
       evaluation,
       experiment,
@@ -102,6 +104,7 @@ export class FinancePromotionService {
       input.governance?.autoApproveManualReview
     ) {
       finalAudit = await this.experimentEngine.approvePromotion({
+        runId: input.runId,
         candidateId: input.candidate.candidate_id,
         approver: input.governance.approver ?? 'finance-auto-approver',
         note: 'auto approval enabled by feature flag',

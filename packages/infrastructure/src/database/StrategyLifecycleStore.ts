@@ -24,6 +24,7 @@ export interface StrategyLifecycleStore {
 export interface GovernanceEventStore {
   append(event: RuntimeGovernanceEvent): Promise<void>;
   listByCandidate(candidateId: string): Promise<RuntimeGovernanceEvent[]>;
+  listByRunId(runId: string): Promise<RuntimeGovernanceEvent[]>;
 }
 
 export interface StrategyLifecyclePersistenceDriver {
@@ -34,6 +35,7 @@ export interface StrategyLifecyclePersistenceDriver {
 export interface GovernanceEventPersistenceDriver {
   append(event: RuntimeGovernanceEvent): Promise<void>;
   listByCandidate(candidateId: string): Promise<RuntimeGovernanceEvent[]>;
+  listByRunId(runId: string): Promise<RuntimeGovernanceEvent[]>;
 }
 
 export class InMemoryStrategyLifecycleStore implements StrategyLifecycleStore {
@@ -57,6 +59,10 @@ export class InMemoryGovernanceEventStore implements GovernanceEventStore {
 
   async listByCandidate(candidateId: string): Promise<RuntimeGovernanceEvent[]> {
     return this.events.filter((event) => event.candidate_id === candidateId);
+  }
+
+  async listByRunId(runId: string): Promise<RuntimeGovernanceEvent[]> {
+    return this.events.filter((event) => event.run_id === runId);
   }
 }
 
@@ -120,6 +126,18 @@ export class DatabaseGovernanceEventStore implements GovernanceEventStore {
         return;
       }
       result = this.cache.filter((event) => event.candidate_id === candidateId);
+    });
+    return result;
+  }
+
+  async listByRunId(runId: string): Promise<RuntimeGovernanceEvent[]> {
+    let result: RuntimeGovernanceEvent[] = [];
+    await this.database.transaction(async () => {
+      if (this.driver) {
+        result = await this.driver.listByRunId(runId);
+        return;
+      }
+      result = this.cache.filter((event) => event.run_id === runId);
     });
     return result;
   }

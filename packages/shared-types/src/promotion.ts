@@ -51,11 +51,13 @@ export interface PromotionDecision {
 
 export interface ManualApprovalTicket {
   ticket_id: string;
+  run_id: string;
   candidate_id: string;
   candidate_version: string;
   requested_action: Exclude<PromotionAction, 'manual_review'>;
   status: 'pending' | 'approved' | 'rejected';
   requested_at: string;
+  sla_due_at?: string;
   reviewed_at?: string;
   reviewed_by?: string;
   note?: string;
@@ -63,18 +65,21 @@ export interface ManualApprovalTicket {
 
 export interface RuntimeGovernanceEvent {
   event_id: string;
+  run_id: string;
   candidate_id: string;
   type:
     | 'promotion_decision_evaluated'
     | 'manual_approval_requested'
     | 'manual_approval_approved'
-    | 'manual_approval_rejected';
+    | 'manual_approval_rejected'
+    | 'approval_sla_breached';
   at: string;
   payload: Record<string, unknown>;
 }
 
 export interface PromotionAuditRecord {
   audit_id: string;
+  run_id?: string;
   candidate_id: string;
   source_error_pattern_id: string;
   evaluation: EvaluationResult;

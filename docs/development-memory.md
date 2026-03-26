@@ -457,3 +457,27 @@
 - 新增回归测试：
   - `manual_review`（risk note 触发）仍可创建审批 ticket。
   - `approvePromotion` 非法输入拒绝路径。
+
+## 2026-03-26 Phase N — 审批追踪增强（runId 索引 + SLA breach 事件）
+
+- 当前阶段名称：Phase N / Approval Traceability Hardening
+- 完成内容：
+  - 为治理事件与审批 ticket 增加 `run_id` 维度，支持按 candidate 与 run 双索引检索。
+  - `GovernanceEventStore` 增加 `listByRunId` 抽象，内存/数据库桥接实现同步支持。
+  - `ExperimentEngine` 增加：
+    - `listGovernanceEventsByRunId`；
+    - `checkApprovalSLA`（pending ticket 超时后生成 `approval_sla_breached` 事件）。
+  - finance promotion 入口支持透传 `runId` 到治理引擎，保证端到端审计链按 run 收敛。
+  - 回归测试补充：
+    - run 维度事件查询；
+    - SLA breach 事件触发路径。
+- 当前系统是否可运行：`pnpm build` / `pnpm test` 通过。
+- 下一阶段计划（Phase O 候选）：
+  - 将 `approval_sla_breached` 对接告警渠道（queue/webhook）并增加去重策略。
+  - 在 replay-debug 中增加按 runId 的审计摘要输出模板。
+
+### Phase N.1 补充（review round）
+
+- 将 `PromotionAuditRecord` 增加 `run_id`，并将 `audit_id` 绑定 run 维度，降低跨 run 冲突风险。
+- `rejectPromotion` 增加 `runId` 透传能力，保证 reject 事件可按 run 准确检索。
+- 新增 reject 路径回归测试，验证 `manual_approval_rejected` 事件写入与 rollback 决策一致性。
