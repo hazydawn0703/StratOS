@@ -23,6 +23,10 @@ export interface FinancePromotionInput {
   candidateVersion: string;
   evaluationMetrics: Record<string, number>;
   experimentMode: 'shadow' | 'canary' | 'partial' | 'cohort' | 'full';
+  governance?: {
+    autoApproveManualReview?: boolean;
+    approver?: string;
+  };
 }
 
 export interface FinancePromotionResult {
@@ -90,9 +94,24 @@ export class FinancePromotionService {
       sourceErrorPatternId: input.candidate.source_error_pattern_id,
       impactedTaskType: input.taskType
     });
+    let finalAudit = audit;
 
-    if (audit.decision.action === 'promote' && audit.active_stu_version) {
-      this.registry.activate(input.candidate.candidate_id, audit.active_stu_version);
+    if (
+      audit.decision.action === 'manual_review' &&
+      audit.decision.requires_manual_approval &&
+      input.governance?.autoApproveManualReview
+    ) {
+      finalAudit = await this.experimentEngine.approvePromotion({
+        candidateId: input.candidate.candidate_id,
+        approver: input.governance.approver ?? 'finance-auto-approver',
+        note: 'auto approval enabled by feature flag',
+        approve: true,
+        audit
+      });
+    }
+
+    if (finalAudit.decision.action === 'promote' && finalAudit.active_stu_version) {
+      this.registry.activate(input.candidate.candidate_id, finalAudit.active_stu_version);
     }
 
     const taskContext: TaskContext = {
@@ -103,17 +122,17 @@ export class FinancePromotionService {
     };
     const compiled = this.compiler.compile(this.registry.getCompilationInput(taskContext), taskContext);
     const compileAuditSummary = this.replayAudit.explainPromotionChange({
-      candidate_id: audit.candidate_id,
-      source_error_pattern_id: audit.source_error_pattern_id,
-      baseline_version: audit.evaluation.baseline_version,
-      candidate_version: audit.evaluation.candidate_version,
-      experiment_mode: audit.experiment.mode,
-      experiment_bucket: audit.experiment.bucket,
-      promotion_action: audit.decision.action,
-      decision_reasons: audit.decision.reasons,
+      candidate_id: finalAudit.candidate_id,
+      source_error_pattern_id: finalAudit.source_error_pattern_id,
+      baseline_version: finalAudit.evaluation.baseline_version,
+      candidate_version: finalAudit.evaluation.candidate_version,
+      experiment_mode: finalAudit.experiment.mode,
+      experiment_bucket: finalAudit.experiment.bucket,
+      promotion_action: finalAudit.decision.action,
+      decision_reasons: finalAudit.decision.reasons,
       active_stu_version: compiled.audit.activeStuVersions[0]?.split('@')[1]
     });
 
-    return { audit, compileAuditSummary };
+    return { audit: finalAudit, compileAuditSummary };
   }
 }
