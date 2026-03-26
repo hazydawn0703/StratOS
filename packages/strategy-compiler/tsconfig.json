@@ -22,5 +22,8 @@
     {
       "path": "../stu-registry"
     }
+  ],
+  "exclude": [
+    "src/**/__tests__/**"
   ]
 }

@@ -43,5 +43,8 @@
     {
       "path": "../../packages/ui"
     }
+  ],
+  "exclude": [
+    "src/**/__tests__/**"
   ]
 }

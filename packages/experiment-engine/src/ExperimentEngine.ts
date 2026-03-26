@@ -8,26 +8,16 @@ export class ExperimentEngine {
   private readonly experiments = new Map<string, ExperimentRecord>();
   private readonly lifecycleGuard = new StrategyLifecycleGuard();
 
-  /**
-   * Backward-compatible shortcut for legacy callers.
-   * New callers should use registerCandidate -> markCandidateEvaluated -> startExperimentGuarded.
-   */
-  startExperiment(candidate: { id: string }): ExperimentRecord {
-    this.lifecycleGuard.registerCandidate(candidate.id);
-    this.lifecycleGuard.markEvaluated(candidate.id, 'legacy auto-evaluation bridge');
-    return this.startExperimentGuarded(candidate.id);
+  async registerCandidate(candidateId: string): Promise<void> {
+    await this.lifecycleGuard.registerCandidate(candidateId);
   }
 
-  registerCandidate(candidateId: string): void {
-    this.lifecycleGuard.registerCandidate(candidateId);
+  async markCandidateEvaluated(candidateId: string, note?: string): Promise<void> {
+    await this.lifecycleGuard.markEvaluated(candidateId, note);
   }
 
-  markCandidateEvaluated(candidateId: string, note?: string): void {
-    this.lifecycleGuard.markEvaluated(candidateId, note);
-  }
-
-  startExperimentGuarded(candidateId: string): ExperimentRecord {
-    this.lifecycleGuard.markExperimenting(candidateId);
+  async startExperimentGuarded(candidateId: string): Promise<ExperimentRecord> {
+    await this.lifecycleGuard.markExperimenting(candidateId);
 
     const record: ExperimentRecord = {
       id: `exp-${candidateId}`,
@@ -50,7 +40,7 @@ export class ExperimentEngine {
     exp.state = exp.metrics.length > 2 ? 'canary' : 'shadow';
   }
 
-  decidePromotion(experimentId: string): 'promoted' | 'rolled_back' {
+  async decidePromotion(experimentId: string): Promise<'promoted' | 'rolled_back'> {
     const exp = this.experiments.get(experimentId);
     if (!exp) return 'rolled_back';
 
@@ -58,9 +48,9 @@ export class ExperimentEngine {
     exp.state = decision;
 
     if (decision === 'promoted') {
-      this.lifecycleGuard.activate(exp.candidateId, `promotion approved by ${experimentId}`);
+      await this.lifecycleGuard.activate(exp.candidateId, `promotion approved by ${experimentId}`);
     } else {
-      this.lifecycleGuard.rollback(exp.candidateId, `promotion rejected by ${experimentId}`);
+      await this.lifecycleGuard.rollback(exp.candidateId, `promotion rejected by ${experimentId}`);
     }
 
     return decision;

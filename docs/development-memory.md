@@ -194,7 +194,37 @@
 - 未通过删除导入/放宽类型来“假通过”；而是通过正规 monorepo 工程化（references + exports + workspace deps + tsc -b）修复。
 - 结论：Phase G 的结构化修复与 Framework PRD 初始目标保持一致。
 
-- 下一阶段计划（Phase H 候选）：
-  - 逐包补充 API 面向使用者的 `exports` 设计（必要时再引入受控 subpath exports）。
-  - 增加 CI 任务：`pnpm install && pnpm typecheck && pnpm build` 作为合并门槛。
-  - 针对 lifecycle guard 与 runtime kernel 增加单测，确保后续演进不回归。
+
+
+## 2026-03-26 Phase H — Governance Completion & Regression Hardening
+
+- 当前阶段名称：Phase H / Governance Completion
+- 完成内容：
+  - 完成 `DatabaseStrategyLifecycleStore`，并将 `StrategyLifecycleGuard` 默认持久化路径切到 database-backed store（不再默认纯内存路径）。
+  - finance workflow 增加 `FinanceStrategyLifecycleService` 的全异步 guarded 调用链，统一通过 `registerCandidate -> markCandidateEvaluated -> startExperimentGuarded -> decidePromotion`。
+  - 清理 experiment engine 的 legacy shortcut（移除 `startExperiment` 快捷入口），只保留 guarded API。
+  - 建立治理链路测试矩阵（Node test）：
+    - 单测：`StrategyLifecycleGuard`、`StrategyRuntimeKernel`
+    - 回归：非法生命周期迁移、rollback 路径
+    - smoke：finance guarded workflow 最小闭环
+  - CI merge gate 落地到 workflow：
+    `pnpm install --frozen-lockfile && pnpm clean && pnpm build && pnpm typecheck && pnpm test`
+- 修改文件：
+  - `packages/infrastructure/src/database/StrategyLifecycleStore.ts`
+  - `packages/experiment-engine/src/lifecycle/StrategyLifecycleGuard.ts`
+  - `packages/experiment-engine/src/ExperimentEngine.ts`
+  - `apps/finance/src/application/services/FinanceStrategyLifecycleService.ts`
+  - `tests/strategy-lifecycle-guard.test.mjs`
+  - `tests/strategy-runtime-kernel.test.mjs`
+  - `tests/finance-guarded-workflow.smoke.test.mjs`
+  - `.github/workflows/ci.yml`
+  - `package.json`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：`pnpm install` / `pnpm build` / `pnpm typecheck` / `pnpm test` 均通过。
+- 当前遗留风险：
+  - `DatabaseStrategyLifecycleStore` 当前仍是 DB 事务边界 + cache bridge 实现，后续可替换为真实 SQL/NoSQL adapter。
+- 下一阶段计划：
+  - 将 lifecycle persistence bridge 替换为真实数据库仓储实现。
+  - 增加 model-router 与 replay-debug 的治理链路测试覆盖。
+- 变更原因：完成治理链路闭环并把质量门禁固化到 CI merge gate。
+- 影响范围：实验治理路径、finance 受控流程、测试与 CI。

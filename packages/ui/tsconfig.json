@@ -17,5 +17,8 @@
     {
       "path": "../shared-types"
     }
+  ],
+  "exclude": [
+    "src/**/__tests__/**"
   ]
 }

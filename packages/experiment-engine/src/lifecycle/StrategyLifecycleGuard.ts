@@ -1,5 +1,5 @@
 import {
-  InMemoryStrategyLifecycleStore,
+  DatabaseStrategyLifecycleStore,
   type StrategyLifecycleSnapshot,
   type StrategyLifecycleState,
   type StrategyLifecycleStore
@@ -16,44 +16,44 @@ const allowedTransitions: Record<StrategyLifecycleState, StrategyLifecycleState[
 };
 
 export class StrategyLifecycleGuard {
-  constructor(private readonly store: StrategyLifecycleStore = new InMemoryStrategyLifecycleStore()) {}
+  constructor(private readonly store: StrategyLifecycleStore = new DatabaseStrategyLifecycleStore()) {}
 
-  registerCandidate(candidateId: string): StrategyLifecycleSnapshot {
+  async registerCandidate(candidateId: string): Promise<StrategyLifecycleSnapshot> {
     const snapshot: StrategyLifecycleSnapshot = {
       candidateId,
       state: 'candidate',
       history: [{ at: new Date().toISOString(), state: 'candidate' }]
     };
-    this.store.save(snapshot);
+    await this.store.save(snapshot);
     return snapshot;
   }
 
-  markEvaluated(candidateId: string, note = 'evaluation completed'): StrategyLifecycleSnapshot {
+  markEvaluated(candidateId: string, note = 'evaluation completed'): Promise<StrategyLifecycleSnapshot> {
     return this.transition(candidateId, 'evaluated', note);
   }
 
-  markExperimenting(candidateId: string, note = 'experiment started'): StrategyLifecycleSnapshot {
+  markExperimenting(candidateId: string, note = 'experiment started'): Promise<StrategyLifecycleSnapshot> {
     return this.transition(candidateId, 'experimenting', note);
   }
 
-  activate(candidateId: string, note = 'promoted to active'): StrategyLifecycleSnapshot {
+  activate(candidateId: string, note = 'promoted to active'): Promise<StrategyLifecycleSnapshot> {
     return this.transition(candidateId, 'active', note);
   }
 
-  rollback(candidateId: string, note = 'rolled back'): StrategyLifecycleSnapshot {
+  rollback(candidateId: string, note = 'rolled back'): Promise<StrategyLifecycleSnapshot> {
     return this.transition(candidateId, 'rolled_back', note);
   }
 
-  getSnapshot(candidateId: string): StrategyLifecycleSnapshot | undefined {
+  getSnapshot(candidateId: string): Promise<StrategyLifecycleSnapshot | undefined> {
     return this.store.get(candidateId);
   }
 
-  private transition(
+  private async transition(
     candidateId: string,
     nextState: StrategyLifecycleState,
     note?: string
-  ): StrategyLifecycleSnapshot {
-    const current = this.store.get(candidateId);
+  ): Promise<StrategyLifecycleSnapshot> {
+    const current = await this.store.get(candidateId);
     if (!current) {
       throw new Error(`Candidate ${candidateId} is not registered.`);
     }
@@ -70,7 +70,7 @@ export class StrategyLifecycleGuard {
       state: nextState,
       history: [...current.history, { at: new Date().toISOString(), state: nextState, note }]
     };
-    this.store.save(updated);
+    await this.store.save(updated);
     return updated;
   }
 }

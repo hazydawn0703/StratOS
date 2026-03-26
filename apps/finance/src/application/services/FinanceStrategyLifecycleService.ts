@@ -7,13 +7,13 @@ import { ExperimentEngine } from '@stratos/experiment-engine';
 export class FinanceStrategyLifecycleService {
   constructor(private readonly experimentEngine = new ExperimentEngine()) {}
 
-  startCandidateExperiment(candidateId: string): string {
-    this.experimentEngine.registerCandidate(candidateId);
-    this.experimentEngine.markCandidateEvaluated(candidateId, 'finance evaluation completed');
-    return this.experimentEngine.startExperimentGuarded(candidateId).id;
+  async startCandidateExperiment(candidateId: string): Promise<string> {
+    await this.experimentEngine.registerCandidate(candidateId);
+    await this.experimentEngine.markCandidateEvaluated(candidateId, 'finance evaluation completed');
+    return (await this.experimentEngine.startExperimentGuarded(candidateId)).id;
   }
 
-  finalizeCandidate(experimentId: string): 'promoted' | 'rolled_back' {
+  finalizeCandidate(experimentId: string): Promise<'promoted' | 'rolled_back'> {
     return this.experimentEngine.decidePromotion(experimentId);
   }
 }
