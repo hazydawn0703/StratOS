@@ -1,4 +1,8 @@
-import type { EvaluationResult } from './metrics/types.js';
+import type {
+  CandidateEvaluationInput,
+  CandidateEvaluationSummary,
+  EvaluationResult
+} from './metrics/types.js';
 import { mockScore } from './scorers/mockScorer.js';
 
 export class EvaluationEngine {
@@ -28,6 +32,21 @@ export class EvaluationEngine {
         actionableScore: candidateResult.metrics.actionableScore - baselineResult.metrics.actionableScore
       },
       notes: ['delta comparison']
+    };
+  }
+
+  evaluateCandidateAgainstBaseline(input: CandidateEvaluationInput): CandidateEvaluationSummary {
+    const delta = input.candidateScore - input.baselineScore;
+    const recommendation = delta > 0 && input.supportCount > 0 ? 'promote' : 'hold';
+    return {
+      candidateId: input.candidateId,
+      baselineId: input.baselineId,
+      delta,
+      recommendation,
+      rationale:
+        recommendation === 'promote'
+          ? 'candidate outperformed baseline with supporting review evidence'
+          : 'insufficient candidate advantage or support evidence'
     };
   }
 }

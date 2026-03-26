@@ -12,3 +12,19 @@ export interface EvaluationResult {
   metrics: EvaluationMetrics;
   notes: string[];
 }
+
+export interface CandidateEvaluationInput {
+  candidateId: string;
+  baselineId: string;
+  candidateScore: number;
+  baselineScore: number;
+  supportCount: number;
+}
+
+export interface CandidateEvaluationSummary {
+  candidateId: string;
+  baselineId: string;
+  delta: number;
+  recommendation: 'promote' | 'hold';
+  rationale: string;
+}

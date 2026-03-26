@@ -6,9 +6,17 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b --pretty false",
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
   },
   "dependencies": {
     "@stratos/shared-types": "workspace:*"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   }
 }
