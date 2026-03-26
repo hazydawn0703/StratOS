@@ -1,34 +1,49 @@
-import type { Prediction, Review } from '@stratos/shared-types';
-import { detectBiasFromDiff } from './detection/detectBias.js';
-import type { BiasAnalysisResult, BiasSnapshot } from './metrics/types.js';
+import { detectBiasFromSnapshot } from './detection/detectBias.js';
+import type { BiasAlert, BiasSnapshot, CandidateGateResult } from './metrics/types.js';
+
+export interface BiasSignalInput {
+  confidenceScores: number[];
+  rejectionFlags: boolean[];
+  riskHints: boolean[];
+  claimTiltValues: number[];
+  reviewPassFlags: boolean[];
+  errorDirectionValues: number[];
+  severeErrorFlags: boolean[];
+  rollbackFlags: boolean[];
+}
 
 export class BiasMonitor {
-  computeSnapshot(predictions: Prediction[], _reviews: Review[], _windowType: string): BiasSnapshot {
-    const bullish = predictions.filter((item) => item.thesisType === 'bullish').length;
-    const cautious = predictions.filter((item) => item.thesisType === 'cautious').length;
-    const total = Math.max(predictions.length, 1);
-    const avg = predictions.reduce((sum, item) => sum + item.confidenceScore, 0) / total;
+  computeSnapshot(input: BiasSignalInput): BiasSnapshot {
+    const avg = (arr: number[]): number =>
+      arr.length === 0 ? 0 : arr.reduce((sum, value) => sum + value, 0) / arr.length;
+    const ratio = (arr: boolean[]): number => (arr.length === 0 ? 0 : arr.filter(Boolean).length / arr.length);
 
     return {
-      bullishRatio: bullish / total,
-      cautiousRatio: cautious / total,
-      riskAlertRatio: 0,
-      avgConfidenceScore: avg,
-      confidenceStd: 0
+      behavior: {
+        confidenceDistributionSkew: avg(input.confidenceScores),
+        rejectionRate: ratio(input.rejectionFlags),
+        riskHintRate: ratio(input.riskHints),
+        claimOutputTilt: avg(input.claimTiltValues)
+      },
+      outcome: {
+        reviewPassRate: ratio(input.reviewPassFlags),
+        errorDirectionDrift: avg(input.errorDirectionValues),
+        severeErrorRatio: ratio(input.severeErrorFlags),
+        rollbackRate: ratio(input.rollbackFlags)
+      }
     };
   }
 
-  compareWindows(current: BiasSnapshot, baseline: BiasSnapshot): Record<string, number> {
-    return {
-      bullishRatio: current.bullishRatio - baseline.bullishRatio,
-      cautiousRatio: current.cautiousRatio - baseline.cautiousRatio,
-      riskAlertRatio: current.riskAlertRatio - baseline.riskAlertRatio,
-      avgConfidenceScore: current.avgConfidenceScore - baseline.avgConfidenceScore,
-      confidenceStd: current.confidenceStd - baseline.confidenceStd
-    };
+  detectBias(snapshot: BiasSnapshot): BiasAlert {
+    return detectBiasFromSnapshot(snapshot);
   }
 
-  detectBias(snapshotDiff: Record<string, number>): BiasAnalysisResult {
-    return detectBiasFromDiff(snapshotDiff);
+  gateCandidate(candidateId: string, snapshot: BiasSnapshot): CandidateGateResult {
+    const alert = this.detectBias(snapshot);
+    return {
+      candidate_id: candidateId,
+      gate_status: alert.hasBiasRisk ? 'needs_bias_review' : 'ready_for_evaluation',
+      bias_reasons: alert.reasons
+    };
   }
 }

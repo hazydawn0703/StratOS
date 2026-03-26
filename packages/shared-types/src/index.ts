@@ -5,3 +5,5 @@ export * from './rules.js';
 export * from './task.js';
 export * from './model.js';
 export * from './mock.js';
+export * from './strategyArtifacts.js';
+export * from './candidate.js';

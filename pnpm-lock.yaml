@@ -1,0 +1,184 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  apps/finance:
+    dependencies:
+      '@stratos/bias-monitor':
+        specifier: workspace:*
+        version: link:../../packages/bias-monitor
+      '@stratos/claim-extractor':
+        specifier: workspace:*
+        version: link:../../packages/claim-extractor
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@stratos/error-utilization':
+        specifier: workspace:*
+        version: link:../../packages/error-utilization
+      '@stratos/evaluation-engine':
+        specifier: workspace:*
+        version: link:../../packages/evaluation-engine
+      '@stratos/experiment-engine':
+        specifier: workspace:*
+        version: link:../../packages/experiment-engine
+      '@stratos/model-gateway':
+        specifier: workspace:*
+        version: link:../../packages/model-gateway
+      '@stratos/model-router':
+        specifier: workspace:*
+        version: link:../../packages/model-router
+      '@stratos/replay-debug':
+        specifier: workspace:*
+        version: link:../../packages/replay-debug
+      '@stratos/review-engine':
+        specifier: workspace:*
+        version: link:../../packages/review-engine
+      '@stratos/rule-engine':
+        specifier: workspace:*
+        version: link:../../packages/rule-engine
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
+      '@stratos/strategy-compiler':
+        specifier: workspace:*
+        version: link:../../packages/strategy-compiler
+      '@stratos/stu-registry':
+        specifier: workspace:*
+        version: link:../../packages/stu-registry
+      '@stratos/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+
+  packages/bias-monitor:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/claim-extractor: {}
+
+  packages/core:
+    dependencies:
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/error-utilization:
+    dependencies:
+      '@stratos/review-engine':
+        specifier: workspace:*
+        version: link:../review-engine
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/evaluation-engine:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/rule-engine':
+        specifier: workspace:*
+        version: link:../rule-engine
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@stratos/strategy-compiler':
+        specifier: workspace:*
+        version: link:../strategy-compiler
+
+  packages/experiment-engine:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/evaluation-engine':
+        specifier: workspace:*
+        version: link:../evaluation-engine
+      '@stratos/infrastructure':
+        specifier: workspace:*
+        version: link:../infrastructure
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/infrastructure:
+    dependencies:
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/model-gateway:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/model-router:
+    dependencies:
+      '@stratos/strategy-compiler':
+        specifier: workspace:*
+        version: link:../strategy-compiler
+
+  packages/replay-debug:
+    dependencies:
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/review-engine:
+    dependencies:
+      '@stratos/claim-extractor':
+        specifier: workspace:*
+        version: link:../claim-extractor
+
+  packages/rule-engine:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/shared-types: {}
+
+  packages/strategy-compiler:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@stratos/stu-registry':
+        specifier: workspace:*
+        version: link:../stu-registry
+
+  packages/stu-registry:
+    dependencies:
+      '@stratos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+
+  packages/ui:
+    dependencies:
+      '@stratos/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types

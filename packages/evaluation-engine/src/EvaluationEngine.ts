@@ -1,4 +1,9 @@
-import type { EvaluationResult } from './metrics/types.js';
+import type { EvaluationInput } from '@stratos/shared-types';
+import type {
+  CandidateEvaluationInput,
+  CandidateEvaluationSummary,
+  EvaluationResult
+} from './metrics/types.js';
 import { mockScore } from './scorers/mockScorer.js';
 
 export class EvaluationEngine {
@@ -29,5 +34,50 @@ export class EvaluationEngine {
       },
       notes: ['delta comparison']
     };
+  }
+
+  buildEvaluationInput(input: {
+    candidateId: string;
+    baselineId: string;
+    gateStatus: EvaluationInput['gate_status'];
+    biasReasons: string[];
+    supportCount: number;
+    candidateScore: number;
+    baselineScore: number;
+  }): EvaluationInput {
+    return {
+      candidate_id: input.candidateId,
+      baseline_id: input.baselineId,
+      gate_status: input.gateStatus,
+      bias_reasons: input.biasReasons,
+      support_count: input.supportCount,
+      candidate_score: input.candidateScore,
+      baseline_score: input.baselineScore
+    };
+  }
+
+  evaluateCandidateAgainstBaseline(input: CandidateEvaluationInput): CandidateEvaluationSummary {
+    const delta = input.candidateScore - input.baselineScore;
+    const recommendation = delta > 0 && input.supportCount > 0 ? 'promote' : 'hold';
+    return {
+      candidateId: input.candidateId,
+      baselineId: input.baselineId,
+      delta,
+      recommendation,
+      rationale:
+        recommendation === 'promote'
+          ? 'candidate outperformed baseline with supporting review evidence'
+          : 'insufficient candidate advantage or support evidence'
+    };
+  }
+
+  evaluateFromInput(input: EvaluationInput): CandidateEvaluationSummary {
+    return this.evaluateCandidateAgainstBaseline({
+      candidateId: input.candidate_id,
+      baselineId: input.baseline_id,
+      candidateScore: input.candidate_score,
+      baselineScore: input.baseline_score,
+      supportCount: input.support_count
+    });
   }
 }

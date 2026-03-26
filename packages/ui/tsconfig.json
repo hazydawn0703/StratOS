@@ -3,7 +3,22 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../shared-types"
+    }
+  ],
+  "exclude": [
+    "src/**/__tests__/**"
+  ]
 }

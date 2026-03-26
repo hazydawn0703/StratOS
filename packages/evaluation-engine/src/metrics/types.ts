@@ -1,3 +1,5 @@
+import type { EvaluationInput } from '@stratos/shared-types';
+
 export interface EvaluationMetrics {
   predictionValidity: number;
   confidenceCalibration: number;
@@ -12,3 +14,21 @@ export interface EvaluationResult {
   metrics: EvaluationMetrics;
   notes: string[];
 }
+
+export interface CandidateEvaluationInput {
+  candidateId: string;
+  baselineId: string;
+  candidateScore: number;
+  baselineScore: number;
+  supportCount: number;
+}
+
+export interface CandidateEvaluationSummary {
+  candidateId: string;
+  baselineId: string;
+  delta: number;
+  recommendation: 'promote' | 'hold';
+  rationale: string;
+}
+
+export type FrameworkEvaluationInput = EvaluationInput;
