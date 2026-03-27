@@ -18,3 +18,11 @@ export * from './evaluation/FinanceEvaluationService.js';
 export * from './services/FinanceAppOrchestratorService.js';
 export * from './api/financeApiRoutes.js';
 export * from './pages/financePages.js';
+
+export * from './benchmark/FinanceBenchmarkService.js';
+export * from './query/FinanceQueryService.js';
+export * from './http/FinanceRouteHandlers.js';
+export * from './ui/FinancePagesRuntime.js';
+export * from './providers/types.js';
+export * from './providers/mockProviders.js';
+export * from './providers/registry.js';

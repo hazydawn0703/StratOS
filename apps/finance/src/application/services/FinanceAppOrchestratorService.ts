@@ -4,7 +4,8 @@ import { FinanceErrorIntelligenceService } from '../error-intelligence/FinanceEr
 import { financeAppConfig } from '../config/financeAppConfig.js';
 import { FinancePredictionService } from '../predictions/FinancePredictionService.js';
 import { FinanceReviewService } from '../reviews/FinanceReviewService.js';
-import type { ArtifactType, FinanceSTUCandidateProposal } from '../../domain/models.js';
+import type { ArtifactType } from '../../domain/models.js';
+import { FinanceRepository } from '../../domain/repository.js';
 
 export interface FinanceEndToEndInput {
   artifactType: ArtifactType;
@@ -29,6 +30,7 @@ export class FinanceAppOrchestratorService {
   private readonly reviewService = new FinanceReviewService();
   private readonly errorIntel = new FinanceErrorIntelligenceService();
   private readonly evaluationService = new FinanceEvaluationService();
+  private readonly repo = new FinanceRepository();
 
   async runMockTask(input: FinanceEndToEndInput): Promise<FinanceEndToEndResult> {
     const optimizedBody = [input.body, ...(input.activeSTUContext ?? []).map((x) => `STU_HINT:${x}`)].join('\n');
@@ -59,6 +61,14 @@ export class FinanceAppOrchestratorService {
       });
       const review = this.reviewService.reviewPrediction(prediction, outcome);
       reviewIds.push(review.id);
+      this.repo.saveTimelineLink({
+        id: `tl-${prediction.id}`,
+        ticker: prediction.ticker,
+        reportId: artifact.id,
+        predictionId: prediction.id,
+        reviewId: review.id,
+        createdAt: new Date().toISOString()
+      });
     }
 
     const reviews = this.reviewService.listReviews();
@@ -69,6 +79,16 @@ export class FinanceAppOrchestratorService {
     for (const proposal of proposals) {
       const result = await this.evaluationService.run(proposal, reviews, input.riskLevel);
       experimentIds.push(result.experimentId);
+      this.repo.saveTimelineLink({
+        id: `tl-${proposal.id}`,
+        ticker: input.ticker,
+        reportId: artifact.id,
+        errorPatternId: proposal.patternId,
+        candidateId: proposal.id,
+        experimentId: result.experimentId,
+        activeSTUEffect: result.promoted ? 'candidate promoted affects next task context' : 'candidate held',
+        createdAt: new Date().toISOString()
+      });
     }
 
     return {
