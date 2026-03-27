@@ -1,4 +1,5 @@
 import type {
+  ApprovalSLAAlertMessage,
   EvaluationInput,
   EvaluationResult,
   ExperimentCandidate,
@@ -10,7 +11,12 @@ import type {
   RuntimeGovernanceEvent
 } from '@stratos/shared-types';
 import type { TaskContext } from '@stratos/shared-types';
-import { DatabaseGovernanceEventStore, type GovernanceEventStore } from '@stratos/infrastructure';
+import {
+  DatabaseGovernanceEventStore,
+  InMemoryQueueAdapter,
+  type GovernanceEventStore,
+  type QueueAdapter
+} from '@stratos/infrastructure';
 import { decidePromotionAction } from './decision/promotionDecision.js';
 import { StrategyLifecycleGuard } from './lifecycle/StrategyLifecycleGuard.js';
 import { deterministicRollout } from './rollout/deterministicRollout.js';
@@ -20,10 +26,16 @@ export class ExperimentEngine {
   private readonly experiments = new Map<string, ExperimentRecord>();
   private readonly lifecycleGuard = new StrategyLifecycleGuard();
   private readonly eventStore: GovernanceEventStore;
+  private readonly alertQueue: QueueAdapter<ApprovalSLAAlertMessage>;
   private readonly approvalTickets = new Map<string, ManualApprovalTicket>();
+  private readonly slaAlertedTickets = new Set<string>();
 
-  constructor(eventStore: GovernanceEventStore = new DatabaseGovernanceEventStore()) {
+  constructor(
+    eventStore: GovernanceEventStore = new DatabaseGovernanceEventStore(),
+    alertQueue: QueueAdapter<ApprovalSLAAlertMessage> = new InMemoryQueueAdapter<ApprovalSLAAlertMessage>()
+  ) {
     this.eventStore = eventStore;
+    this.alertQueue = alertQueue;
   }
 
   async registerCandidate(candidateId: string): Promise<void> {
@@ -320,6 +332,18 @@ export class ExperimentEngine {
       at: nowIso,
       payload: { due_at: ticket.sla_due_at, status: ticket.status }
     });
+    if (!this.slaAlertedTickets.has(ticket.ticket_id)) {
+      await this.alertQueue.enqueue({
+        alert_id: `alert-${ticket.ticket_id}`,
+        run_id: input.runId ?? ticket.run_id,
+        candidate_id: input.candidateId,
+        ticket_id: ticket.ticket_id,
+        due_at: ticket.sla_due_at,
+        breached_at: nowIso,
+        status: 'pending'
+      });
+      this.slaAlertedTickets.add(ticket.ticket_id);
+    }
     return { breached: true, dueAt: ticket.sla_due_at };
   }
 

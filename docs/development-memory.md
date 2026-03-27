@@ -481,3 +481,18 @@
 - 将 `PromotionAuditRecord` 增加 `run_id`，并将 `audit_id` 绑定 run 维度，降低跨 run 冲突风险。
 - `rejectPromotion` 增加 `runId` 透传能力，保证 reject 事件可按 run 准确检索。
 - 新增 reject 路径回归测试，验证 `manual_approval_rejected` 事件写入与 rollback 决策一致性。
+
+## 2026-03-26 Phase O — SLA 告警去重 + Replay run 维审计摘要
+
+- 当前阶段名称：Phase O / Alerting & Replay Audit Extension
+- 完成内容：
+  - `ExperimentEngine.checkApprovalSLA` 接入 queue 告警输出（`ApprovalSLAAlertMessage`），并基于 `ticket_id` 做去重，避免重复 breach 反复告警。
+  - 新增 SLA 告警消息协议：`alert_id/run_id/candidate_id/ticket_id/due_at/breached_at/status`。
+  - `ReplayAuditEngine` 增加 run 维摘要方法 `explainPromotionRunSummary`，输出 `run + promotion summary + governance events`。
+  - 回归测试补充：
+    - SLA breach 首次入队、二次检查不重复入队；
+    - run 维 replay 审计摘要输出格式校验。
+- 当前系统是否可运行：`pnpm build` / `pnpm test` 通过。
+- 下一阶段计划（Phase P 候选）：
+  - 告警消息与 queue 消费端联调（ack/retry 策略 + dead-letter）。
+  - run 维 replay 摘要接入 API/控制台查询接口。

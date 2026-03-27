@@ -5,7 +5,7 @@ import {
   StrategyLifecycleGuard,
   decidePromotionAction
 } from '../packages/experiment-engine/dist/index.js';
-import { InMemoryGovernanceEventStore } from '../packages/infrastructure/dist/index.js';
+import { InMemoryGovernanceEventStore, InMemoryQueueAdapter } from '../packages/infrastructure/dist/index.js';
 
 test('promotion path candidate -> evaluated -> experimenting -> active', async () => {
   const guard = new StrategyLifecycleGuard();
@@ -151,7 +151,8 @@ test('manual approval path can promote candidate and leaves governance event tra
 });
 
 test('manual review from risk notes creates approval ticket even if policy does not require manual approval', async () => {
-  const engine = new ExperimentEngine(new InMemoryGovernanceEventStore());
+  const queue = new InMemoryQueueAdapter();
+  const engine = new ExperimentEngine(new InMemoryGovernanceEventStore(), queue);
   await engine.registerCandidate('cand-risk');
   await engine.markCandidateEvaluated('cand-risk');
   await engine.startExperimentGuarded('cand-risk');
@@ -207,6 +208,18 @@ test('manual review from risk notes creates approval ticket even if policy does 
   assert.equal(sla.breached, true);
   const runEvents = await engine.listGovernanceEventsByRunId('run-risk-1');
   assert.ok(runEvents.some((item) => item.type === 'approval_sla_breached'));
+
+  const alert1 = await queue.dequeue();
+  assert.ok(alert1);
+  assert.equal(alert1.message.candidate_id, 'cand-risk');
+
+  await engine.checkApprovalSLA({
+    candidateId: 'cand-risk',
+    runId: 'run-risk-1',
+    now: '2099-01-02T00:00:00.000Z'
+  });
+  const alert2 = await queue.dequeue();
+  assert.equal(alert2, undefined);
 });
 
 test('approvePromotion rejects invalid inputs', async () => {

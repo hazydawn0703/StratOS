@@ -77,6 +77,16 @@ export interface RuntimeGovernanceEvent {
   payload: Record<string, unknown>;
 }
 
+export interface ApprovalSLAAlertMessage {
+  alert_id: string;
+  run_id: string;
+  candidate_id: string;
+  ticket_id: string;
+  due_at: string;
+  breached_at: string;
+  status: 'pending';
+}
+
 export interface PromotionAuditRecord {
   audit_id: string;
   run_id?: string;
