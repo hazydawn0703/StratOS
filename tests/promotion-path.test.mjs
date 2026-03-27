@@ -212,6 +212,11 @@ test('manual review from risk notes creates approval ticket even if policy does 
   const alert1 = await queue.dequeue();
   assert.ok(alert1);
   assert.equal(alert1.message.candidate_id, 'cand-risk');
+  await queue.retry(alert1.id);
+  const consumeStatus = await engine.consumeNextSLAAlert(async (_message) => {
+    // consume success path
+  });
+  assert.equal(consumeStatus, 'processed');
 
   await engine.checkApprovalSLA({
     candidateId: 'cand-risk',

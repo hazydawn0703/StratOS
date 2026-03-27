@@ -26,3 +26,17 @@ test('promotion run summary includes runId and governance events', () => {
   assert.match(summary, /run:run-phase-o-1/);
   assert.match(summary, /governance_events:manual_approval_requested\|approval_sla_breached/);
 });
+
+test('run summary index can store and retrieve latest summary by runId', () => {
+  const fixture = JSON.parse(
+    readFileSync(new URL('../packages/replay-debug/fixtures/promotion-decision-replay.json', import.meta.url), 'utf-8')
+  );
+  const engine = new ReplayAuditEngine();
+  const indexed = engine.indexPromotionRunSummary({
+    run_id: 'run-phase-o-2',
+    promotion: fixture,
+    governance_events: ['manual_approval_requested']
+  });
+  assert.equal(indexed.run_id, 'run-phase-o-2');
+  assert.equal(engine.getRunSummary('run-phase-o-2'), indexed.summary);
+});

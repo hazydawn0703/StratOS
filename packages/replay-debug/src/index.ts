@@ -39,7 +39,13 @@ export interface RunPromotionAuditSummaryInput {
   governance_events?: string[];
 }
 
+export interface RunPromotionAuditIndexItem {
+  run_id: string;
+  summary: string;
+}
+
 export class ReplayAuditEngine {
+  private readonly runAuditIndex = new Map<string, string>();
   replay(fixture: ReplayFixture): ReplayResult {
     const stages = fixture.events.map((event) => event.stage);
     return {
@@ -89,5 +95,15 @@ export class ReplayAuditEngine {
     });
     const events = input.governance_events?.length ? input.governance_events.join('|') : 'none';
     return `${promoSummary};governance_events:${events}`;
+  }
+
+  indexPromotionRunSummary(input: RunPromotionAuditSummaryInput): RunPromotionAuditIndexItem {
+    const summary = this.explainPromotionRunSummary(input);
+    this.runAuditIndex.set(input.run_id, summary);
+    return { run_id: input.run_id, summary };
+  }
+
+  getRunSummary(runId: string): string | undefined {
+    return this.runAuditIndex.get(runId);
   }
 }

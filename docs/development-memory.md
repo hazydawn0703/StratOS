@@ -496,3 +496,24 @@
 - 下一阶段计划（Phase P 候选）：
   - 告警消息与 queue 消费端联调（ack/retry 策略 + dead-letter）。
   - run 维 replay 摘要接入 API/控制台查询接口。
+
+## 2026-03-27 Phase P — 告警消费闭环 + Run 摘要索引
+
+- 当前阶段名称：Phase P / Alert Consumer Loop & Run Summary Index
+- 完成内容：
+  - `InMemoryQueueAdapter` 增强为真实 ack/retry 流程：
+    - 引入 in-flight 管理；
+    - 引入 retry 计数；
+    - 超过重试阈值进入 dead-letter。
+  - `ExperimentEngine` 新增 `consumeNextSLAAlert`，支持 SLA 告警消费（成功 ack / 失败 retry）。
+  - `ReplayAuditEngine` 新增 run 摘要索引能力：
+    - `indexPromotionRunSummary`
+    - `getRunSummary`
+  - 新增/扩展测试：
+    - 队列 retry -> dead-letter 路径；
+    - SLA 告警消费路径；
+    - run 摘要索引读写校验。
+- 当前系统是否可运行：`pnpm install --frozen-lockfile` / `pnpm clean` / `pnpm build` / `pnpm typecheck` / `pnpm test` 通过。
+- 下一阶段计划（Phase Q 候选）：
+  - 将 dead-letter 告警接入统一治理控制台与人工处理队列。
+  - 将 run 摘要索引持久化并开放按时间窗检索。

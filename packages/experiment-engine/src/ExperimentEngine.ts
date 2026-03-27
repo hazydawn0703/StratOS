@@ -347,6 +347,22 @@ export class ExperimentEngine {
     return { breached: true, dueAt: ticket.sla_due_at };
   }
 
+  async consumeNextSLAAlert(
+    handler: (message: ApprovalSLAAlertMessage) => Promise<void> | void
+  ): Promise<'empty' | 'processed' | 'retried'> {
+    const item = await this.alertQueue.dequeue();
+    if (!item) return 'empty';
+
+    try {
+      await handler(item.message);
+      await this.alertQueue.ack(item.id);
+      return 'processed';
+    } catch {
+      await this.alertQueue.retry(item.id);
+      return 'retried';
+    }
+  }
+
   private async appendEvent(event: RuntimeGovernanceEvent): Promise<void> {
     await this.eventStore.append(event);
   }
