@@ -125,6 +125,7 @@ export class FinancePromotionService {
     };
     const compiled = this.compiler.compile(this.registry.getCompilationInput(taskContext), taskContext);
     const compileAuditSummary = this.replayAudit.explainPromotionChange({
+      run_id: input.runId,
       candidate_id: finalAudit.candidate_id,
       source_error_pattern_id: finalAudit.source_error_pattern_id,
       baseline_version: finalAudit.evaluation.baseline_version,

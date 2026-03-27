@@ -536,4 +536,16 @@
 - 当前系统是否可运行：`pnpm install --frozen-lockfile` / `pnpm clean` / `pnpm build` / `pnpm typecheck` / `pnpm test` 通过。
 - 下一阶段计划（Phase R 候选）：
   - 将 dead-letter 与 run 摘要查询接入统一 API/控制台层。
-  - 对告警与审批链路增加多租户/权限边界校验。
+  - 将 run 摘要索引从内存扩展到持久化存储（保留当前单租户假设，不引入权限模型）。
+
+### Phase Q.1 — PRD V2 16.5/16.6 完整性回顾（边界收敛）
+
+- 回顾范围：
+  - 16.5：人工审批 + 运行期治理事件 + run 维追踪。
+  - 16.6：SLA 告警、dead-letter 回放、run 摘要查询。
+- 完整性检查结论：
+  - 16.5 已覆盖：manual_review ticket、approve/reject、run_id 审计、candidate/run 双维事件检索、finance auto-approve feature flag。
+  - 16.6 已覆盖：SLA breach 事件、队列 retry/dead-letter、dead-letter 手动回放、run 摘要索引与时间窗查询。
+- 本回合修正：
+  - finance compile replay 摘要补充 `run_id` 透传，避免 app 层摘要丢失 run 追踪。
+  - finance smoke 增加 `run_id` 与 run 维摘要断言，确保应用层链路与框架能力一致。
