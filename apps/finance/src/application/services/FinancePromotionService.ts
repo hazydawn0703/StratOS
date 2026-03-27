@@ -136,7 +136,42 @@ export class FinancePromotionService {
       decision_reasons: finalAudit.decision.reasons,
       active_stu_version: compiled.audit.activeStuVersions[0]?.split('@')[1]
     });
+    if (input.runId) {
+      this.replayAudit.indexPromotionRunSummary({
+        run_id: input.runId,
+        promotion: {
+          run_id: input.runId,
+          candidate_id: finalAudit.candidate_id,
+          source_error_pattern_id: finalAudit.source_error_pattern_id,
+          baseline_version: finalAudit.evaluation.baseline_version,
+          candidate_version: finalAudit.evaluation.candidate_version,
+          experiment_mode: finalAudit.experiment.mode,
+          experiment_bucket: finalAudit.experiment.bucket,
+          promotion_action: finalAudit.decision.action,
+          decision_reasons: finalAudit.decision.reasons,
+          active_stu_version: compiled.audit.activeStuVersions[0]?.split('@')[1]
+        }
+      });
+    }
 
     return { audit: finalAudit, compileAuditSummary };
+  }
+
+  getRunSummary(runId: string): string | undefined {
+    return this.replayAudit.getRunSummary(runId);
+  }
+
+  listRunSummaries(input?: { from?: string; to?: string }): Array<{ run_id: string; summary: string; indexed_at: string }> {
+    return this.replayAudit.listRunSummaries(input);
+  }
+
+  listDeadLetterAlerts(): Array<{ alert_id: string; run_id: string; candidate_id: string }> {
+    return this.experimentEngine
+      .listDeadLetterSLAAlerts()
+      .map((item) => ({ alert_id: item.alert_id, run_id: item.run_id, candidate_id: item.candidate_id }));
+  }
+
+  requeueDeadLetterAlert(messageId: string): boolean {
+    return this.experimentEngine.requeueDeadLetterSLAAlert(messageId);
   }
 }
