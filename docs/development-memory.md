@@ -517,3 +517,23 @@
 - 下一阶段计划（Phase Q 候选）：
   - 将 dead-letter 告警接入统一治理控制台与人工处理队列。
   - 将 run 摘要索引持久化并开放按时间窗检索。
+
+## 2026-03-27 Phase Q — Dead-letter 人工回放 + 摘要时间窗查询
+
+- 当前阶段名称：Phase Q / Operational Governance Hardening
+- 完成内容：
+  - `InMemoryQueueAdapter` 增加 dead-letter 元信息 `movedAt` 与 `requeueDeadLetter`，支持人工回放处理。
+  - `ExperimentEngine` 增加：
+    - `listDeadLetterSLAAlerts`（治理侧查看 dead-letter）；
+    - `requeueDeadLetterSLAAlert`（治理侧手动回放）。
+  - `ReplayAuditEngine` 的 run 索引增强：
+    - `RunPromotionAuditIndexItem` 增加 `indexed_at`；
+    - 新增 `listRunSummaries({from,to})` 支持时间窗查询。
+  - 新增/扩展测试：
+    - dead-letter 再入队路径；
+    - SLA 告警消费失败 -> dead-letter -> 手动回放；
+    - run 摘要时间窗查询。
+- 当前系统是否可运行：`pnpm install --frozen-lockfile` / `pnpm clean` / `pnpm build` / `pnpm typecheck` / `pnpm test` 通过。
+- 下一阶段计划（Phase R 候选）：
+  - 将 dead-letter 与 run 摘要查询接入统一 API/控制台层。
+  - 对告警与审批链路增加多租户/权限边界校验。

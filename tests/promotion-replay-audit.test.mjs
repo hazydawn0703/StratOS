@@ -39,4 +39,8 @@ test('run summary index can store and retrieve latest summary by runId', () => {
   });
   assert.equal(indexed.run_id, 'run-phase-o-2');
   assert.equal(engine.getRunSummary('run-phase-o-2'), indexed.summary);
+  const all = engine.listRunSummaries();
+  assert.equal(all.length, 1);
+  const windowed = engine.listRunSummaries({ from: '2000-01-01T00:00:00.000Z', to: '2099-01-01T00:00:00.000Z' });
+  assert.equal(windowed.length, 1);
 });

@@ -10,7 +10,7 @@ export class InMemoryQueueAdapter<T = unknown> implements QueueAdapter<T> {
   private nextId = 1;
   private readonly inFlight = new Map<string, T>();
   private readonly retryCount = new Map<string, number>();
-  private readonly deadLetters: Array<{ id: string; message: T; retries: number }> = [];
+  private readonly deadLetters: Array<{ id: string; message: T; retries: number; movedAt: string }> = [];
 
   constructor(private readonly maxRetries = 3) {}
 
@@ -41,14 +41,23 @@ export class InMemoryQueueAdapter<T = unknown> implements QueueAdapter<T> {
     this.inFlight.delete(messageId);
 
     if (retries > this.maxRetries) {
-      this.deadLetters.push({ id: messageId, message, retries });
+      this.deadLetters.push({ id: messageId, message, retries, movedAt: new Date().toISOString() });
       this.retryCount.delete(messageId);
       return;
     }
     this.queue.push({ id: messageId, message });
   }
 
-  getDeadLetters(): Array<{ id: string; message: T; retries: number }> {
+  getDeadLetters(): Array<{ id: string; message: T; retries: number; movedAt: string }> {
     return [...this.deadLetters];
+  }
+
+  requeueDeadLetter(messageId: string): boolean {
+    const index = this.deadLetters.findIndex((item) => item.id === messageId);
+    if (index < 0) return false;
+    const [item] = this.deadLetters.splice(index, 1);
+    this.retryCount.delete(messageId);
+    this.queue.push({ id: item.id, message: item.message });
+    return true;
   }
 }

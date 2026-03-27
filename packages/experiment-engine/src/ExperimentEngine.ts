@@ -363,6 +363,22 @@ export class ExperimentEngine {
     }
   }
 
+  listDeadLetterSLAAlerts(): ApprovalSLAAlertMessage[] {
+    const queue = this.alertQueue as {
+      getDeadLetters?: () => Array<{ message: ApprovalSLAAlertMessage }>;
+    };
+    if (!queue.getDeadLetters) return [];
+    return queue.getDeadLetters().map((item) => item.message);
+  }
+
+  requeueDeadLetterSLAAlert(alertMessageId: string): boolean {
+    const queue = this.alertQueue as {
+      requeueDeadLetter?: (messageId: string) => boolean;
+    };
+    if (!queue.requeueDeadLetter) return false;
+    return queue.requeueDeadLetter(alertMessageId);
+  }
+
   private async appendEvent(event: RuntimeGovernanceEvent): Promise<void> {
     await this.eventStore.append(event);
   }

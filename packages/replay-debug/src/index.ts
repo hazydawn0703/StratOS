@@ -42,10 +42,11 @@ export interface RunPromotionAuditSummaryInput {
 export interface RunPromotionAuditIndexItem {
   run_id: string;
   summary: string;
+  indexed_at: string;
 }
 
 export class ReplayAuditEngine {
-  private readonly runAuditIndex = new Map<string, string>();
+  private readonly runAuditIndex = new Map<string, RunPromotionAuditIndexItem>();
   replay(fixture: ReplayFixture): ReplayResult {
     const stages = fixture.events.map((event) => event.stage);
     return {
@@ -99,11 +100,26 @@ export class ReplayAuditEngine {
 
   indexPromotionRunSummary(input: RunPromotionAuditSummaryInput): RunPromotionAuditIndexItem {
     const summary = this.explainPromotionRunSummary(input);
-    this.runAuditIndex.set(input.run_id, summary);
-    return { run_id: input.run_id, summary };
+    const item: RunPromotionAuditIndexItem = {
+      run_id: input.run_id,
+      summary,
+      indexed_at: new Date().toISOString()
+    };
+    this.runAuditIndex.set(input.run_id, item);
+    return item;
   }
 
   getRunSummary(runId: string): string | undefined {
-    return this.runAuditIndex.get(runId);
+    return this.runAuditIndex.get(runId)?.summary;
+  }
+
+  listRunSummaries(input?: { from?: string; to?: string }): RunPromotionAuditIndexItem[] {
+    const from = input?.from;
+    const to = input?.to;
+    return [...this.runAuditIndex.values()].filter((item) => {
+      if (from && item.indexed_at < from) return false;
+      if (to && item.indexed_at > to) return false;
+      return true;
+    });
   }
 }

@@ -18,4 +18,11 @@ test('in-memory queue supports retry and dead-letter after max retries', async (
   assert.equal(deadLetters.length, 1);
   assert.equal(deadLetters[0].id, retried.id);
   assert.equal(deadLetters[0].retries, 2);
+  assert.ok(deadLetters[0].movedAt);
+
+  const requeued = queue.requeueDeadLetter(retried.id);
+  assert.equal(requeued, true);
+  const restored = await queue.dequeue();
+  assert.ok(restored);
+  assert.equal(restored.id, retried.id);
 });

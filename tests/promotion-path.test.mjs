@@ -336,3 +336,64 @@ test('rejectPromotion marks rollback and records rejection event with runId', as
   const runEvents = await engine.listGovernanceEventsByRunId('run-reject-1');
   assert.ok(runEvents.some((item) => item.type === 'manual_approval_rejected'));
 });
+
+test('SLA alert dead-letter can be listed and manually requeued', async () => {
+  const queue = new InMemoryQueueAdapter(0);
+  const engine = new ExperimentEngine(new InMemoryGovernanceEventStore(), queue);
+  await engine.registerCandidate('cand-dlq');
+  await engine.markCandidateEvaluated('cand-dlq');
+  await engine.startExperimentGuarded('cand-dlq');
+
+  await engine.evaluatePromotion({
+    runId: 'run-dlq-1',
+    policy: {
+      policy_id: 'p-dlq',
+      app: 'finance',
+      min_sample_size: 10,
+      min_observation_window_hours: 24,
+      require_manual_approval: false,
+      promote_threshold: 0.5,
+      rollback_threshold: -0.5
+    },
+    evaluation: {
+      candidate_id: 'cand-dlq',
+      candidate_version: 'v2',
+      baseline_id: 'baseline',
+      baseline_version: 'v1',
+      recommendation: 'promote',
+      metric_deltas: { quality_delta: 0.6 },
+      risk_notes: ['needs review'],
+      sample_failures: []
+    },
+    experiment: {
+      experiment_id: 'exp-cand-dlq',
+      candidate_id: 'cand-dlq',
+      candidate_version: 'v2',
+      baseline_version: 'v1',
+      mode: 'canary',
+      bucket: 'b1',
+      sample_size: 20,
+      observation_window_hours: 48,
+      metrics: { quality_delta: 0.6 },
+      rollback_ready: true,
+      notes: []
+    },
+    sourceErrorPatternId: 'pattern-dlq',
+    impactedTaskType: 'report_generation'
+  });
+
+  await engine.checkApprovalSLA({
+    candidateId: 'cand-dlq',
+    runId: 'run-dlq-1',
+    now: '2099-01-01T00:00:00.000Z'
+  });
+  const status = await engine.consumeNextSLAAlert(async () => {
+    throw new Error('simulate consumer failure');
+  });
+  assert.equal(status, 'retried');
+
+  const deadLetters = engine.listDeadLetterSLAAlerts();
+  assert.equal(deadLetters.length, 1);
+  const requeued = engine.requeueDeadLetterSLAAlert('msg-1');
+  assert.equal(requeued, true);
+});
