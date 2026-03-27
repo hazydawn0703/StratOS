@@ -568,3 +568,21 @@
 - 下一阶段计划（Phase S 候选）：
   - 将 GovernanceTransportFacade 接入 HTTP 控制器（保持当前单租户边界，不扩展权限模型）。
   - 为 run summary 查询增加分页与排序参数，支持更大窗口检索。
+
+## 2026-03-27 Phase S — Governance HTTP Controller + Summary Query Pagination
+
+- 当前阶段名称：Phase S / API-facing Governance Access
+- 完成内容：
+  - 在 transport 层新增 `FinanceGovernanceHttpController`，覆盖：
+    - `GET /governance/run-summary`
+    - `GET /governance/run-summaries`
+    - `GET /governance/dead-letters`
+    - `POST /governance/dead-letters/requeue`
+  - `ReplayAuditEngine.listRunSummaries` 增加 `sort/offset/limit` 参数，支持分页与排序。
+  - `FinanceGovernanceTransportFacade` 与 `FinancePromotionService` 对齐新查询参数；`FinancePromotionService` 保持 run summary index 写入。
+  - 新增 HTTP controller 回归测试；扩展 governance transport 测试覆盖分页参数。
+  - 输出 `docs/prd-v2-core-completion-checklist.md`，用于 PRD V2 核心框架完成度比对。
+- 当前系统是否可运行：`pnpm install --frozen-lockfile` / `pnpm clean` / `pnpm build` / `pnpm typecheck` / `pnpm test` 通过。
+- 下一阶段计划（Phase T 候选）：
+  - 将 `FinanceGovernanceHttpController` 对接真实 HTTP router / OpenAPI 描述。
+  - 将 run summary index 从内存 map 迁移到可配置存储后端。

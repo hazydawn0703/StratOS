@@ -40,7 +40,10 @@ test('finance governance transport can query run summaries after promotion flow'
 
   const list = await governanceFacade.listRunSummaries({
     from: '2000-01-01T00:00:00.000Z',
-    to: '2099-01-01T00:00:00.000Z'
+    to: '2099-01-01T00:00:00.000Z',
+    sort: 'indexed_at_desc',
+    offset: 0,
+    limit: 10
   });
   assert.equal(list.statusCode, 200);
   assert.ok(list.items.length >= 1);

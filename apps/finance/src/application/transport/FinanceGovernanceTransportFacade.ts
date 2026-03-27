@@ -7,6 +7,9 @@ export interface GovernanceRunSummaryRequest {
 export interface GovernanceRunSummaryListRequest {
   from?: string;
   to?: string;
+  sort?: 'indexed_at_asc' | 'indexed_at_desc';
+  offset?: number;
+  limit?: number;
 }
 
 export interface GovernanceRequeueRequest {

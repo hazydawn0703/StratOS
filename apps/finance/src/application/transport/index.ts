@@ -4,4 +4,5 @@ export * from './mapper.js';
 export * from './endpointContracts.js';
 export * from './FinanceTaskTransportFacade.js';
 export * from './FinanceGovernanceTransportFacade.js';
+export * from './FinanceGovernanceHttpController.js';
 export * from './mockTransportDemo.js';

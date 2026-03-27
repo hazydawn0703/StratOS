@@ -113,13 +113,26 @@ export class ReplayAuditEngine {
     return this.runAuditIndex.get(runId)?.summary;
   }
 
-  listRunSummaries(input?: { from?: string; to?: string }): RunPromotionAuditIndexItem[] {
+  listRunSummaries(input?: {
+    from?: string;
+    to?: string;
+    sort?: 'indexed_at_asc' | 'indexed_at_desc';
+    offset?: number;
+    limit?: number;
+  }): RunPromotionAuditIndexItem[] {
     const from = input?.from;
     const to = input?.to;
-    return [...this.runAuditIndex.values()].filter((item) => {
+    const sort = input?.sort ?? 'indexed_at_desc';
+    const offset = Math.max(0, input?.offset ?? 0);
+    const limit = input?.limit ? Math.max(1, input.limit) : undefined;
+
+    const filtered = [...this.runAuditIndex.values()].filter((item) => {
       if (from && item.indexed_at < from) return false;
       if (to && item.indexed_at > to) return false;
       return true;
     });
+    filtered.sort((a, b) => (sort === 'indexed_at_asc' ? a.indexed_at.localeCompare(b.indexed_at) : b.indexed_at.localeCompare(a.indexed_at)));
+    const paged = filtered.slice(offset, limit ? offset + limit : undefined);
+    return paged;
   }
 }

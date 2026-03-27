@@ -161,7 +161,13 @@ export class FinancePromotionService {
     return this.replayAudit.getRunSummary(runId);
   }
 
-  listRunSummaries(input?: { from?: string; to?: string }): Array<{ run_id: string; summary: string; indexed_at: string }> {
+  listRunSummaries(input?: {
+    from?: string;
+    to?: string;
+    sort?: 'indexed_at_asc' | 'indexed_at_desc';
+    offset?: number;
+    limit?: number;
+  }): Array<{ run_id: string; summary: string; indexed_at: string }> {
     return this.replayAudit.listRunSummaries(input);
   }
 
