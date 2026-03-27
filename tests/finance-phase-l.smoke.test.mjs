@@ -22,15 +22,19 @@ test('finance Phase L smoke: Claim->Review->ErrorPattern->STUCandidate->Evaluati
   });
 
   const promotionFlow = await promotionService.run({
+    runId: 'run-finance-phase-l-1',
     candidate: candidateFlow.candidate,
     taskType: 'report_generation',
     baselineVersion: 'finance-baseline-v1',
     candidateVersion: 'finance-candidate-v2',
     evaluationMetrics: { quality_delta: 0.3, risk_delta: 0.05 },
-    experimentMode: 'canary'
+    experimentMode: 'canary',
+    governance: { autoApproveManualReview: true, approver: 'finance-lead' }
   });
 
   assert.ok(['promote', 'hold', 'rollback', 'manual_review', 'deprecate'].includes(promotionFlow.audit.decision.action));
+  assert.equal(promotionFlow.audit.run_id, 'run-finance-phase-l-1');
+  assert.match(promotionFlow.compileAuditSummary, /run:run-finance-phase-l-1/);
   assert.match(promotionFlow.compileAuditSummary, /candidate:/);
   assert.match(promotionFlow.compileAuditSummary, /decision:/);
 });

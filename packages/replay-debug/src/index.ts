@@ -21,6 +21,7 @@ export interface ReplayDiff {
 }
 
 export interface PromotionReplayFixture {
+  run_id?: string;
   candidate_id: string;
   source_error_pattern_id: string;
   baseline_version: string;
@@ -32,7 +33,20 @@ export interface PromotionReplayFixture {
   active_stu_version?: string;
 }
 
+export interface RunPromotionAuditSummaryInput {
+  run_id: string;
+  promotion: PromotionReplayFixture;
+  governance_events?: string[];
+}
+
+export interface RunPromotionAuditIndexItem {
+  run_id: string;
+  summary: string;
+  indexed_at: string;
+}
+
 export class ReplayAuditEngine {
+  private readonly runAuditIndex = new Map<string, RunPromotionAuditIndexItem>();
   replay(fixture: ReplayFixture): ReplayResult {
     const stages = fixture.events.map((event) => event.stage);
     return {
@@ -63,6 +77,7 @@ export class ReplayAuditEngine {
       ? `active:${fixture.active_stu_version}`
       : 'active:not_promoted';
     return [
+      ...(fixture.run_id ? [`run:${fixture.run_id}`] : []),
       `candidate:${fixture.candidate_id}`,
       `pattern:${fixture.source_error_pattern_id}`,
       `baseline:${fixture.baseline_version}`,
@@ -72,5 +87,52 @@ export class ReplayAuditEngine {
       activeInfo,
       `reasons:${fixture.decision_reasons.join('|')}`
     ].join(';');
+  }
+
+  explainPromotionRunSummary(input: RunPromotionAuditSummaryInput): string {
+    const promoSummary = this.explainPromotionChange({
+      ...input.promotion,
+      run_id: input.run_id
+    });
+    const events = input.governance_events?.length ? input.governance_events.join('|') : 'none';
+    return `${promoSummary};governance_events:${events}`;
+  }
+
+  indexPromotionRunSummary(input: RunPromotionAuditSummaryInput): RunPromotionAuditIndexItem {
+    const summary = this.explainPromotionRunSummary(input);
+    const item: RunPromotionAuditIndexItem = {
+      run_id: input.run_id,
+      summary,
+      indexed_at: new Date().toISOString()
+    };
+    this.runAuditIndex.set(input.run_id, item);
+    return item;
+  }
+
+  getRunSummary(runId: string): string | undefined {
+    return this.runAuditIndex.get(runId)?.summary;
+  }
+
+  listRunSummaries(input?: {
+    from?: string;
+    to?: string;
+    sort?: 'indexed_at_asc' | 'indexed_at_desc';
+    offset?: number;
+    limit?: number;
+  }): RunPromotionAuditIndexItem[] {
+    const from = input?.from;
+    const to = input?.to;
+    const sort = input?.sort ?? 'indexed_at_desc';
+    const offset = Math.max(0, input?.offset ?? 0);
+    const limit = input?.limit ? Math.max(1, input.limit) : undefined;
+
+    const filtered = [...this.runAuditIndex.values()].filter((item) => {
+      if (from && item.indexed_at < from) return false;
+      if (to && item.indexed_at > to) return false;
+      return true;
+    });
+    filtered.sort((a, b) => (sort === 'indexed_at_asc' ? a.indexed_at.localeCompare(b.indexed_at) : b.indexed_at.localeCompare(a.indexed_at)));
+    const paged = filtered.slice(offset, limit ? offset + limit : undefined);
+    return paged;
   }
 }
