@@ -44,10 +44,52 @@ export interface PromotionDecision {
   action: PromotionAction;
   reasons: string[];
   requires_manual_approval: boolean;
+  approval_status?: 'not_required' | 'pending' | 'approved' | 'rejected';
+  approved_by?: string;
+  approved_at?: string;
+}
+
+export interface ManualApprovalTicket {
+  ticket_id: string;
+  run_id: string;
+  candidate_id: string;
+  candidate_version: string;
+  requested_action: Exclude<PromotionAction, 'manual_review'>;
+  status: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  sla_due_at?: string;
+  reviewed_at?: string;
+  reviewed_by?: string;
+  note?: string;
+}
+
+export interface RuntimeGovernanceEvent {
+  event_id: string;
+  run_id: string;
+  candidate_id: string;
+  type:
+    | 'promotion_decision_evaluated'
+    | 'manual_approval_requested'
+    | 'manual_approval_approved'
+    | 'manual_approval_rejected'
+    | 'approval_sla_breached';
+  at: string;
+  payload: Record<string, unknown>;
+}
+
+export interface ApprovalSLAAlertMessage {
+  alert_id: string;
+  run_id: string;
+  candidate_id: string;
+  ticket_id: string;
+  due_at: string;
+  breached_at: string;
+  status: 'pending';
 }
 
 export interface PromotionAuditRecord {
   audit_id: string;
+  run_id?: string;
   candidate_id: string;
   source_error_pattern_id: string;
   evaluation: EvaluationResult;
