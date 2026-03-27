@@ -406,3 +406,134 @@
   - 增加人工审批流（manual approval）与 feature flag 联动策略。
 - 变更原因：Phase K 已完成 candidate 形成，但尚未形成“可治理晋升 + active 回注编译主链路”的后半闭环。
 - 影响范围：晋升治理协议层、实验治理引擎、registry/compile 主链路、finance 接入 facade 与测试基线。
+
+## 2026-03-26 Phase M — Manual Approval + Runtime Governance Event Store
+
+- 当前阶段名称：Phase M / Governance Auditability Continuation
+- 完成内容：
+  - 在 `@stratos/shared-types` 扩展治理协议：
+    - 为 `PromotionDecision` 增加 `approval_status/approved_by/approved_at`。
+    - 新增 `ManualApprovalTicket` 与 `RuntimeGovernanceEvent`，统一表达“待审批”与“治理事件轨迹”。
+  - 在 `@stratos/infrastructure` 增加治理事件存储抽象：
+    - `GovernanceEventStore` + `InMemoryGovernanceEventStore`。
+    - `DatabaseGovernanceEventStore`（可选 driver + transaction 包裹）用于后续接入真实审计库。
+  - 在 `@stratos/experiment-engine` 落地审批与事件审计：
+    - `evaluatePromotion` 在 manual review 场景自动生成审批 ticket。
+    - 新增 `approvePromotion`，支持人工批准/拒绝并驱动 lifecycle state。
+    - 新增 `listGovernanceEvents`，支持按 candidate 查询治理轨迹。
+  - 在 finance 接入层新增 feature-flag 化审批策略：
+    - `FinancePromotionService` 支持 `governance.autoApproveManualReview`；
+      在策略要求人工审批时可由 flag 触发自动批准（便于灰度联调/回归）。
+  - 新增回归测试覆盖：
+    - manual approval promote 路径。
+    - governance event trail 存在性校验。
+- 修改文件：
+  - `packages/shared-types/src/promotion.ts`
+  - `packages/infrastructure/src/database/StrategyLifecycleStore.ts`
+  - `packages/experiment-engine/src/ExperimentEngine.ts`
+  - `apps/finance/src/application/services/FinancePromotionService.ts`
+  - `tests/promotion-path.test.mjs`
+  - `tests/finance-phase-l.smoke.test.mjs`
+  - `docs/development-memory.md`
+- 当前系统是否可运行：`pnpm build` 与 `pnpm test` 已通过（本轮已先修复 workspace 安装/解析状态后再执行测试）。
+- 当前遗留风险：
+  - `autoApproveManualReview` 目前仅作为应用侧 feature flag，后续应与组织审批系统（RBAC/工单）对接。
+  - governance event store 目前为抽象与内存/bridge 实现，仍需落地外部审计库与 retention 策略。
+- 下一阶段计划（Phase N 候选）：
+  - 将审批 ticket 与事件轨迹写入统一审计数据模型（支持 runId/candidateId 交叉检索）。
+  - 补齐 manual approval 的 reject/deprecate 分支端到端测试，并增加审批 SLA 监控指标。
+- 变更原因：承接 Phase L 的“人工审批流 + feature flag 联动策略”遗留计划，补齐治理追踪最小闭环。
+- 影响范围：治理协议层、实验决策执行层、finance 接入编排与测试基线。
+
+### Phase M.1 补充（基于代码评审回合）
+
+- 修正 `manual_review` 审批状态语义：
+  - 仅当决策为 `manual_review` 时标记 `approval_status=pending`；
+  - `hold/rollback/promote` 不再误标 pending。
+- 修正审批触发条件：
+  - 即使 policy 未强制人工审批，只要决策进入 `manual_review`（如 risk note 触发）也会创建审批 ticket。
+- 增加审批 API 防御性校验：
+  - 无 ticket、candidate 与 audit 不匹配、非 `manual_review` 决策时会拒绝审批调用。
+- 新增回归测试：
+  - `manual_review`（risk note 触发）仍可创建审批 ticket。
+  - `approvePromotion` 非法输入拒绝路径。
+
+## 2026-03-26 Phase N — 审批追踪增强（runId 索引 + SLA breach 事件）
+
+- 当前阶段名称：Phase N / Approval Traceability Hardening
+- 完成内容：
+  - 为治理事件与审批 ticket 增加 `run_id` 维度，支持按 candidate 与 run 双索引检索。
+  - `GovernanceEventStore` 增加 `listByRunId` 抽象，内存/数据库桥接实现同步支持。
+  - `ExperimentEngine` 增加：
+    - `listGovernanceEventsByRunId`；
+    - `checkApprovalSLA`（pending ticket 超时后生成 `approval_sla_breached` 事件）。
+  - finance promotion 入口支持透传 `runId` 到治理引擎，保证端到端审计链按 run 收敛。
+  - 回归测试补充：
+    - run 维度事件查询；
+    - SLA breach 事件触发路径。
+- 当前系统是否可运行：`pnpm build` / `pnpm test` 通过。
+- 下一阶段计划（Phase O 候选）：
+  - 将 `approval_sla_breached` 对接告警渠道（queue/webhook）并增加去重策略。
+  - 在 replay-debug 中增加按 runId 的审计摘要输出模板。
+
+### Phase N.1 补充（review round）
+
+- 将 `PromotionAuditRecord` 增加 `run_id`，并将 `audit_id` 绑定 run 维度，降低跨 run 冲突风险。
+- `rejectPromotion` 增加 `runId` 透传能力，保证 reject 事件可按 run 准确检索。
+- 新增 reject 路径回归测试，验证 `manual_approval_rejected` 事件写入与 rollback 决策一致性。
+
+## 2026-03-26 Phase O — SLA 告警去重 + Replay run 维审计摘要
+
+- 当前阶段名称：Phase O / Alerting & Replay Audit Extension
+- 完成内容：
+  - `ExperimentEngine.checkApprovalSLA` 接入 queue 告警输出（`ApprovalSLAAlertMessage`），并基于 `ticket_id` 做去重，避免重复 breach 反复告警。
+  - 新增 SLA 告警消息协议：`alert_id/run_id/candidate_id/ticket_id/due_at/breached_at/status`。
+  - `ReplayAuditEngine` 增加 run 维摘要方法 `explainPromotionRunSummary`，输出 `run + promotion summary + governance events`。
+  - 回归测试补充：
+    - SLA breach 首次入队、二次检查不重复入队；
+    - run 维 replay 审计摘要输出格式校验。
+- 当前系统是否可运行：`pnpm build` / `pnpm test` 通过。
+- 下一阶段计划（Phase P 候选）：
+  - 告警消息与 queue 消费端联调（ack/retry 策略 + dead-letter）。
+  - run 维 replay 摘要接入 API/控制台查询接口。
+
+## 2026-03-27 Phase P — 告警消费闭环 + Run 摘要索引
+
+- 当前阶段名称：Phase P / Alert Consumer Loop & Run Summary Index
+- 完成内容：
+  - `InMemoryQueueAdapter` 增强为真实 ack/retry 流程：
+    - 引入 in-flight 管理；
+    - 引入 retry 计数；
+    - 超过重试阈值进入 dead-letter。
+  - `ExperimentEngine` 新增 `consumeNextSLAAlert`，支持 SLA 告警消费（成功 ack / 失败 retry）。
+  - `ReplayAuditEngine` 新增 run 摘要索引能力：
+    - `indexPromotionRunSummary`
+    - `getRunSummary`
+  - 新增/扩展测试：
+    - 队列 retry -> dead-letter 路径；
+    - SLA 告警消费路径；
+    - run 摘要索引读写校验。
+- 当前系统是否可运行：`pnpm install --frozen-lockfile` / `pnpm clean` / `pnpm build` / `pnpm typecheck` / `pnpm test` 通过。
+- 下一阶段计划（Phase Q 候选）：
+  - 将 dead-letter 告警接入统一治理控制台与人工处理队列。
+  - 将 run 摘要索引持久化并开放按时间窗检索。
+
+## 2026-03-27 Phase Q — Dead-letter 人工回放 + 摘要时间窗查询
+
+- 当前阶段名称：Phase Q / Operational Governance Hardening
+- 完成内容：
+  - `InMemoryQueueAdapter` 增加 dead-letter 元信息 `movedAt` 与 `requeueDeadLetter`，支持人工回放处理。
+  - `ExperimentEngine` 增加：
+    - `listDeadLetterSLAAlerts`（治理侧查看 dead-letter）；
+    - `requeueDeadLetterSLAAlert`（治理侧手动回放）。
+  - `ReplayAuditEngine` 的 run 索引增强：
+    - `RunPromotionAuditIndexItem` 增加 `indexed_at`；
+    - 新增 `listRunSummaries({from,to})` 支持时间窗查询。
+  - 新增/扩展测试：
+    - dead-letter 再入队路径；
+    - SLA 告警消费失败 -> dead-letter -> 手动回放；
+    - run 摘要时间窗查询。
+- 当前系统是否可运行：`pnpm install --frozen-lockfile` / `pnpm clean` / `pnpm build` / `pnpm typecheck` / `pnpm test` 通过。
+- 下一阶段计划（Phase R 候选）：
+  - 将 dead-letter 与 run 摘要查询接入统一 API/控制台层。
+  - 对告警与审批链路增加多租户/权限边界校验。
