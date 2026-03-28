@@ -7,6 +7,7 @@ import { FinanceReviewService } from '../reviews/FinanceReviewService.js';
 import { FinanceErrorIntelligenceService } from '../error-intelligence/FinanceErrorIntelligenceService.js';
 import { FinanceEvaluationService } from '../evaluation/FinanceEvaluationService.js';
 import { FinanceRepository } from '../../domain/repository.js';
+import { ReplayAuditEngine, type ReplayFixture } from '@stratos/replay-debug';
 
 export interface STUEffectReplayInput {
   ticker: string;
@@ -26,6 +27,7 @@ export interface STUEffectReplayResult {
     reviewDelta: number;
     errorPatternDelta: number;
   };
+  replayProof?: Record<string, unknown>;
 }
 
 export class ActiveSTUEffectProofService {
@@ -36,6 +38,7 @@ export class ActiveSTUEffectProofService {
   private readonly reviews: FinanceReviewService;
   private readonly errors: FinanceErrorIntelligenceService;
   private readonly evaluation: FinanceEvaluationService;
+  private readonly replayAudit = new ReplayAuditEngine();
 
   constructor(private readonly repo = new FinanceRepository()) {
     this.artifacts = new FinanceArtifactService(repo);
@@ -81,6 +84,28 @@ export class ActiveSTUEffectProofService {
     const activeCompiled = this.compiler.compile(this.registry.getCompilationInput(taskContext), taskContext);
     const active = await this.executeOnce('active', input, activeCompiled.promptLayer);
 
+    const baselineFixture: ReplayFixture = {
+      runId: `${taskContext.taskType}-baseline-${Date.now().toString(36)}`,
+      events: [
+        { at: new Date().toISOString(), stage: 'artifact', payload: { id: baseline.artifactId } },
+        { at: new Date().toISOString(), stage: 'prediction', payload: { count: baseline.predictionCount } },
+        { at: new Date().toISOString(), stage: 'review', payload: { count: baseline.reviewCount } },
+        { at: new Date().toISOString(), stage: 'error_pattern', payload: { count: baseline.patternCount } }
+      ]
+    };
+    const activeFixture: ReplayFixture = {
+      runId: `${taskContext.taskType}-active-${Date.now().toString(36)}`,
+      events: [
+        { at: new Date().toISOString(), stage: 'artifact', payload: { id: active.artifactId } },
+        { at: new Date().toISOString(), stage: 'prediction', payload: { count: active.predictionCount } },
+        { at: new Date().toISOString(), stage: 'review', payload: { count: active.reviewCount } },
+        { at: new Date().toISOString(), stage: 'error_pattern', payload: { count: active.patternCount } }
+      ]
+    };
+    const replayBaseline = this.replayAudit.replay(baselineFixture);
+    const replayActive = this.replayAudit.replay(activeFixture);
+    const replayDiff = this.replayAudit.diff(baselineFixture, activeFixture);
+
     const effectSummary = {
       artifactDelta: String(active.artifactBody).length - String(baseline.artifactBody).length,
       predictionDelta: Number(active.predictionCount) - Number(baseline.predictionCount),
@@ -100,7 +125,8 @@ export class ActiveSTUEffectProofService {
       },
       baseline,
       active,
-      effectSummary
+      effectSummary,
+      replayProof: { baseline: replayBaseline, active: replayActive, diff: replayDiff }
     };
 
     this.repo.saveSTUEffectReplay({ id: replayId, payload, createdAt: new Date().toISOString() });
@@ -120,7 +146,8 @@ export class ActiveSTUEffectProofService {
       },
       baseline,
       active,
-      effectSummary
+      effectSummary,
+      replayProof: { baseline: replayBaseline, active: replayActive, diff: replayDiff }
     };
   }
 

@@ -1,22 +1,20 @@
-import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { CliFinanceSqlExecutor, type FinanceSqlExecutor } from '../adapters/FinanceSqlExecutor.js';
 
 const DEFAULT_DB_PATH = resolve(process.cwd(), 'apps/finance/.data/finance-app.db');
 
-const runSql = (dbPath: string, sql: string): string => {
-  return execFileSync('sqlite3', [dbPath, '-json', sql], { encoding: 'utf8' }).trim();
-};
-
 export class FinanceSQLite {
-  constructor(private readonly dbPath: string = DEFAULT_DB_PATH) {
+  constructor(
+    private readonly dbPath: string = DEFAULT_DB_PATH,
+    private readonly sqlExecutor: FinanceSqlExecutor = new CliFinanceSqlExecutor()
+  ) {
     mkdirSync(dirname(this.dbPath), { recursive: true });
     this.bootstrap();
   }
 
   private bootstrap(): void {
-    runSql(
-      this.dbPath,
+    this.exec(
       `
 PRAGMA journal_mode=WAL;
 CREATE TABLE IF NOT EXISTS finance_portfolios (
@@ -105,7 +103,6 @@ CREATE TABLE IF NOT EXISTS finance_benchmark_samples (
   expected_json TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS finance_stu_effect_replays (
   id TEXT PRIMARY KEY,
   payload_json TEXT NOT NULL,
@@ -141,16 +138,17 @@ CREATE TABLE IF NOT EXISTS finance_timeline_links (
     const updates = Object.keys(columns)
       .map((k) => `${k}=excluded.${k}`)
       .join(',');
-    runSql(
-      this.dbPath,
-      `INSERT INTO ${table} (${keys.join(',')}) VALUES (${vals.join(',')}) ON CONFLICT(id) DO UPDATE SET ${updates};`
-    );
+    this.exec(`INSERT INTO ${table} (${keys.join(',')}) VALUES (${vals.join(',')}) ON CONFLICT(id) DO UPDATE SET ${updates};`);
   }
 
   query<T>(sql: string): T[] {
-    const out = runSql(this.dbPath, sql);
+    const out = this.exec(sql, true);
     if (!out) return [];
     return JSON.parse(out) as T[];
+  }
+
+  private exec(sql: string, asJson = false): string {
+    return this.sqlExecutor.exec(this.dbPath, sql, asJson);
   }
 
   private quote(value: string | number | null): string {

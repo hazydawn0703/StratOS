@@ -884,3 +884,45 @@
 - 五条 pnpm 命令结果：全部通过（V-G checks）。
 - 新增测试：`finance-web-runtime.smoke` + `mock/run` 路径可触发 provider stats。
 - 遗留问题/技术债/下一步建议：部署前阶段再处理真实 provider 稳定性工程。
+
+## 2026-03-28 Phase W — Review Comment Fix: Replay/Audit 边界校正 + SQLite infrastructure adapter 抽象补齐
+
+- 本阶段目标：
+  1) 回答并落实 review comment：`ActiveSTUEffectProofService` 仅做 finance orchestration/comparison，不重写 framework replay/audit 协议。
+  2) 补齐 SQLite 访问的 infrastructure adapter 抽象层，避免 repository 直接依赖 CLI 细节。
+
+- 实际完成内容：
+  - `ActiveSTUEffectProofService` 接入 `@stratos/replay-debug` 的 `ReplayAuditEngine`，改为基于 framework replay/diff 协议输出 replay proof，不在 app 重定义平行 replay 协议。
+  - 新增 `FinanceSqlExecutor` 抽象与 `CliFinanceSqlExecutor` 实现，将 sqlite3 CLI 调用从 `FinanceSQLite` 分离到 infrastructure adapter 层。
+  - `FinanceSQLite` 改为依赖 `FinanceSqlExecutor`，形成统一数据访问抽象边界。
+
+- 关键新增/修改文件：
+  - `apps/finance/src/infrastructure/adapters/FinanceSqlExecutor.ts`
+  - `apps/finance/src/infrastructure/sqlite/FinanceSQLite.ts`
+  - `apps/finance/src/application/services/ActiveSTUEffectProofService.ts`
+
+- 数据模型与接口变更：
+  - 新增 infrastructure adapter 接口：`FinanceSqlExecutor.exec`。
+  - `ActiveSTUEffectProofService` 返回结构新增 `replayProof`（来源于 framework replay engine）。
+
+- 与 framework 的接入方式：
+  - replay/diff 语义由 framework `ReplayAuditEngine` 提供，finance app 仅聚合、映射、解释。
+  - 未改动 framework STU/Compiler/Evaluation/Experiment 核心协议。
+
+- 已实现/未实现 PRD 条款：
+  - 已实现：review comment 指出的两项边界问题修复。
+  - 未实现：Prisma 级 ORM 迁移（仍为 SQL migration + adapter 抽象）。
+
+- 五条 pnpm 命令结果（仓库根目录）：
+  - `pnpm install --frozen-lockfile`：通过
+  - `pnpm clean`：通过
+  - `pnpm build`：通过
+  - `pnpm typecheck`：通过
+  - `pnpm test`：通过（47/47）
+
+- 新增测试：
+  - 无新增测试文件；现有 `finance-active-stu-effect.replay.test.mjs` 与全量测试通过，覆盖 replay proof 关键路径。
+
+- 当前遗留问题、技术债、下一步建议：
+  - 后续可将 `FinanceSqlExecutor` 扩展为可切换 sqlite driver（不仅 CLI）。
+  - 在部署前阶段再引入真实 provider 绑定与稳定性工程。
