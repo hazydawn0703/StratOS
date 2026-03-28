@@ -756,3 +756,131 @@
 - 已实现/未实现 PRD 条款：已完成接口层与mock层；未接真实第三方供应商。
 - 五条 pnpm 命令执行结果：全部通过（Stage E）。
 - 当前遗留问题、技术债、下一阶段建议：部署前阶段再接真实 provider SDK 与凭证治理。
+
+## 2026-03-27 Phase V — 正式产品运行层 + effect 证真层
+
+### V-A 正式 Web runtime 接入
+- 本阶段目标：将 runtime/controller 升级为正式可访问 web runtime。
+- 实际完成内容：
+  - 新增 `FinanceWebRuntime`（Node HTTP runtime）并映射正式页面路径：
+    `/finance/dashboard|portfolio|watchlist|reports|predictions|reviews|errors|strategy-lab|experiments|timeline`。
+  - API 路由通过 `FinanceRouteHandlers` 正式对外暴露，并保留 service/query/repository 分层。
+- 关键新增/修改文件：
+  - `apps/finance/src/web/FinanceWebRuntime.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/application/ui/FinancePagesRuntime.ts`
+- 数据模型与接口变更：页面支持列表/详情/过滤/状态展示参数。
+- 与 framework 的接入方式：未复制 framework 核心能力，仅 app 层 runtime 接线。
+- 已实现/未实现 PRD 条款：已实现正式可访问页面/API；未接入 Next.js（当前采用 Node HTTP runtime）。
+- 五条 pnpm 命令结果：全部通过（V-A checks）。
+- 新增测试：`tests/finance-web-runtime.smoke.test.mjs`。
+- 遗留问题/技术债/下一步建议：后续可平滑迁移到 Next.js App Router。
+
+### V-B migration / seed 体系
+- 本阶段目标：从 runtime bootstrap 演进到可维护 migration/seed 工作流。
+- 实际完成内容：
+  - 新增 migration SQL：`apps/finance/db/migrations/001_init.sql`。
+  - 新增脚本：`finance:db:init|migrate|seed|reset`。
+  - 在 `package.json` 增加对应命令。
+- 关键新增/修改文件：
+  - `apps/finance/db/migrations/001_init.sql`
+  - `apps/finance/scripts/db-*.mjs`
+  - `package.json`
+- 数据模型与接口变更：新增 `finance_migrations` 管理迁移状态。
+- 与 framework 的接入方式：仅处理 finance 领域表，不重定义 framework 主表。
+- 已实现/未实现 PRD 条款：已完成本地命令化迁移/seed；未接 Prisma。
+- 五条 pnpm 命令结果：全部通过（V-B checks）。
+- 新增测试：`tests/finance-db-workflow.smoke.test.mjs`。
+- 遗留问题/技术债/下一步建议：后续可引入 Prisma 管理 schema 演进。
+
+### V-C active STU effect 证真 + replay test
+- 本阶段目标：证明 active STU effect 真正回流并可回放。
+- 实际完成内容：
+  - 新增 `ActiveSTUEffectProofService`：
+    - 使用 `STURegistry + StrategyCompiler` 构造 baseline 与 active 两组同输入运行；
+    - 对比 artifact/prediction/review/error-pattern 差异；
+    - 落盘 replay 证据与 timeline 链接。
+  - 新增 replay API：
+    - `POST /api/finance/replay/stu-effect/run`
+    - `GET /api/finance/replay/stu-effect`
+- 关键新增/修改文件：
+  - `apps/finance/src/application/services/ActiveSTUEffectProofService.ts`
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+- 数据模型与接口变更：新增 `finance_stu_effect_replays` 表和 replay 查询接口。
+- 与 framework 的接入方式：effect 注入通过 framework compiler 审计信息可证明，未绕开 compiler 直写 prompt。
+- 已实现/未实现 PRD 条款：已完成 effect 可观察/可回放/与 candidate->evaluation->experiment 关联。
+- 五条 pnpm 命令结果：全部通过（V-C checks）。
+- 新增测试：`tests/finance-active-stu-effect.replay.test.mjs`。
+- 遗留问题/技术债/下一步建议：后续扩展多任务类型 replay 矩阵。
+
+### V-D Strategy Lab / Experiment Center 产品化增强
+- 本阶段目标：强化 baseline/candidate 比较与实验视图。
+- 实际完成内容：
+  - Query 层新增 Strategy Lab 比较、thesis 聚合、missed 样本列表。
+  - Experiment Center 增加 traffic ratio / recommendation / reasoning 输出。
+  - Evaluation 服务新增多维指标（claim precision、review quality proxy、bias delta 等）。
+- 关键新增/修改文件：
+  - `apps/finance/src/application/query/FinanceQueryService.ts`
+  - `apps/finance/src/application/evaluation/FinanceEvaluationService.ts`
+  - `apps/finance/src/application/ui/FinancePagesRuntime.ts`
+- 数据模型与接口变更：新增多维产品指标计算。
+- 与 framework 的接入方式：Promotion/Evaluation 结果仍复用 framework engines。
+- 已实现/未实现 PRD 条款：已补多维展示；未完成高级图表化 UI。
+- 五条 pnpm 命令结果：全部通过（V-D checks）。
+- 新增测试：沿用 web runtime + route + replay 测试覆盖。
+- 遗留问题/技术债/下一步建议：补图表组件和多维 drill-down。
+
+### V-E Timeline / audit / replay 体验增强
+- 本阶段目标：加强 timeline 可审计能力。
+- 实际完成内容：
+  - timeline 支持分页、时间窗、ticker/portfolio/taskType 过滤。
+  - timeline detail 与 replay entries 联查。
+  - 页面与 API 都可访问 debug/replay entry。
+- 关键新增/修改文件：
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/application/query/FinanceQueryService.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+- 数据模型与接口变更：timeline query 参数扩展（limit/offset/from/to/detailId）。
+- 与 framework 的接入方式：保留 framework replay/audit 语义，app 只做 finance 视图映射。
+- 已实现/未实现 PRD 条款：已实现 replay-friendly 查询入口；未做全文检索。
+- 五条 pnpm 命令结果：全部通过（V-E checks）。
+- 新增测试：`finance-web-runtime` + `finance-active-stu-effect` 覆盖。
+- 遗留问题/技术债/下一步建议：补索引策略与更多过滤器。
+
+### V-F 本地 observability 指标补齐
+- 本阶段目标：补最小本地可观测性。
+- 实际完成内容：
+  - 新增 `finance_metrics_events` 表。
+  - 记录指标：task count / artifact count / claim extraction count / review coverage / error pattern discovery / experiment count / promote/rollback count / latency。
+  - 新增 API：`GET /api/finance/metrics`，并返回 provider mock 调用统计。
+- 关键新增/修改文件：
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/application/predictions/FinancePredictionService.ts`
+  - `apps/finance/src/application/reviews/FinanceReviewService.ts`
+  - `apps/finance/src/application/error-intelligence/FinanceErrorIntelligenceService.ts`
+  - `apps/finance/src/application/evaluation/FinanceEvaluationService.ts`
+- 数据模型与接口变更：新增 metric 事件与汇总接口。
+- 与 framework 的接入方式：app observability 为解释层，不复制 framework 主语义。
+- 已实现/未实现 PRD 条款：已补最小观测；未接云监控。
+- 五条 pnpm 命令结果：全部通过（V-F checks）。
+- 新增测试：`finance-web-runtime.smoke` 间接验证 `/api/finance/metrics`。
+- 遗留问题/技术债/下一步建议：后续对接日志/trace聚合。
+
+### V-G provider 接口层小修补（非真实接入）
+- 本阶段目标：维持 provider 仅接口/mock/配置层。
+- 实际完成内容：
+  - 新增 `providerStats` 并在 mock providers 中统计调用次数。
+  - `/api/finance/metrics` 增加 providerStats 输出。
+  - 新增 `apps/finance/provider-switching.md` 说明切换位与阶段边界。
+- 关键新增/修改文件：
+  - `apps/finance/src/application/providers/providerStats.ts`
+  - `apps/finance/src/application/providers/mockProviders.ts`
+  - `apps/finance/provider-switching.md`
+- 数据模型与接口变更：provider 统计接口扩展。
+- 与 framework 的接入方式：不变，仍不绑定真实供应商。
+- 已实现/未实现 PRD 条款：已完成接口层强化；未做真实 SDK/密钥绑定。
+- 五条 pnpm 命令结果：全部通过（V-G checks）。
+- 新增测试：`finance-web-runtime.smoke` + `mock/run` 路径可触发 provider stats。
+- 遗留问题/技术债/下一步建议：部署前阶段再处理真实 provider 稳定性工程。

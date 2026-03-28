@@ -25,15 +25,22 @@ export interface FinanceEndToEndResult {
 }
 
 export class FinanceAppOrchestratorService {
-  private readonly artifactService = new FinanceArtifactService();
-  private readonly predictionService = new FinancePredictionService();
-  private readonly reviewService = new FinanceReviewService();
-  private readonly errorIntel = new FinanceErrorIntelligenceService();
-  private readonly evaluationService = new FinanceEvaluationService();
-  private readonly repo = new FinanceRepository();
+  private readonly artifactService: FinanceArtifactService;
+  private readonly predictionService: FinancePredictionService;
+  private readonly reviewService: FinanceReviewService;
+  private readonly errorIntel: FinanceErrorIntelligenceService;
+  private readonly evaluationService: FinanceEvaluationService;
+
+  constructor(private readonly repo = new FinanceRepository()) {
+    this.artifactService = new FinanceArtifactService(this.repo);
+    this.predictionService = new FinancePredictionService(this.repo);
+    this.reviewService = new FinanceReviewService(this.repo);
+    this.errorIntel = new FinanceErrorIntelligenceService(this.repo);
+    this.evaluationService = new FinanceEvaluationService(this.repo);
+  }
 
   async runMockTask(input: FinanceEndToEndInput): Promise<FinanceEndToEndResult> {
-    const optimizedBody = [input.body, ...(input.activeSTUContext ?? []).map((x) => `STU_HINT:${x}`)].join('\n');
+    const optimizedBody = [input.body, ...(input.activeSTUContext ?? []).map((x) => `STU_CONTEXT:${x}`)].join('\n');
     const artifact = this.artifactService.generate({
       taskType:
         input.artifactType === 'daily_brief'

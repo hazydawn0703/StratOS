@@ -55,6 +55,7 @@ export class FinancePredictionService {
       admitted.push(this.repo.savePrediction(prediction));
     }
 
+    this.repo.recordMetric({ id: `m-${Date.now().toString(36)}-${Math.random()}`, metricKey: 'claim_extraction_count', metricValue: admitted.length, meta: { rejected: rejected.length }, createdAt: new Date().toISOString() });
     return { admitted, rejected };
   }
 

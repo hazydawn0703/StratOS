@@ -47,6 +47,7 @@ export class FinanceReviewService {
       summary: `review(${prediction.id}): ${outcome.outcomeLabel}`
     };
 
+    this.repo.recordMetric({ id: `m-${Date.now().toString(36)}-${Math.random()}`, metricKey: 'review_coverage', metricValue: 1, meta: { result }, createdAt: new Date().toISOString() });
     return this.repo.saveReview(review);
   }
 

@@ -27,6 +27,20 @@ export interface FinanceBiasSnapshot {
   createdAt: string;
 }
 
+export interface FinanceMetricEvent {
+  id: string;
+  metricKey: string;
+  metricValue: number;
+  meta: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface FinanceSTUEffectReplay {
+  id: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface FinanceTimelineLink {
   id: string;
   ticker?: string;
@@ -274,14 +288,63 @@ export class FinanceRepository {
   }
 
   listTimelineByTicker(ticker: string): FinanceTimelineLink[] {
-    return this.listTimeline(`WHERE ticker='${ticker}'`);
+    return this.listTimeline({ ticker });
   }
 
   listTimelineByPortfolio(portfolioId: string): FinanceTimelineLink[] {
-    return this.listTimeline(`WHERE portfolio_id='${portfolioId}'`);
+    return this.listTimeline({ portfolioId });
   }
 
-  private listTimeline(whereSql: string): FinanceTimelineLink[] {
+
+  saveSTUEffectReplay(replay: FinanceSTUEffectReplay): FinanceSTUEffectReplay {
+    this.db.upsert('finance_stu_effect_replays', replay.id, {
+      payload_json: JSON.stringify(replay.payload),
+      created_at: replay.createdAt
+    });
+    return replay;
+  }
+
+  listSTUEffectReplays(): FinanceSTUEffectReplay[] {
+    return this.db
+      .query<{ id: string; payload_json: string; created_at: string }>('SELECT * FROM finance_stu_effect_replays ORDER BY created_at DESC;')
+      .map((x) => ({ id: x.id, payload: JSON.parse(x.payload_json), createdAt: x.created_at }));
+  }
+
+  getSTUEffectReplay(id: string): FinanceSTUEffectReplay | undefined {
+    return this.db
+      .query<{ id: string; payload_json: string; created_at: string }>(`SELECT * FROM finance_stu_effect_replays WHERE id='${id}' LIMIT 1;`)
+      .map((x) => ({ id: x.id, payload: JSON.parse(x.payload_json), createdAt: x.created_at }))[0];
+  }
+
+  recordMetric(event: FinanceMetricEvent): FinanceMetricEvent {
+    this.db.upsert('finance_metrics_events', event.id, {
+      metric_key: event.metricKey,
+      metric_value: event.metricValue,
+      meta_json: JSON.stringify(event.meta),
+      created_at: event.createdAt
+    });
+    return event;
+  }
+
+  getMetricsSummary(): Record<string, number> {
+    const rows = this.db.query<{ metric_key: string; total: number }>(
+      'SELECT metric_key, SUM(metric_value) AS total FROM finance_metrics_events GROUP BY metric_key;'
+    );
+    return rows.reduce<Record<string, number>>((acc, row) => {
+      acc[row.metric_key] = Number(row.total);
+      return acc;
+    }, {});
+  }
+
+  listTimeline(filters?: { ticker?: string; portfolioId?: string; taskType?: string; from?: string; to?: string; limit?: number; offset?: number }): FinanceTimelineLink[] {
+    const conds: string[] = [];
+    if (filters?.ticker) conds.push(`ticker='${filters.ticker}'`);
+    if (filters?.portfolioId) conds.push(`portfolio_id='${filters.portfolioId}'`);
+    if (filters?.from) conds.push(`created_at>='${filters.from}'`);
+    if (filters?.to) conds.push(`created_at<='${filters.to}'`);
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const limit = filters?.limit ?? 50;
+    const offset = filters?.offset ?? 0;
     return this.db
       .query<{
         id: string;
@@ -295,7 +358,7 @@ export class FinanceRepository {
         experiment_id: string | null;
         active_stu_effect: string | null;
         created_at: string;
-      }>(`SELECT * FROM finance_timeline_links ${whereSql} ORDER BY created_at DESC;`)
+      }>(`SELECT * FROM finance_timeline_links ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset};`)
       .map((x) => ({
         id: x.id,
         ticker: x.ticker ?? undefined,
@@ -310,4 +373,5 @@ export class FinanceRepository {
         createdAt: x.created_at
       }));
   }
+
 }

@@ -5,18 +5,24 @@ export interface FinanceApiRoute {
 }
 
 export const financeApiRoutes: FinanceApiRoute[] = [
-  { method: 'GET', path: '/api/finance/portfolio', purpose: 'list portfolio + holdings' },
-  { method: 'POST', path: '/api/finance/portfolio', purpose: 'create or update portfolio' },
+  { method: 'GET', path: '/api/finance/portfolios', purpose: 'list portfolios + detail' },
+  { method: 'POST', path: '/api/finance/portfolios', purpose: 'create or update portfolio' },
+  { method: 'GET', path: '/api/finance/holdings', purpose: 'list holdings by portfolio' },
+  { method: 'POST', path: '/api/finance/holdings', purpose: 'create or update holding' },
   { method: 'GET', path: '/api/finance/watchlist', purpose: 'list watchlist items' },
   { method: 'POST', path: '/api/finance/watchlist', purpose: 'create or update watchlist item' },
-  { method: 'GET', path: '/api/finance/reports', purpose: 'list artifacts and report summaries' },
-  { method: 'POST', path: '/api/finance/reports', purpose: 'generate report artifact' },
-  { method: 'GET', path: '/api/finance/predictions', purpose: 'list admitted predictions' },
-  { method: 'POST', path: '/api/finance/predictions/extract', purpose: 'extract + admit predictions from artifact' },
-  { method: 'POST', path: '/api/finance/reviews/trigger', purpose: 'trigger time/event review' },
-  { method: 'GET', path: '/api/finance/reviews', purpose: 'list prediction reviews' },
-  { method: 'GET', path: '/api/finance/error-intelligence', purpose: 'list error patterns and candidate proposals' },
-  { method: 'POST', path: '/api/finance/strategy-lab/evaluate', purpose: 'run evaluation policy' },
-  { method: 'POST', path: '/api/finance/experiment-center/promote', purpose: 'run experiment and promotion gate' },
-  { method: 'GET', path: '/api/finance/thesis-timeline', purpose: 'timeline of artifact -> prediction -> review' }
+  { method: 'GET', path: '/api/finance/reports', purpose: 'list report artifacts' },
+  { method: 'POST', path: '/api/finance/reports', purpose: 'create report artifact' },
+  { method: 'GET', path: '/api/finance/predictions', purpose: 'list predictions' },
+  { method: 'POST', path: '/api/finance/predictions', purpose: 'extract predictions from artifact' },
+  { method: 'GET', path: '/api/finance/reviews', purpose: 'list reviews' },
+  { method: 'GET', path: '/api/finance/errors/*', purpose: 'list error patterns' },
+  { method: 'GET', path: '/api/finance/candidates/*', purpose: 'list candidate proposals' },
+  { method: 'GET', path: '/api/finance/bias/*', purpose: 'list bias snapshots' },
+  { method: 'GET', path: '/api/finance/timeline', purpose: 'timeline query with filters and paging' },
+  { method: 'GET', path: '/api/finance/strategy-lab', purpose: 'baseline/candidate comparison and benchmark views' },
+  { method: 'GET', path: '/api/finance/experiments', purpose: 'experiment center summary and recommendations' },
+  { method: 'GET', path: '/api/finance/metrics', purpose: 'local observability metrics' },
+  { method: 'POST', path: '/api/finance/replay/stu-effect/run', purpose: 'run active STU replay proof' },
+  { method: 'GET', path: '/api/finance/replay/stu-effect', purpose: 'list replay proof entries' }
 ];

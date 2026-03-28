@@ -25,7 +25,7 @@ export class FinanceErrorIntelligenceService {
       if (review.result === 'incorrect' && !review.timingIssue) register('event_miss', review);
     }
 
-    return [...buckets.entries()].map(([patternCode, grouped]) => {
+    const out = [...buckets.entries()].map(([patternCode, grouped]) => {
       const pattern: FinanceErrorPattern = {
         id: `pattern-${patternCode}`,
         patternCode,
@@ -35,6 +35,8 @@ export class FinanceErrorIntelligenceService {
       };
       return this.repo.savePattern(pattern);
     });
+    this.repo.recordMetric({ id: `m-${Date.now().toString(36)}-${Math.random()}`, metricKey: 'error_pattern_discovery_count', metricValue: out.length, meta: {}, createdAt: new Date().toISOString() });
+    return out;
   }
 
   async proposeSTUCandidates(patterns: FinanceErrorPattern[]): Promise<FinanceSTUCandidateProposal[]> {

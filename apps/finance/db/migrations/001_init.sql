@@ -1,24 +1,9 @@
-import { execFileSync } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-
-const DEFAULT_DB_PATH = resolve(process.cwd(), 'apps/finance/.data/finance-app.db');
-
-const runSql = (dbPath: string, sql: string): string => {
-  return execFileSync('sqlite3', [dbPath, '-json', sql], { encoding: 'utf8' }).trim();
-};
-
-export class FinanceSQLite {
-  constructor(private readonly dbPath: string = DEFAULT_DB_PATH) {
-    mkdirSync(dirname(this.dbPath), { recursive: true });
-    this.bootstrap();
-  }
-
-  private bootstrap(): void {
-    runSql(
-      this.dbPath,
-      `
 PRAGMA journal_mode=WAL;
+CREATE TABLE IF NOT EXISTS finance_migrations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  applied_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS finance_portfolios (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -105,7 +90,6 @@ CREATE TABLE IF NOT EXISTS finance_benchmark_samples (
   expected_json TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS finance_stu_effect_replays (
   id TEXT PRIMARY KEY,
   payload_json TEXT NOT NULL,
@@ -131,31 +115,3 @@ CREATE TABLE IF NOT EXISTS finance_timeline_links (
   active_stu_effect TEXT,
   created_at TEXT NOT NULL
 );
-`
-    );
-  }
-
-  upsert(table: string, id: string, columns: Record<string, string | number | null>): void {
-    const keys = ['id', ...Object.keys(columns)];
-    const vals = [id, ...Object.values(columns)].map((value) => this.quote(value));
-    const updates = Object.keys(columns)
-      .map((k) => `${k}=excluded.${k}`)
-      .join(',');
-    runSql(
-      this.dbPath,
-      `INSERT INTO ${table} (${keys.join(',')}) VALUES (${vals.join(',')}) ON CONFLICT(id) DO UPDATE SET ${updates};`
-    );
-  }
-
-  query<T>(sql: string): T[] {
-    const out = runSql(this.dbPath, sql);
-    if (!out) return [];
-    return JSON.parse(out) as T[];
-  }
-
-  private quote(value: string | number | null): string {
-    if (value === null) return 'NULL';
-    if (typeof value === 'number') return String(value);
-    return `'${value.replaceAll("'", "''")}'`;
-  }
-}
