@@ -144,6 +144,36 @@ CREATE TABLE IF NOT EXISTS finance_review_corrections (
   counterevidence TEXT,
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS finance_task_queue (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL,
+  task_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  source TEXT NOT NULL,
+  status TEXT NOT NULL,
+  claim_token TEXT,
+  lease_until TEXT,
+  attempt_count INTEGER NOT NULL,
+  enqueued_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS finance_task_schedule (
+  id TEXT PRIMARY KEY,
+  task_type TEXT NOT NULL,
+  run_at TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  source TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS finance_prediction_review_runs (
+  id TEXT PRIMARY KEY,
+  prediction_id TEXT NOT NULL,
+  trigger_type TEXT NOT NULL,
+  outcome_id TEXT,
+  run_key TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS finance_timeline_links (
   id TEXT PRIMARY KEY,
   ticker TEXT,
