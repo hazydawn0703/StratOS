@@ -33,5 +33,11 @@ export const financeApiRoutes: FinanceApiRoute[] = [
   { method: 'GET', path: '/api/finance/experiments', purpose: 'experiment center summary and recommendations' },
   { method: 'GET', path: '/api/finance/metrics', purpose: 'local observability metrics' },
   { method: 'POST', path: '/api/finance/replay/stu-effect/run', purpose: 'run active STU replay proof' },
-  { method: 'GET', path: '/api/finance/replay/stu-effect', purpose: 'list replay proof entries' }
+  { method: 'GET', path: '/api/finance/replay/stu-effect', purpose: 'list replay proof entries' },
+  { method: 'GET', path: '/api/finance/setup/status', purpose: 'setup status and admin view' },
+  { method: 'POST', path: '/api/finance/setup/validate', purpose: 'validate setup wizard payload' },
+  { method: 'POST', path: '/api/finance/setup/save-config', purpose: 'save setup config with secret protection' },
+  { method: 'POST', path: '/api/finance/setup/bootstrap', purpose: 'initialize app resources from setup' },
+  { method: 'POST', path: '/api/finance/setup/healthcheck', purpose: 'run setup health checks' },
+  { method: 'POST', path: '/api/finance/setup/demo-run', purpose: 'enqueue and run setup demo task' }
 ];

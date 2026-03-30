@@ -1058,3 +1058,39 @@
 - 五条 pnpm 命令结果：全部通过。
 - 新增测试：无单独新增。
 - 遗留问题：部署前阶段再做真实供应商绑定与稳定性工程。
+
+### Phase D2：部署接入与初始化体验（Setup UI）
+- setup UI 目标：让 `apps/finance` 部署后可通过浏览器完成首次配置、初始化、健康检查与首轮任务启动，而不需要手动编辑大量配置文件。
+- 页面 / API：
+  - 页面：`/finance/setup`（Setup Wizard）、`/finance/setup/status`（Setup Status/Admin）
+  - API：
+    - `GET /api/finance/setup/status`
+    - `POST /api/finance/setup/validate`
+    - `POST /api/finance/setup/save-config`
+    - `POST /api/finance/setup/bootstrap`
+    - `POST /api/finance/setup/healthcheck`
+    - `POST /api/finance/setup/demo-run`
+- 配置持久化方案：
+  - 新增 `finance_setup_configs` 表保存 setup version / mode / non-secret / secret / setup completed / updated_at。
+  - 新增 `finance_setup_healthchecks` 表记录 health check 结果历史。
+  - `FinanceSetupService` 统一负责校验、保存、初始化、健康检查与 demo run。
+- secret handling 方案：
+  - setup 保存时将 secret 字段与 non-secret 配置分离。
+  - API 返回仅包含 `secretFields` 字段名，不回显 secret 内容。
+  - server-side 对 secret payload 做简单保护编码（可由 `FINANCE_SETUP_SECRET_KEY` 参与）。
+- 与 framework model-router/model-gateway 接线方式：
+  - setup 仅采集和保存 provider/model/routing policy 的配置数据，不在 finance app 中直连模型 SDK。
+  - healthcheck 通过现有 provider registry / orchestration 路径做可用性探测，保持“app 配置 -> framework 可消费输入层”的边界。
+- 新增测试：
+  - `tests/finance-setup-status.test.mjs`
+  - `tests/finance-setup-validate.test.mjs`
+  - `tests/finance-setup-save-config.test.mjs`
+  - `tests/finance-setup-bootstrap.test.mjs`
+  - `tests/finance-setup-healthcheck.test.mjs`
+  - `tests/finance-setup-wizard.smoke.test.mjs`
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（58/58）。

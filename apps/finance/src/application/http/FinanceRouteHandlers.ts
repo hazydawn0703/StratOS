@@ -10,6 +10,7 @@ import { FinanceTaskAutomationService } from '../services/FinanceTaskAutomationS
 import { FinanceIngestService } from '../services/FinanceIngestService.js';
 import { getProviderCallStats } from '../providers/providerStats.js';
 import { createFinanceProviderRegistry } from '../providers/registry.js';
+import { FinanceSetupService } from '../services/FinanceSetupService.js';
 
 export interface RouteRequest {
   method: 'GET' | 'POST';
@@ -34,6 +35,7 @@ export class FinanceRouteHandlers {
   private readonly stuEffectProof = new ActiveSTUEffectProofService(this.repo);
   private readonly taskAutomation = new FinanceTaskAutomationService(this.repo);
   private readonly ingest = new FinanceIngestService(this.repo);
+  private readonly setup = new FinanceSetupService(this.repo, this.benchmark, this.taskAutomation);
 
   async handle(req: RouteRequest): Promise<RouteResponse> {
     const start = Date.now();
@@ -239,6 +241,25 @@ export class FinanceRouteHandlers {
 
     if (req.method === 'GET' && path === '/api/finance/run-center/summary') {
       return this.done(start, 200, this.taskAutomation.runCenterSummary());
+    }
+
+    if (req.method === 'GET' && path === '/api/finance/setup/status') {
+      return this.done(start, 200, this.setup.status());
+    }
+    if (req.method === 'POST' && path === '/api/finance/setup/validate') {
+      return this.done(start, 200, this.setup.validate((req.body ?? {}) as Record<string, unknown>));
+    }
+    if (req.method === 'POST' && path === '/api/finance/setup/save-config') {
+      return this.done(start, 200, this.setup.saveConfig((req.body ?? {}) as never));
+    }
+    if (req.method === 'POST' && path === '/api/finance/setup/bootstrap') {
+      return this.done(start, 200, this.setup.bootstrap());
+    }
+    if (req.method === 'POST' && path === '/api/finance/setup/healthcheck') {
+      return this.done(start, 200, await this.setup.healthcheck());
+    }
+    if (req.method === 'POST' && path === '/api/finance/setup/demo-run') {
+      return this.done(start, 200, await this.setup.demoRun());
     }
 
     return this.done(start, 404, { error: 'route_not_found' });

@@ -9,7 +9,9 @@ export type FinancePageName =
   | 'Strategy Lab'
   | 'Experiment Center'
   | 'Thesis Timeline'
-  | 'Task Ops';
+  | 'Task Ops'
+  | 'Setup Wizard'
+  | 'Setup Status';
 
 export interface FinancePageDefinition {
   name: FinancePageName;
@@ -27,5 +29,7 @@ export const financePages: FinancePageDefinition[] = [
   { name: 'Strategy Lab', keyWidgets: ['candidate-evaluation', 'routing-simulation'] },
   { name: 'Experiment Center', keyWidgets: ['experiment-status', 'promotion-gate'] },
   { name: 'Thesis Timeline', keyWidgets: ['artifact-claim-outcome-review-timeline'] },
-  { name: 'Task Ops', keyWidgets: ['task-list', 'status-distribution', 'retry-rerun-controls'] }
+  { name: 'Task Ops', keyWidgets: ['task-list', 'status-distribution', 'retry-rerun-controls'] },
+  { name: 'Setup Wizard', keyWidgets: ['mode-select', 'infra-config', 'model-routing-config', 'bootstrap-options', 'healthcheck'] },
+  { name: 'Setup Status', keyWidgets: ['deployment-mode', 'dependency-health', 'automation-state', 'healthcheck-history'] }
 ];

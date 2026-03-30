@@ -1,9 +1,15 @@
 import { FinanceQueryService } from '../query/FinanceQueryService.js';
 import { FinanceRepository } from '../../domain/repository.js';
+import { FinanceBenchmarkService } from '../benchmark/FinanceBenchmarkService.js';
+import { FinanceTaskAutomationService } from '../services/FinanceTaskAutomationService.js';
+import { FinanceSetupService } from '../services/FinanceSetupService.js';
 
 export class FinancePagesRuntime {
   private readonly repo = new FinanceRepository();
   private readonly query = new FinanceQueryService(this.repo);
+  private readonly benchmark = new FinanceBenchmarkService(this.repo);
+  private readonly taskAutomation = new FinanceTaskAutomationService(this.repo);
+  private readonly setup = new FinanceSetupService(this.repo, this.benchmark, this.taskAutomation);
 
   render(page:
     | 'Dashboard'
@@ -16,7 +22,9 @@ export class FinancePagesRuntime {
     | 'Strategy Lab'
     | 'Experiment Center'
     | 'Thesis Timeline'
-    | 'Task Ops',
+    | 'Task Ops'
+    | 'Setup Wizard'
+    | 'Setup Status',
   params: Record<string, string> = {}): string {
     const payload = this.payloadFor(page, params);
     return `<!doctype html><html><body><h1>${page}</h1><p>filter=${JSON.stringify(params)}</p><pre>${JSON.stringify(payload, null, 2)}</pre></body></html>`;
@@ -71,6 +79,30 @@ export class FinancePagesRuntime {
         failures: tasks.filter((t) => t.status === 'failed'),
         summary: this.repo.getRunCenterSummary()
       };
+    }
+    if (page === 'Setup Wizard') {
+      return {
+        steps: [
+          '1. Welcome / Mode Select',
+          '2. Infrastructure Config',
+          '3. Model & Provider Config',
+          '4. Finance App Bootstrap',
+          '5. Task Automation Init',
+          '6. Health Check'
+        ],
+        api: [
+          '/api/finance/setup/status',
+          '/api/finance/setup/validate',
+          '/api/finance/setup/save-config',
+          '/api/finance/setup/bootstrap',
+          '/api/finance/setup/healthcheck',
+          '/api/finance/setup/demo-run'
+        ],
+        status: this.setup.status()
+      };
+    }
+    if (page === 'Setup Status') {
+      return this.setup.status();
     }
 
     return this.query.timeline({

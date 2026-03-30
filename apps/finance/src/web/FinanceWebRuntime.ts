@@ -41,7 +41,9 @@ export class FinanceWebRuntime {
         '/finance/strategy-lab': 'Strategy Lab',
         '/finance/experiments': 'Experiment Center',
         '/finance/timeline': 'Thesis Timeline',
-        '/finance/run-center': 'Task Ops'
+        '/finance/run-center': 'Task Ops',
+        '/finance/setup': 'Setup Wizard',
+        '/finance/setup/status': 'Setup Status'
       };
       const page = viewMap[parsed.pathname];
       if (!page) {

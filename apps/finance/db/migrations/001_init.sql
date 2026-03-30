@@ -174,6 +174,21 @@ CREATE TABLE IF NOT EXISTS finance_prediction_review_runs (
   run_key TEXT NOT NULL UNIQUE,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS finance_setup_configs (
+  id TEXT PRIMARY KEY,
+  setup_version TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  non_secret_json TEXT NOT NULL,
+  secret_json TEXT NOT NULL,
+  setup_completed INTEGER NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS finance_setup_healthchecks (
+  id TEXT PRIMARY KEY,
+  status TEXT NOT NULL,
+  result_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS finance_timeline_links (
   id TEXT PRIMARY KEY,
   ticker TEXT,

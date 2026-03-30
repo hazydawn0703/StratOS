@@ -100,6 +100,23 @@ export interface FinanceTimelineLink {
   createdAt: string;
 }
 
+export interface FinanceSetupConfigRecord {
+  id: string;
+  setupVersion: string;
+  mode: 'local' | 'staging' | 'production';
+  nonSecret: Record<string, unknown>;
+  secret: Record<string, unknown>;
+  setupCompleted: boolean;
+  updatedAt: string;
+}
+
+export interface FinanceSetupHealthcheckRecord {
+  id: string;
+  status: 'ok' | 'degraded' | 'failed';
+  result: Record<string, unknown>;
+  createdAt: string;
+}
+
 export class FinanceRepository {
   private readonly db = new FinanceSQLite();
 
@@ -517,4 +534,59 @@ export class FinanceRepository {
     };
   }
 
+  saveSetupConfig(record: FinanceSetupConfigRecord): FinanceSetupConfigRecord {
+    this.db.upsert('finance_setup_configs', record.id, {
+      setup_version: record.setupVersion,
+      mode: record.mode,
+      non_secret_json: JSON.stringify(record.nonSecret),
+      secret_json: JSON.stringify(record.secret),
+      setup_completed: record.setupCompleted ? 1 : 0,
+      updated_at: record.updatedAt
+    });
+    return record;
+  }
+
+  getLatestSetupConfig(): FinanceSetupConfigRecord | undefined {
+    return this.db
+      .query<{
+        id: string;
+        setup_version: string;
+        mode: FinanceSetupConfigRecord['mode'];
+        non_secret_json: string;
+        secret_json: string;
+        setup_completed: number;
+        updated_at: string;
+      }>('SELECT * FROM finance_setup_configs ORDER BY updated_at DESC LIMIT 1;')
+      .map((x) => ({
+        id: x.id,
+        setupVersion: x.setup_version,
+        mode: x.mode,
+        nonSecret: JSON.parse(x.non_secret_json),
+        secret: JSON.parse(x.secret_json),
+        setupCompleted: x.setup_completed === 1,
+        updatedAt: x.updated_at
+      }))[0];
+  }
+
+  saveSetupHealthcheck(record: FinanceSetupHealthcheckRecord): FinanceSetupHealthcheckRecord {
+    this.db.upsert('finance_setup_healthchecks', record.id, {
+      status: record.status,
+      result_json: JSON.stringify(record.result),
+      created_at: record.createdAt
+    });
+    return record;
+  }
+
+  listSetupHealthchecks(limit = 20): FinanceSetupHealthcheckRecord[] {
+    return this.db
+      .query<{ id: string; status: FinanceSetupHealthcheckRecord['status']; result_json: string; created_at: string }>(
+        `SELECT * FROM finance_setup_healthchecks ORDER BY created_at DESC LIMIT ${limit};`
+      )
+      .map((x) => ({
+        id: x.id,
+        status: x.status,
+        result: JSON.parse(x.result_json),
+        createdAt: x.created_at
+      }));
+  }
 }
