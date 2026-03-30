@@ -40,7 +40,8 @@ export class FinanceWebRuntime {
         '/finance/errors': 'Error Intelligence',
         '/finance/strategy-lab': 'Strategy Lab',
         '/finance/experiments': 'Experiment Center',
-        '/finance/timeline': 'Thesis Timeline'
+        '/finance/timeline': 'Thesis Timeline',
+        '/finance/run-center': 'Task Ops'
       };
       const page = viewMap[parsed.pathname];
       if (!page) {

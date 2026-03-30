@@ -15,7 +15,8 @@ export class FinancePagesRuntime {
     | 'Error Intelligence'
     | 'Strategy Lab'
     | 'Experiment Center'
-    | 'Thesis Timeline',
+    | 'Thesis Timeline'
+    | 'Task Ops',
   params: Record<string, string> = {}): string {
     const payload = this.payloadFor(page, params);
     return `<!doctype html><html><body><h1>${page}</h1><p>filter=${JSON.stringify(params)}</p><pre>${JSON.stringify(payload, null, 2)}</pre></body></html>`;
@@ -58,6 +59,17 @@ export class FinancePagesRuntime {
         timeline: this.query.timeline({ ticker: params.ticker, portfolioId: params.portfolioId, from: params.from, to: params.to }),
         suggestions: this.query.experimentSuggestions(),
         biasRiskNote: this.repo.listBiasSnapshots().slice(0, 3)
+      };
+    }
+
+
+    if (page === 'Task Ops') {
+      const tasks = this.repo.listTasks({ status: params.status, taskType: params.taskType, limit: Number(params.limit ?? '50') });
+      return {
+        list: tasks,
+        detail: params.id ? tasks.find((t) => t.id === params.id) : undefined,
+        failures: tasks.filter((t) => t.status === 'failed'),
+        summary: this.repo.getRunCenterSummary()
       };
     }
 

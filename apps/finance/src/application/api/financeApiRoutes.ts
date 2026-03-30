@@ -5,6 +5,15 @@ export interface FinanceApiRoute {
 }
 
 export const financeApiRoutes: FinanceApiRoute[] = [
+  { method: 'POST', path: '/api/finance/tasks/enqueue', purpose: 'enqueue finance task' },
+  { method: 'GET', path: '/api/finance/tasks', purpose: 'list tasks' },
+  { method: 'GET', path: '/api/finance/tasks/:id', purpose: 'task detail' },
+  { method: 'POST', path: '/api/finance/tasks/:id/retry', purpose: 'retry failed task' },
+  { method: 'POST', path: '/api/finance/tasks/:id/cancel', purpose: 'cancel pending task' },
+  { method: 'POST', path: '/api/finance/ingest/source-documents', purpose: 'source document ingest' },
+  { method: 'POST', path: '/api/finance/ingest/outcomes', purpose: 'outcome ingest + review auto-enqueue' },
+  { method: 'POST', path: '/api/finance/reviews/:id/correct', purpose: 'manual review correction ingest' },
+  { method: 'GET', path: '/api/finance/run-center/summary', purpose: 'run center summary' },
   { method: 'GET', path: '/api/finance/portfolios', purpose: 'list portfolios + detail' },
   { method: 'POST', path: '/api/finance/portfolios', purpose: 'create or update portfolio' },
   { method: 'GET', path: '/api/finance/holdings', purpose: 'list holdings by portfolio' },

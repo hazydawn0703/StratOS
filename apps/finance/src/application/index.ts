@@ -29,3 +29,5 @@ export * from './providers/registry.js';
 
 export * from './services/ActiveSTUEffectProofService.js';
 export * from './providers/providerStats.js';
+export * from './services/FinanceTaskAutomationService.js';
+export * from './services/FinanceIngestService.js';

@@ -6,6 +6,8 @@ import { FinanceQueryService } from '../query/FinanceQueryService.js';
 import { FinanceRepository } from '../../domain/repository.js';
 import { FinanceReviewService } from '../reviews/FinanceReviewService.js';
 import { ActiveSTUEffectProofService } from '../services/ActiveSTUEffectProofService.js';
+import { FinanceTaskAutomationService } from '../services/FinanceTaskAutomationService.js';
+import { FinanceIngestService } from '../services/FinanceIngestService.js';
 import { getProviderCallStats } from '../providers/providerStats.js';
 import { createFinanceProviderRegistry } from '../providers/registry.js';
 
@@ -30,6 +32,8 @@ export class FinanceRouteHandlers {
   private readonly benchmark = new FinanceBenchmarkService(this.repo);
   private readonly orchestrator = new FinanceAppOrchestratorService(this.repo);
   private readonly stuEffectProof = new ActiveSTUEffectProofService(this.repo);
+  private readonly taskAutomation = new FinanceTaskAutomationService(this.repo);
+  private readonly ingest = new FinanceIngestService(this.repo);
 
   async handle(req: RouteRequest): Promise<RouteResponse> {
     const start = Date.now();
@@ -124,7 +128,7 @@ export class FinanceRouteHandlers {
       return this.done(start, 200, this.query.experimentSuggestions());
     }
 
-    if (req.method === 'GET' && path === '/api/finance/metrics') return this.done(start, 200, { metrics: this.repo.getMetricsSummary(), providerStats: getProviderCallStats() });
+    if (req.method === 'GET' && path === '/api/finance/metrics') return this.done(start, 200, { metrics: this.repo.getMetricsSummary(), providerStats: getProviderCallStats(), runCenter: this.taskAutomation.runCenterSummary() });
 
     if (req.method === 'POST' && path === '/api/finance/benchmark/seed') return this.done(start, 200, { samples: this.benchmark.seedDefaultSamples() });
 
@@ -150,6 +154,91 @@ export class FinanceRouteHandlers {
     }
     if (req.method === 'GET' && path === '/api/finance/replay/stu-effect') {
       return this.done(start, 200, { replays: this.repo.listSTUEffectReplays() });
+    }
+
+
+    if (req.method === 'POST' && path === '/api/finance/tasks/enqueue') {
+      const p = req.body as Record<string, unknown>;
+      const task = await this.taskAutomation.enqueue(String(p.taskType) as never, (p.payload as Record<string, unknown>) ?? {}, 'manual');
+      return this.done(start, 200, { task });
+    }
+
+    if (req.method === 'GET' && path === '/api/finance/tasks') {
+      return this.done(start, 200, {
+        tasks: this.taskAutomation.list({ status: req.query?.status, taskType: req.query?.taskType, limit: Number(req.query?.limit ?? '100') })
+      });
+    }
+
+    if (req.method === 'GET' && path.startsWith('/api/finance/tasks/') && !path.endsWith('/retry') && !path.endsWith('/cancel')) {
+      const id = path.split('/').pop() as string;
+      return this.done(start, 200, { task: this.taskAutomation.list({ limit: 500 }).find((t) => t.id === id) });
+    }
+
+    if (req.method === 'POST' && path.endsWith('/retry') && path.startsWith('/api/finance/tasks/')) {
+      const id = path.split('/')[4] as string;
+      return this.done(start, 200, { task: await this.taskAutomation.retry(id) });
+    }
+
+    if (req.method === 'POST' && path.endsWith('/cancel') && path.startsWith('/api/finance/tasks/')) {
+      const id = path.split('/')[4] as string;
+      return this.done(start, 200, { task: this.taskAutomation.cancel(id) });
+    }
+
+    if (req.method === 'POST' && path === '/api/finance/tasks/run-now') {
+      return this.done(start, 200, { task: await this.taskAutomation.runNext() });
+    }
+
+    if (req.method === 'POST' && path === '/api/finance/tasks/schedule') {
+      const p = req.body as Record<string, unknown>;
+      await this.taskAutomation.schedule(String(p.taskType) as never, String(p.runAt), (p.payload as Record<string, unknown>) ?? {});
+      return this.done(start, 200, { ok: true });
+    }
+
+    if (req.method === 'POST' && path === '/api/finance/tasks/poll-scheduled') {
+      const queued = await this.taskAutomation.pollScheduled();
+      return this.done(start, 200, { queued });
+    }
+
+    if (req.method === 'POST' && path === '/api/finance/ingest/source-documents') {
+      const p = req.body as Record<string, unknown>;
+      const doc = this.ingest.ingestSourceDocument({
+        ticker: p.ticker ? String(p.ticker) : undefined,
+        portfolioId: p.portfolioId ? String(p.portfolioId) : undefined,
+        sourceType: String(p.sourceType),
+        sourceTimestamp: String(p.sourceTimestamp ?? new Date().toISOString()),
+        content: String(p.content ?? ''),
+        normalizedPayload: (p.normalizedPayload as Record<string, unknown>) ?? {}
+      });
+      return this.done(start, 200, { document: doc });
+    }
+
+    if (req.method === 'POST' && path === '/api/finance/ingest/outcomes') {
+      const p = req.body as Record<string, unknown>;
+      const outcome = this.ingest.ingestOutcome({
+        predictionId: p.predictionId ? String(p.predictionId) : undefined,
+        outcomeType: String(p.outcomeType) as never,
+        outcomeTimestamp: String(p.outcomeTimestamp ?? new Date().toISOString()),
+        payload: (p.payload as Record<string, unknown>) ?? {}
+      });
+      // auto enqueue prediction review after outcome ingest
+      await this.taskAutomation.enqueue('prediction_review' as never, { predictionId: outcome.predictionId }, 'manual');
+      return this.done(start, 200, { outcome });
+    }
+
+    if (req.method === 'POST' && path.startsWith('/api/finance/reviews/') && path.endsWith('/correct')) {
+      const id = path.split('/')[4] as string;
+      const p = req.body as Record<string, unknown>;
+      const correction = this.ingest.correctReview({
+        reviewId: id,
+        correctedPayload: (p.correctedPayload as Record<string, unknown>) ?? {},
+        reason: p.reason ? String(p.reason) : undefined,
+        counterevidence: p.counterevidence ? String(p.counterevidence) : undefined
+      });
+      return this.done(start, 200, { correction });
+    }
+
+    if (req.method === 'GET' && path === '/api/finance/run-center/summary') {
+      return this.done(start, 200, this.taskAutomation.runCenterSummary());
     }
 
     return this.done(start, 404, { error: 'route_not_found' });

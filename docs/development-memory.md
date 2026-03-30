@@ -926,3 +926,135 @@
 - 当前遗留问题、技术债、下一步建议：
   - 后续可将 `FinanceSqlExecutor` 扩展为可切换 sqlite driver（不仅 CLI）。
   - 在部署前阶段再引入真实 provider 绑定与稳定性工程。
+
+## 2026-03-28 Phase X — 任务自动化运行层 + 数据入口补齐
+
+### X-A Queue / Scheduler infrastructure adapter
+- 本阶段目标：补齐 finance 任务自动化基础设施适配层。
+- 实际完成内容：新增 `FinanceQueueAdapter` 与 `FinanceSchedulerAdapter`（in-process 本地实现），并通过 app service 统一接入，不在业务服务散落队列/调度实现细节。
+- 新增/修改关键文件：
+  - `apps/finance/src/infrastructure/adapters/FinanceQueueAdapter.ts`
+  - `apps/finance/src/infrastructure/adapters/FinanceSchedulerAdapter.ts`
+- 数据模型与接口变更：新增 queue message / scheduled task 协议。
+- 与 framework 的接入方式：仅做 finance task registration/dispatch/status 映射，不复制 framework task 主协议。
+- 已实现/未实现 PRD 条款：已完成本地 adapter；未接远程队列/调度器。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：由后续 X-B/X-F 集成测试覆盖。
+- 遗留问题：后续可扩展 sqlite-backed queue。
+
+### X-B finance 任务执行层与状态模型
+- 本阶段目标：让 finance task types 真正可持续运行。
+- 实际完成内容：
+  - 新增 `FinanceTaskAutomationService`，支持 enqueue / schedule / pollScheduled / runNow / retry failed / cancel pending / idempotency guard。
+  - 任务记录字段包含：task id/type/status/scheduled_at/started_at/finished_at/retry_count/error_summary/refs/source/idempotency。
+  - 最小可运行任务：`daily_brief_generation` / `weekly_portfolio_review` / `prediction_review` / `error_pattern_scan`。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/services/FinanceTaskAutomationService.ts`
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/infrastructure/sqlite/FinanceSQLite.ts`
+  - `apps/finance/db/migrations/001_init.sql`
+- 数据模型与接口变更：新增 `finance_tasks` 表与 task query/update 接口。
+- 与 framework 的接入方式：任务内部仍复用既有 finance->framework 调用链，不重写 framework evaluation/experiment/replay 主语义。
+- 已实现/未实现 PRD 条款：已实现核心任务执行；其余 task type 先占位可执行。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：
+  - `tests/finance-scheduled-task.integration.test.mjs`
+  - `tests/finance-error-scan-periodic.test.mjs`
+- 遗留问题：后续可补 task priority / dead-letter 策略。
+
+### X-C 数据入口（source/outcome/review correction）
+- 本阶段目标：补齐任务系统可消费的数据入口层。
+- 实际完成内容：新增 `FinanceIngestService` 与持久化接口，支持：
+  - source document ingest（ticker/portfolio/source type/source timestamp/content/normalized payload）
+  - outcome ingest（price_window/earnings/risk_event/manual）
+  - manual review correction ingest（corrected payload/reason/counterevidence）
+- 新增/修改关键文件：
+  - `apps/finance/src/application/services/FinanceIngestService.ts`
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/infrastructure/sqlite/FinanceSQLite.ts`
+  - `apps/finance/db/migrations/001_init.sql`
+- 数据模型与接口变更：新增 `finance_source_documents` / `finance_ingested_outcomes` / `finance_review_corrections`。
+- 与 framework 的接入方式：仅补 app 数据入口，不重写 claim/review/error 主协议。
+- 已实现/未实现 PRD 条款：已实现三类 ingest；未接真实外部 provider。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：
+  - `tests/finance-ingest-task-link.test.mjs`
+  - `tests/finance-prediction-review-auto-enqueue.test.mjs`
+- 遗留问题：后续补批量导入/校验规则。
+
+### X-D Task Ops / Run Center 页面与 API
+- 本阶段目标：新增系统运行可视化与操作面。
+- 实际完成内容：
+  - 新增 `Task Ops` 页面（`/finance/run-center`）支持列表、详情、失败筛选、摘要。
+  - 新增运行 API：
+    - `POST /api/finance/tasks/enqueue`
+    - `GET /api/finance/tasks`
+    - `GET /api/finance/tasks/:id`
+    - `POST /api/finance/tasks/:id/retry`
+    - `POST /api/finance/tasks/:id/cancel`
+    - `GET /api/finance/run-center/summary`
+- 新增/修改关键文件：
+  - `apps/finance/src/web/FinanceWebRuntime.ts`
+  - `apps/finance/src/application/ui/FinancePagesRuntime.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/application/pages/financePages.ts`
+  - `apps/finance/src/application/api/financeApiRoutes.ts`
+- 数据模型与接口变更：Task Ops 视图读取 task/retry/error/source/duration refs。
+- 与 framework 的接入方式：仅做 finance app 运行视图与操作，不复制 framework audit 主语义。
+- 已实现/未实现 PRD 条款：已实现列表/详情/失败筛选/retry/cancel。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：`tests/finance-run-center-api.smoke.test.mjs`。
+- 遗留问题：后续可补批量 rerun。
+
+### X-E 任务系统接现有闭环
+- 本阶段目标：把 task 自动化接入既有 artifact/prediction/review/error/experiment/bias/timeline。
+- 实际完成内容：
+  - `daily_brief_generation` / `weekly_portfolio_review` 任务接 `FinanceAppOrchestratorService`。
+  - outcome ingest 后自动入队 `prediction_review`。
+  - `error_pattern_scan` 周期任务接 review->error pattern 聚合。
+  - 任务 refs 回填 artifact/review/pattern，并可在 run center/timeline 查询。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/services/FinanceTaskAutomationService.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/domain/repository.ts`
+- 数据模型与接口变更：task refs 结构化写入。
+- 与 framework 的接入方式：active STU 影响仍通过 compiler 注入（沿用 existing proof service）。
+- 已实现/未实现 PRD 条款：已落地至少一条可持续自动化链路。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：scheduled / auto-enqueue / periodic scan / ingest-link 测试均通过。
+- 遗留问题：后续补 weekly/prediction review 的更细规则。
+
+### X-F 运行级 observability 接任务层
+- 本阶段目标：把任务自动化指标接入 Dashboard/Run Center/API。
+- 实际完成内容：新增并接通指标：
+  - queued task count
+  - running task count
+  - failed task count
+  - retry count
+  - average latency（通过 latency 累计可计算）
+  - task success rate
+  - scheduled run count
+  - manual run count
+  - 并在 `/api/finance/metrics` 返回 runCenter + providerStats。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/services/FinanceTaskAutomationService.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/domain/repository.ts`
+- 数据模型与接口变更：metrics events 新增任务运行维度写入。
+- 与 framework 的接入方式：app 解释层指标，不复制 framework observability 主协议。
+- 已实现/未实现 PRD 条款：已补最小运行级指标。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：run-center + scheduled integration 间接覆盖。
+- 遗留问题：后续可加窗口化聚合 API。
+
+### X-G provider 接口说明整理（不做真实接入）
+- 本阶段目标：保持 provider 仍为接口/mock/config 层。
+- 实际完成内容：保持既有 mock provider + registry + `.env.example` 与 provider switching 文档，不新增真实 SDK 绑定。
+- 新增/修改关键文件：
+  - 无实质新增（保持边界）。
+- 数据模型与接口变更：无。
+- 与 framework 的接入方式：不变。
+- 已实现/未实现 PRD 条款：符合“本阶段不做真实 provider 接入”要求。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：无单独新增。
+- 遗留问题：部署前阶段再做真实供应商绑定与稳定性工程。

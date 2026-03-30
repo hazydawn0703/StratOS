@@ -8,7 +8,8 @@ export type FinancePageName =
   | 'Error Intelligence'
   | 'Strategy Lab'
   | 'Experiment Center'
-  | 'Thesis Timeline';
+  | 'Thesis Timeline'
+  | 'Task Ops';
 
 export interface FinancePageDefinition {
   name: FinancePageName;
@@ -25,5 +26,6 @@ export const financePages: FinancePageDefinition[] = [
   { name: 'Error Intelligence', keyWidgets: ['pattern-aggregation', 'candidate-proposals'] },
   { name: 'Strategy Lab', keyWidgets: ['candidate-evaluation', 'routing-simulation'] },
   { name: 'Experiment Center', keyWidgets: ['experiment-status', 'promotion-gate'] },
-  { name: 'Thesis Timeline', keyWidgets: ['artifact-claim-outcome-review-timeline'] }
+  { name: 'Thesis Timeline', keyWidgets: ['artifact-claim-outcome-review-timeline'] },
+  { name: 'Task Ops', keyWidgets: ['task-list', 'status-distribution', 'retry-rerun-controls'] }
 ];

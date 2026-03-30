@@ -41,6 +41,51 @@ export interface FinanceSTUEffectReplay {
   createdAt: string;
 }
 
+export interface FinanceTaskRecord {
+  id: string;
+  taskType: string;
+  status: "pending" | "running" | "succeeded" | "failed" | "cancelled";
+  scheduledAt?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  retryCount: number;
+  errorSummary?: string;
+  source: "manual" | "schedule" | "replay";
+  idempotencyKey: string;
+  refs: Record<string, unknown>;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface FinanceSourceDocument {
+  id: string;
+  ticker?: string;
+  portfolioId?: string;
+  sourceType: string;
+  sourceTimestamp: string;
+  content: string;
+  normalizedPayload: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface FinanceIngestedOutcome {
+  id: string;
+  predictionId?: string;
+  outcomeType: "price_window_outcome" | "earnings_outcome" | "risk_event_outcome" | "manual_outcome";
+  outcomeTimestamp: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface FinanceReviewCorrection {
+  id: string;
+  reviewId: string;
+  correctedPayload: Record<string, unknown>;
+  reason?: string;
+  counterevidence?: string;
+  createdAt: string;
+}
+
 export interface FinanceTimelineLink {
   id: string;
   ticker?: string;
@@ -372,6 +417,104 @@ export class FinanceRepository {
         activeSTUEffect: x.active_stu_effect ?? undefined,
         createdAt: x.created_at
       }));
+  }
+
+
+  saveTask(task: FinanceTaskRecord): FinanceTaskRecord {
+    this.db.upsert('finance_tasks', task.id, {
+      task_type: task.taskType,
+      status: task.status,
+      scheduled_at: task.scheduledAt ?? null,
+      started_at: task.startedAt ?? null,
+      finished_at: task.finishedAt ?? null,
+      retry_count: task.retryCount,
+      error_summary: task.errorSummary ?? null,
+      source: task.source,
+      idempotency_key: task.idempotencyKey,
+      refs_json: JSON.stringify(task.refs),
+      payload_json: JSON.stringify(task.payload),
+      created_at: task.createdAt
+    });
+    return task;
+  }
+
+  listTasks(filters?: { status?: string; taskType?: string; limit?: number }): FinanceTaskRecord[] {
+    const conds: string[] = [];
+    if (filters?.status) conds.push(`status='${filters.status}'`);
+    if (filters?.taskType) conds.push(`task_type='${filters.taskType}'`);
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const limit = filters?.limit ?? 100;
+    return this.db.query<{ id: string; task_type: string; status: FinanceTaskRecord['status']; scheduled_at: string | null; started_at: string | null; finished_at: string | null; retry_count: number; error_summary: string | null; source: FinanceTaskRecord['source']; idempotency_key: string; refs_json: string; payload_json: string; created_at: string; }>(`SELECT * FROM finance_tasks ${where} ORDER BY created_at DESC LIMIT ${limit};`)
+      .map((x) => ({ id: x.id, taskType: x.task_type, status: x.status, scheduledAt: x.scheduled_at ?? undefined, startedAt: x.started_at ?? undefined, finishedAt: x.finished_at ?? undefined, retryCount: x.retry_count, errorSummary: x.error_summary ?? undefined, source: x.source, idempotencyKey: x.idempotency_key, refs: JSON.parse(x.refs_json), payload: JSON.parse(x.payload_json), createdAt: x.created_at }));
+  }
+
+  getTask(id: string): FinanceTaskRecord | undefined {
+    return this.listTasks().find((x) => x.id === id);
+  }
+
+  saveSourceDocument(doc: FinanceSourceDocument): FinanceSourceDocument {
+    this.db.upsert('finance_source_documents', doc.id, {
+      ticker: doc.ticker ?? null,
+      portfolio_id: doc.portfolioId ?? null,
+      source_type: doc.sourceType,
+      source_timestamp: doc.sourceTimestamp,
+      content: doc.content,
+      normalized_payload_json: JSON.stringify(doc.normalizedPayload),
+      created_at: doc.createdAt
+    });
+    return doc;
+  }
+
+  listSourceDocuments(): FinanceSourceDocument[] {
+    return this.db.query<{ id: string; ticker: string | null; portfolio_id: string | null; source_type: string; source_timestamp: string; content: string; normalized_payload_json: string; created_at: string; }>('SELECT * FROM finance_source_documents ORDER BY created_at DESC;')
+      .map((x) => ({ id: x.id, ticker: x.ticker ?? undefined, portfolioId: x.portfolio_id ?? undefined, sourceType: x.source_type, sourceTimestamp: x.source_timestamp, content: x.content, normalizedPayload: JSON.parse(x.normalized_payload_json), createdAt: x.created_at }));
+  }
+
+  saveIngestedOutcome(outcome: FinanceIngestedOutcome): FinanceIngestedOutcome {
+    this.db.upsert('finance_ingested_outcomes', outcome.id, {
+      prediction_id: outcome.predictionId ?? null,
+      outcome_type: outcome.outcomeType,
+      outcome_timestamp: outcome.outcomeTimestamp,
+      payload_json: JSON.stringify(outcome.payload),
+      created_at: outcome.createdAt
+    });
+    return outcome;
+  }
+
+  listIngestedOutcomes(): FinanceIngestedOutcome[] {
+    return this.db.query<{ id: string; prediction_id: string | null; outcome_type: FinanceIngestedOutcome['outcomeType']; outcome_timestamp: string; payload_json: string; created_at: string; }>('SELECT * FROM finance_ingested_outcomes ORDER BY created_at DESC;')
+      .map((x) => ({ id: x.id, predictionId: x.prediction_id ?? undefined, outcomeType: x.outcome_type, outcomeTimestamp: x.outcome_timestamp, payload: JSON.parse(x.payload_json), createdAt: x.created_at }));
+  }
+
+  saveReviewCorrection(correction: FinanceReviewCorrection): FinanceReviewCorrection {
+    this.db.upsert('finance_review_corrections', correction.id, {
+      review_id: correction.reviewId,
+      corrected_payload_json: JSON.stringify(correction.correctedPayload),
+      reason: correction.reason ?? null,
+      counterevidence: correction.counterevidence ?? null,
+      created_at: correction.createdAt
+    });
+    return correction;
+  }
+
+  listReviewCorrections(): FinanceReviewCorrection[] {
+    return this.db.query<{ id: string; review_id: string; corrected_payload_json: string; reason: string | null; counterevidence: string | null; created_at: string; }>('SELECT * FROM finance_review_corrections ORDER BY created_at DESC;')
+      .map((x) => ({ id: x.id, reviewId: x.review_id, correctedPayload: JSON.parse(x.corrected_payload_json), reason: x.reason ?? undefined, counterevidence: x.counterevidence ?? undefined, createdAt: x.created_at }));
+  }
+
+  getRunCenterSummary(): Record<string, unknown> {
+    const recent = this.listTasks({ limit: 20 });
+    const statusDist = recent.reduce<Record<string, number>>((acc, task) => {
+      acc[task.status] = (acc[task.status] ?? 0) + 1;
+      return acc;
+    }, {});
+    const failures = recent.filter((x) => x.status === 'failed').slice(0, 10);
+    return {
+      recentTasks: recent,
+      statusDistribution: statusDist,
+      recentFailures: failures,
+      nextScheduledAt: recent.filter((x) => x.status === 'pending' && x.scheduledAt).map((x) => x.scheduledAt).sort()[0] ?? null
+    };
   }
 
 }

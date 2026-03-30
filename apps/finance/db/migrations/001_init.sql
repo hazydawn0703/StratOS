@@ -102,6 +102,48 @@ CREATE TABLE IF NOT EXISTS finance_metrics_events (
   meta_json TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS finance_tasks (
+  id TEXT PRIMARY KEY,
+  task_type TEXT NOT NULL,
+  status TEXT NOT NULL,
+  scheduled_at TEXT,
+  started_at TEXT,
+  finished_at TEXT,
+  retry_count INTEGER NOT NULL,
+  error_summary TEXT,
+  source TEXT NOT NULL,
+  idempotency_key TEXT NOT NULL,
+  refs_json TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS finance_source_documents (
+  id TEXT PRIMARY KEY,
+  ticker TEXT,
+  portfolio_id TEXT,
+  source_type TEXT NOT NULL,
+  source_timestamp TEXT NOT NULL,
+  content TEXT NOT NULL,
+  normalized_payload_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS finance_ingested_outcomes (
+  id TEXT PRIMARY KEY,
+  prediction_id TEXT,
+  outcome_type TEXT NOT NULL,
+  outcome_timestamp TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS finance_review_corrections (
+  id TEXT PRIMARY KEY,
+  review_id TEXT NOT NULL,
+  corrected_payload_json TEXT NOT NULL,
+  reason TEXT,
+  counterevidence TEXT,
+  created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS finance_timeline_links (
   id TEXT PRIMARY KEY,
   ticker TEXT,
