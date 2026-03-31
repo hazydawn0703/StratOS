@@ -586,3 +586,607 @@
 - 下一阶段计划（Phase T 候选）：
   - 将 `FinanceGovernanceHttpController` 对接真实 HTTP router / OpenAPI 描述。
   - 将 run summary index 从内存 map 迁移到可配置存储后端。
+
+## 2026-03-27 Phase M — Finance App Domain Landing (PRD-aligned skeleton + closed loops)
+
+- 本阶段目标：
+  - 基于 `apps/finance/apps-finance-prd.md.md` 和 framework 边界，补齐 finance app 领域骨架、artifact/prediction/review/error->candidate/evaluation->experiment 最小闭环，且不复制 framework 核心生命周期实现。
+
+- 实际完成内容：
+  - 新增 finance 领域模型与内存仓储，覆盖 Portfolio/Holding/Watchlist/Artifact/Prediction/Review/ErrorPattern/STU Proposal。
+  - 落地 finance app config 与 App Policies：ClaimAdmissionPolicy、EvaluationPolicy、PromotionPolicy、RoutingDecisionPolicy、BiasAlertPolicy、ErrorPatternPromotionPolicy。
+  - 落地 artifact 生成服务，覆盖 `daily_brief` / `weekly_review` / `stock_deep_dive` / `risk_alert`。
+  - 打通 artifact -> prediction（经 ClaimExtractor + ClaimAdmissionPolicy）闭环，拒绝不达标文本 claim。
+  - 打通 prediction -> outcome -> review 闭环，支持 time_based/event_based trigger 判定与 issue 维度输出（direction/timing/evidence/confidence）。
+  - 落地 finance error pattern 聚合与 candidate proposal 生成，并接入 framework `ExperimentEngine.registerCandidate` 候选入口。
+  - 落地 finance evaluation/experiment/promotion 入口服务，使用 framework Evaluation/Experiment/BiasMonitor，不绕过评估与实验。
+  - 新增 finance 页面定义清单与 API 路由清单，覆盖 Dashboard/Portfolio/Watchlist/Reports/Predictions/Reviews/Error Intelligence/Strategy Lab/Experiment Center/Thesis Timeline。
+  - 新增应用编排服务 `FinanceAppOrchestratorService`，将 active STU context 以提示注入下一次 artifact 生成输入，保证影响回流到后续任务上下文。
+
+- 新增/修改的目录与关键文件：
+  - 新增目录：
+    - `apps/finance/src/domain`
+    - `apps/finance/src/application/config`
+    - `apps/finance/src/application/policies`
+    - `apps/finance/src/application/artifacts`
+    - `apps/finance/src/application/predictions`
+    - `apps/finance/src/application/reviews`
+    - `apps/finance/src/application/error-intelligence`
+    - `apps/finance/src/application/evaluation`
+    - `apps/finance/src/application/api`
+    - `apps/finance/src/application/pages`
+  - 新增/修改关键文件：
+    - `apps/finance/src/domain/models.ts`
+    - `apps/finance/src/domain/repository.ts`
+    - `apps/finance/src/domain/index.ts`
+    - `apps/finance/src/application/config/financeAppConfig.ts`
+    - `apps/finance/src/application/policies/financePolicies.ts`
+    - `apps/finance/src/application/artifacts/FinanceArtifactService.ts`
+    - `apps/finance/src/application/predictions/FinancePredictionService.ts`
+    - `apps/finance/src/application/reviews/FinanceReviewService.ts`
+    - `apps/finance/src/application/error-intelligence/FinanceErrorIntelligenceService.ts`
+    - `apps/finance/src/application/evaluation/FinanceEvaluationService.ts`
+    - `apps/finance/src/application/services/FinanceAppOrchestratorService.ts`
+    - `apps/finance/src/application/api/financeApiRoutes.ts`
+    - `apps/finance/src/application/pages/financePages.ts`
+    - `apps/finance/src/application/index.ts`
+    - `apps/finance/src/index.ts`
+
+- 数据模型与接口变更：
+  - 新增 finance 应用层数据模型（不改 framework 通用协议）：Portfolio/Holding/Watchlist/FinanceArtifact/FinancePrediction/PredictionOutcome/PredictionReview/FinanceErrorPattern/FinanceSTUCandidateProposal。
+  - 新增应用服务接口：artifact 生成、prediction 提取与准入、review 执行、error intelligence 聚合、evaluation & experiment 决策、端到端 mock 编排。
+  - 新增页面与 API 清单定义接口。
+
+- 与 framework 的接入方式：
+  - 复用 `@stratos/claim-extractor`：artifact -> claim 抽取。
+  - 复用 `@stratos/evaluation-engine`：candidate vs baseline 评估。
+  - 复用 `@stratos/experiment-engine`：candidate 注册、评估后实验启动。
+  - 复用 `@stratos/bias-monitor`：candidate bias gate。
+  - app 层仅承载 finance 领域对象、阈值策略和流程编排，不复制 STU Registry/Compiler/Rule Engine/Evaluation/Experiment 主语义。
+
+- 已实现/未实现的 PRD 条款：
+  - 已实现：
+    - 领域模型与目录边界。
+    - Portfolio/Holding/Watchlist 基础 CRUD（in-memory）。
+    - 四类核心 artifact 生成链路。
+    - ClaimAdmissionPolicy 准入。
+    - prediction->outcome->review 闭环（time/event trigger 兼容）。
+    - error pattern 首批模式聚合与 candidate proposal。
+    - evaluation/experiment/promotion 策略接入。
+    - 页面与 API 清单覆盖 PRD 最低要求。
+    - active STU context 对后续任务输入回流。
+  - 未实现：
+    - 真实 DB 持久化和外部 market/news/event provider 接入。
+    - 真正的前端页面渲染与后端 HTTP 路由落地（目前为 contract/registry 层）。
+    - benchmark 数据集管理与更完整偏差治理报表。
+
+- 测试执行结果（仓库根目录）：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（41/41）。
+
+- 当前遗留问题、技术债、下一阶段建议：
+  - 技术债：finance repo 仍为 in-memory，API/page 为 schema/contract 未接入运行时 Web 容器。
+  - 风险：prediction 结构化仍依赖基础 ClaimExtractor，需对接 finance-specific parser/normalizer。
+  - 下一阶段建议：
+    1) 引入 sqlite/remote adapter 将 finance 表与 framework 表按 PRD 原则分表持久化；
+    2) 实现实际 route handler 与 UI 页；
+    3) 接入 benchmark set 与 experiment center 指标追踪；
+    4) 接入真实行情/事件数据源；
+    5) 增加 active STU 回流效果 A/B 观测指标。
+
+## 2026-03-27 Phase U — Finance App 闭环强化（本地持久化 / 可运行页面与API / benchmark+bias+timeline / provider接口层）
+
+### U-A 持久化替换（repository 从 in-memory -> SQLite 本地可跑）
+- 本阶段目标：替换 in-memory repository，落地本地可跑持久化。
+- 实际完成内容：
+  - 新增 SQLite 本地适配 `FinanceSQLite`（基于 sqlite3 CLI）并自动建表。
+  - `FinanceRepository` 全量改为 SQLite 持久化，覆盖 portfolios/holdings/watchlist/assets/report_inputs/predictions/outcomes/reviews/bias/benchmark/timeline 等 finance 表。
+- 新增/修改关键文件：
+  - `apps/finance/src/infrastructure/sqlite/FinanceSQLite.ts`
+  - `apps/finance/src/domain/repository.ts`
+- 数据模型与接口变更：新增 `FinanceBenchmarkSample` / `FinanceBiasSnapshot` / `FinanceTimelineLink` 持久化接口。
+- 与 framework 的接入方式：未改 framework 主表语义，app 仅持有 finance 领域数据表。
+- 已实现/未实现 PRD 条款：已实现本地单机持久化；未实现远程DB部署。
+- 五条 pnpm 命令执行结果：全部通过（Stage A）。
+- 当前遗留问题、技术债、下一阶段建议：后续补 migration 工具链自动化（当前为 runtime bootstrap SQL）。
+
+### U-B 页面与 API 真正落地（Route Handlers + 页面运行时）
+- 本阶段目标：把 page/API 清单变成可运行查询层。
+- 实际完成内容：
+  - 新增 `FinanceRouteHandlers`，覆盖 dashboard/portfolio/watchlist/reports/predictions/reviews/errors/candidates/experiments/bias/timeline + mock run + benchmark seed。
+  - 新增 `FinancePagesRuntime`，可渲染 Dashboard/Portfolio/Watchlist/Reports/Predictions/Reviews/Error Intelligence/Strategy Lab/Experiment Center/Thesis Timeline 页面HTML。
+  - 新增 `FinanceQueryService` 供 API 与页面统一查询。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/application/ui/FinancePagesRuntime.ts`
+  - `apps/finance/src/application/query/FinanceQueryService.ts`
+- 数据模型与接口变更：新增 RouteRequest/RouteResponse 协议与 query 聚合接口。
+- 与 framework 的接入方式：API/page 层消费 app service，不复制 framework 运行时。
+- 已实现/未实现 PRD 条款：已实现最小可运行页面与JSON路由；未接真实Web框架路由器。
+- 五条 pnpm 命令执行结果：全部通过（Stage B）。
+- 当前遗留问题、技术债、下一阶段建议：下一步可接 Next.js/Express 实路由。
+
+### U-C benchmark / evaluation / experiment 打通
+- 本阶段目标：本地基准样本与评估实验展示闭环。
+- 实际完成内容：
+  - 新增 `FinanceBenchmarkService`，支持 default seed/list。
+  - `FinanceEvaluationService` 增加 benchmark comparison 输出。
+  - orchestrator + error-intelligence 持续接入 framework evaluation/experiment candidate pipeline。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/benchmark/FinanceBenchmarkService.ts`
+  - `apps/finance/src/application/evaluation/FinanceEvaluationService.ts`
+- 数据模型与接口变更：新增 benchmark 样本结构和 comparison 输出结构。
+- 与 framework 的接入方式：复用 EvaluationEngine/ExperimentEngine/BiasMonitor。
+- 已实现/未实现 PRD 条款：已支持 candidate 进入 evaluation/experiment；未做多数据集可视化细分。
+- 五条 pnpm 命令执行结果：全部通过（Stage C）。
+- 当前遗留问题、技术债、下一阶段建议：补充更细粒度 candidate-vs-baseline 维度。
+
+### U-D BiasAlertPolicy 与 Thesis Timeline
+- 本阶段目标：补齐 bias snapshot 持久化 + timeline 可查询。
+- 实际完成内容：
+  - Evaluation 过程中生成并落盘 bias snapshot。
+  - Orchestrator 落盘 timeline link，串联 report->prediction->review->pattern->candidate->experiment->active STU effect。
+  - Dashboard/Strategy Lab/Experiment Center/Timeline 页面与 API 可读取 bias/timeline 数据。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/evaluation/FinanceEvaluationService.ts`
+  - `apps/finance/src/application/services/FinanceAppOrchestratorService.ts`
+  - `apps/finance/src/domain/repository.ts`
+- 数据模型与接口变更：新增 bias/timeline 查询接口。
+- 与 framework 的接入方式：bias 信号由 framework BiasMonitor 生成，app 仅做持久化与展示。
+- 已实现/未实现 PRD 条款：已实现 replay-friendly timeline 查询；未实现高级过滤聚合。
+- 五条 pnpm 命令执行结果：全部通过（Stage D）。
+- 当前遗留问题、技术债、下一阶段建议：补充跨组合多ticker时间窗分页。
+
+### U-E provider 接口层（仅 mock/配置，不做真实供应商绑定）
+- 本阶段目标：完成可替换 provider interface + mock provider + env 占位。
+- 实际完成内容：
+  - 新增 `MarketDataProvider/NewsProvider/EventProvider` 接口。
+  - 新增 mock providers 与 registry 注入入口。
+  - 新增 `apps/finance/.env.example` 占位，默认 `FINANCE_PROVIDER_MODE=mock`。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/providers/types.ts`
+  - `apps/finance/src/application/providers/mockProviders.ts`
+  - `apps/finance/src/application/providers/registry.ts`
+  - `apps/finance/.env.example`
+- 数据模型与接口变更：provider registry/DI 接口新增。
+- 与 framework 的接入方式：不改 framework gateway/router，app 仅增加 provider adapter 抽象位。
+- 已实现/未实现 PRD 条款：已完成接口层与mock层；未接真实第三方供应商。
+- 五条 pnpm 命令执行结果：全部通过（Stage E）。
+- 当前遗留问题、技术债、下一阶段建议：部署前阶段再接真实 provider SDK 与凭证治理。
+
+## 2026-03-27 Phase V — 正式产品运行层 + effect 证真层
+
+### V-A 正式 Web runtime 接入
+- 本阶段目标：将 runtime/controller 升级为正式可访问 web runtime。
+- 实际完成内容：
+  - 新增 `FinanceWebRuntime`（Node HTTP runtime）并映射正式页面路径：
+    `/finance/dashboard|portfolio|watchlist|reports|predictions|reviews|errors|strategy-lab|experiments|timeline`。
+  - API 路由通过 `FinanceRouteHandlers` 正式对外暴露，并保留 service/query/repository 分层。
+- 关键新增/修改文件：
+  - `apps/finance/src/web/FinanceWebRuntime.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/application/ui/FinancePagesRuntime.ts`
+- 数据模型与接口变更：页面支持列表/详情/过滤/状态展示参数。
+- 与 framework 的接入方式：未复制 framework 核心能力，仅 app 层 runtime 接线。
+- 已实现/未实现 PRD 条款：已实现正式可访问页面/API；未接入 Next.js（当前采用 Node HTTP runtime）。
+- 五条 pnpm 命令结果：全部通过（V-A checks）。
+- 新增测试：`tests/finance-web-runtime.smoke.test.mjs`。
+- 遗留问题/技术债/下一步建议：后续可平滑迁移到 Next.js App Router。
+
+### V-B migration / seed 体系
+- 本阶段目标：从 runtime bootstrap 演进到可维护 migration/seed 工作流。
+- 实际完成内容：
+  - 新增 migration SQL：`apps/finance/db/migrations/001_init.sql`。
+  - 新增脚本：`finance:db:init|migrate|seed|reset`。
+  - 在 `package.json` 增加对应命令。
+- 关键新增/修改文件：
+  - `apps/finance/db/migrations/001_init.sql`
+  - `apps/finance/scripts/db-*.mjs`
+  - `package.json`
+- 数据模型与接口变更：新增 `finance_migrations` 管理迁移状态。
+- 与 framework 的接入方式：仅处理 finance 领域表，不重定义 framework 主表。
+- 已实现/未实现 PRD 条款：已完成本地命令化迁移/seed；未接 Prisma。
+- 五条 pnpm 命令结果：全部通过（V-B checks）。
+- 新增测试：`tests/finance-db-workflow.smoke.test.mjs`。
+- 遗留问题/技术债/下一步建议：后续可引入 Prisma 管理 schema 演进。
+
+### V-C active STU effect 证真 + replay test
+- 本阶段目标：证明 active STU effect 真正回流并可回放。
+- 实际完成内容：
+  - 新增 `ActiveSTUEffectProofService`：
+    - 使用 `STURegistry + StrategyCompiler` 构造 baseline 与 active 两组同输入运行；
+    - 对比 artifact/prediction/review/error-pattern 差异；
+    - 落盘 replay 证据与 timeline 链接。
+  - 新增 replay API：
+    - `POST /api/finance/replay/stu-effect/run`
+    - `GET /api/finance/replay/stu-effect`
+- 关键新增/修改文件：
+  - `apps/finance/src/application/services/ActiveSTUEffectProofService.ts`
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+- 数据模型与接口变更：新增 `finance_stu_effect_replays` 表和 replay 查询接口。
+- 与 framework 的接入方式：effect 注入通过 framework compiler 审计信息可证明，未绕开 compiler 直写 prompt。
+- 已实现/未实现 PRD 条款：已完成 effect 可观察/可回放/与 candidate->evaluation->experiment 关联。
+- 五条 pnpm 命令结果：全部通过（V-C checks）。
+- 新增测试：`tests/finance-active-stu-effect.replay.test.mjs`。
+- 遗留问题/技术债/下一步建议：后续扩展多任务类型 replay 矩阵。
+
+### V-D Strategy Lab / Experiment Center 产品化增强
+- 本阶段目标：强化 baseline/candidate 比较与实验视图。
+- 实际完成内容：
+  - Query 层新增 Strategy Lab 比较、thesis 聚合、missed 样本列表。
+  - Experiment Center 增加 traffic ratio / recommendation / reasoning 输出。
+  - Evaluation 服务新增多维指标（claim precision、review quality proxy、bias delta 等）。
+- 关键新增/修改文件：
+  - `apps/finance/src/application/query/FinanceQueryService.ts`
+  - `apps/finance/src/application/evaluation/FinanceEvaluationService.ts`
+  - `apps/finance/src/application/ui/FinancePagesRuntime.ts`
+- 数据模型与接口变更：新增多维产品指标计算。
+- 与 framework 的接入方式：Promotion/Evaluation 结果仍复用 framework engines。
+- 已实现/未实现 PRD 条款：已补多维展示；未完成高级图表化 UI。
+- 五条 pnpm 命令结果：全部通过（V-D checks）。
+- 新增测试：沿用 web runtime + route + replay 测试覆盖。
+- 遗留问题/技术债/下一步建议：补图表组件和多维 drill-down。
+
+### V-E Timeline / audit / replay 体验增强
+- 本阶段目标：加强 timeline 可审计能力。
+- 实际完成内容：
+  - timeline 支持分页、时间窗、ticker/portfolio/taskType 过滤。
+  - timeline detail 与 replay entries 联查。
+  - 页面与 API 都可访问 debug/replay entry。
+- 关键新增/修改文件：
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/application/query/FinanceQueryService.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+- 数据模型与接口变更：timeline query 参数扩展（limit/offset/from/to/detailId）。
+- 与 framework 的接入方式：保留 framework replay/audit 语义，app 只做 finance 视图映射。
+- 已实现/未实现 PRD 条款：已实现 replay-friendly 查询入口；未做全文检索。
+- 五条 pnpm 命令结果：全部通过（V-E checks）。
+- 新增测试：`finance-web-runtime` + `finance-active-stu-effect` 覆盖。
+- 遗留问题/技术债/下一步建议：补索引策略与更多过滤器。
+
+### V-F 本地 observability 指标补齐
+- 本阶段目标：补最小本地可观测性。
+- 实际完成内容：
+  - 新增 `finance_metrics_events` 表。
+  - 记录指标：task count / artifact count / claim extraction count / review coverage / error pattern discovery / experiment count / promote/rollback count / latency。
+  - 新增 API：`GET /api/finance/metrics`，并返回 provider mock 调用统计。
+- 关键新增/修改文件：
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/application/predictions/FinancePredictionService.ts`
+  - `apps/finance/src/application/reviews/FinanceReviewService.ts`
+  - `apps/finance/src/application/error-intelligence/FinanceErrorIntelligenceService.ts`
+  - `apps/finance/src/application/evaluation/FinanceEvaluationService.ts`
+- 数据模型与接口变更：新增 metric 事件与汇总接口。
+- 与 framework 的接入方式：app observability 为解释层，不复制 framework 主语义。
+- 已实现/未实现 PRD 条款：已补最小观测；未接云监控。
+- 五条 pnpm 命令结果：全部通过（V-F checks）。
+- 新增测试：`finance-web-runtime.smoke` 间接验证 `/api/finance/metrics`。
+- 遗留问题/技术债/下一步建议：后续对接日志/trace聚合。
+
+### V-G provider 接口层小修补（非真实接入）
+- 本阶段目标：维持 provider 仅接口/mock/配置层。
+- 实际完成内容：
+  - 新增 `providerStats` 并在 mock providers 中统计调用次数。
+  - `/api/finance/metrics` 增加 providerStats 输出。
+  - 新增 `apps/finance/provider-switching.md` 说明切换位与阶段边界。
+- 关键新增/修改文件：
+  - `apps/finance/src/application/providers/providerStats.ts`
+  - `apps/finance/src/application/providers/mockProviders.ts`
+  - `apps/finance/provider-switching.md`
+- 数据模型与接口变更：provider 统计接口扩展。
+- 与 framework 的接入方式：不变，仍不绑定真实供应商。
+- 已实现/未实现 PRD 条款：已完成接口层强化；未做真实 SDK/密钥绑定。
+- 五条 pnpm 命令结果：全部通过（V-G checks）。
+- 新增测试：`finance-web-runtime.smoke` + `mock/run` 路径可触发 provider stats。
+- 遗留问题/技术债/下一步建议：部署前阶段再处理真实 provider 稳定性工程。
+
+## 2026-03-28 Phase W — Review Comment Fix: Replay/Audit 边界校正 + SQLite infrastructure adapter 抽象补齐
+
+- 本阶段目标：
+  1) 回答并落实 review comment：`ActiveSTUEffectProofService` 仅做 finance orchestration/comparison，不重写 framework replay/audit 协议。
+  2) 补齐 SQLite 访问的 infrastructure adapter 抽象层，避免 repository 直接依赖 CLI 细节。
+
+- 实际完成内容：
+  - `ActiveSTUEffectProofService` 接入 `@stratos/replay-debug` 的 `ReplayAuditEngine`，改为基于 framework replay/diff 协议输出 replay proof，不在 app 重定义平行 replay 协议。
+  - 新增 `FinanceSqlExecutor` 抽象与 `CliFinanceSqlExecutor` 实现，将 sqlite3 CLI 调用从 `FinanceSQLite` 分离到 infrastructure adapter 层。
+  - `FinanceSQLite` 改为依赖 `FinanceSqlExecutor`，形成统一数据访问抽象边界。
+
+- 关键新增/修改文件：
+  - `apps/finance/src/infrastructure/adapters/FinanceSqlExecutor.ts`
+  - `apps/finance/src/infrastructure/sqlite/FinanceSQLite.ts`
+  - `apps/finance/src/application/services/ActiveSTUEffectProofService.ts`
+
+- 数据模型与接口变更：
+  - 新增 infrastructure adapter 接口：`FinanceSqlExecutor.exec`。
+  - `ActiveSTUEffectProofService` 返回结构新增 `replayProof`（来源于 framework replay engine）。
+
+- 与 framework 的接入方式：
+  - replay/diff 语义由 framework `ReplayAuditEngine` 提供，finance app 仅聚合、映射、解释。
+  - 未改动 framework STU/Compiler/Evaluation/Experiment 核心协议。
+
+- 已实现/未实现 PRD 条款：
+  - 已实现：review comment 指出的两项边界问题修复。
+  - 未实现：Prisma 级 ORM 迁移（仍为 SQL migration + adapter 抽象）。
+
+- 五条 pnpm 命令结果（仓库根目录）：
+  - `pnpm install --frozen-lockfile`：通过
+  - `pnpm clean`：通过
+  - `pnpm build`：通过
+  - `pnpm typecheck`：通过
+  - `pnpm test`：通过（47/47）
+
+- 新增测试：
+  - 无新增测试文件；现有 `finance-active-stu-effect.replay.test.mjs` 与全量测试通过，覆盖 replay proof 关键路径。
+
+- 当前遗留问题、技术债、下一步建议：
+  - 后续可将 `FinanceSqlExecutor` 扩展为可切换 sqlite driver（不仅 CLI）。
+  - 在部署前阶段再引入真实 provider 绑定与稳定性工程。
+
+## 2026-03-28 Phase X — 任务自动化运行层 + 数据入口补齐
+
+### X-A Queue / Scheduler infrastructure adapter
+- 本阶段目标：补齐 finance 任务自动化基础设施适配层。
+- 实际完成内容：新增 `FinanceQueueAdapter` 与 `FinanceSchedulerAdapter`（in-process 本地实现），并通过 app service 统一接入，不在业务服务散落队列/调度实现细节。
+- 新增/修改关键文件：
+  - `apps/finance/src/infrastructure/adapters/FinanceQueueAdapter.ts`
+  - `apps/finance/src/infrastructure/adapters/FinanceSchedulerAdapter.ts`
+- 数据模型与接口变更：新增 queue message / scheduled task 协议。
+- 与 framework 的接入方式：仅做 finance task registration/dispatch/status 映射，不复制 framework task 主协议。
+- 已实现/未实现 PRD 条款：已完成本地 adapter；未接远程队列/调度器。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：由后续 X-B/X-F 集成测试覆盖。
+- 遗留问题：后续可扩展 sqlite-backed queue。
+
+### X-B finance 任务执行层与状态模型
+- 本阶段目标：让 finance task types 真正可持续运行。
+- 实际完成内容：
+  - 新增 `FinanceTaskAutomationService`，支持 enqueue / schedule / pollScheduled / runNow / retry failed / cancel pending / idempotency guard。
+  - 任务记录字段包含：task id/type/status/scheduled_at/started_at/finished_at/retry_count/error_summary/refs/source/idempotency。
+  - 最小可运行任务：`daily_brief_generation` / `weekly_portfolio_review` / `prediction_review` / `error_pattern_scan`。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/services/FinanceTaskAutomationService.ts`
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/infrastructure/sqlite/FinanceSQLite.ts`
+  - `apps/finance/db/migrations/001_init.sql`
+- 数据模型与接口变更：新增 `finance_tasks` 表与 task query/update 接口。
+- 与 framework 的接入方式：任务内部仍复用既有 finance->framework 调用链，不重写 framework evaluation/experiment/replay 主语义。
+- 已实现/未实现 PRD 条款：已实现核心任务执行；其余 task type 先占位可执行。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：
+  - `tests/finance-scheduled-task.integration.test.mjs`
+  - `tests/finance-error-scan-periodic.test.mjs`
+- 遗留问题：后续可补 task priority / dead-letter 策略。
+
+### X-C 数据入口（source/outcome/review correction）
+- 本阶段目标：补齐任务系统可消费的数据入口层。
+- 实际完成内容：新增 `FinanceIngestService` 与持久化接口，支持：
+  - source document ingest（ticker/portfolio/source type/source timestamp/content/normalized payload）
+  - outcome ingest（price_window/earnings/risk_event/manual）
+  - manual review correction ingest（corrected payload/reason/counterevidence）
+- 新增/修改关键文件：
+  - `apps/finance/src/application/services/FinanceIngestService.ts`
+  - `apps/finance/src/domain/repository.ts`
+  - `apps/finance/src/infrastructure/sqlite/FinanceSQLite.ts`
+  - `apps/finance/db/migrations/001_init.sql`
+- 数据模型与接口变更：新增 `finance_source_documents` / `finance_ingested_outcomes` / `finance_review_corrections`。
+- 与 framework 的接入方式：仅补 app 数据入口，不重写 claim/review/error 主协议。
+- 已实现/未实现 PRD 条款：已实现三类 ingest；未接真实外部 provider。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：
+  - `tests/finance-ingest-task-link.test.mjs`
+  - `tests/finance-prediction-review-auto-enqueue.test.mjs`
+- 遗留问题：后续补批量导入/校验规则。
+
+### X-D Task Ops / Run Center 页面与 API
+- 本阶段目标：新增系统运行可视化与操作面。
+- 实际完成内容：
+  - 新增 `Task Ops` 页面（`/finance/run-center`）支持列表、详情、失败筛选、摘要。
+  - 新增运行 API：
+    - `POST /api/finance/tasks/enqueue`
+    - `GET /api/finance/tasks`
+    - `GET /api/finance/tasks/:id`
+    - `POST /api/finance/tasks/:id/retry`
+    - `POST /api/finance/tasks/:id/cancel`
+    - `GET /api/finance/run-center/summary`
+- 新增/修改关键文件：
+  - `apps/finance/src/web/FinanceWebRuntime.ts`
+  - `apps/finance/src/application/ui/FinancePagesRuntime.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/application/pages/financePages.ts`
+  - `apps/finance/src/application/api/financeApiRoutes.ts`
+- 数据模型与接口变更：Task Ops 视图读取 task/retry/error/source/duration refs。
+- 与 framework 的接入方式：仅做 finance app 运行视图与操作，不复制 framework audit 主语义。
+- 已实现/未实现 PRD 条款：已实现列表/详情/失败筛选/retry/cancel。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：`tests/finance-run-center-api.smoke.test.mjs`。
+- 遗留问题：后续可补批量 rerun。
+
+### X-E 任务系统接现有闭环
+- 本阶段目标：把 task 自动化接入既有 artifact/prediction/review/error/experiment/bias/timeline。
+- 实际完成内容：
+  - `daily_brief_generation` / `weekly_portfolio_review` 任务接 `FinanceAppOrchestratorService`。
+  - outcome ingest 后自动入队 `prediction_review`。
+  - `error_pattern_scan` 周期任务接 review->error pattern 聚合。
+  - 任务 refs 回填 artifact/review/pattern，并可在 run center/timeline 查询。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/services/FinanceTaskAutomationService.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/domain/repository.ts`
+- 数据模型与接口变更：task refs 结构化写入。
+- 与 framework 的接入方式：active STU 影响仍通过 compiler 注入（沿用 existing proof service）。
+- 已实现/未实现 PRD 条款：已落地至少一条可持续自动化链路。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：scheduled / auto-enqueue / periodic scan / ingest-link 测试均通过。
+- 遗留问题：后续补 weekly/prediction review 的更细规则。
+
+### X-F 运行级 observability 接任务层
+- 本阶段目标：把任务自动化指标接入 Dashboard/Run Center/API。
+- 实际完成内容：新增并接通指标：
+  - queued task count
+  - running task count
+  - failed task count
+  - retry count
+  - average latency（通过 latency 累计可计算）
+  - task success rate
+  - scheduled run count
+  - manual run count
+  - 并在 `/api/finance/metrics` 返回 runCenter + providerStats。
+- 新增/修改关键文件：
+  - `apps/finance/src/application/services/FinanceTaskAutomationService.ts`
+  - `apps/finance/src/application/http/FinanceRouteHandlers.ts`
+  - `apps/finance/src/domain/repository.ts`
+- 数据模型与接口变更：metrics events 新增任务运行维度写入。
+- 与 framework 的接入方式：app 解释层指标，不复制 framework observability 主协议。
+- 已实现/未实现 PRD 条款：已补最小运行级指标。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：run-center + scheduled integration 间接覆盖。
+- 遗留问题：后续可加窗口化聚合 API。
+
+### X-G provider 接口说明整理（不做真实接入）
+- 本阶段目标：保持 provider 仍为接口/mock/config 层。
+- 实际完成内容：保持既有 mock provider + registry + `.env.example` 与 provider switching 文档，不新增真实 SDK 绑定。
+- 新增/修改关键文件：
+  - 无实质新增（保持边界）。
+- 数据模型与接口变更：无。
+- 与 framework 的接入方式：不变。
+- 已实现/未实现 PRD 条款：符合“本阶段不做真实 provider 接入”要求。
+- 五条 pnpm 命令结果：全部通过。
+- 新增测试：无单独新增。
+- 遗留问题：部署前阶段再做真实供应商绑定与稳定性工程。
+
+### Phase D2：部署接入与初始化体验（Setup UI）
+- setup UI 目标：让 `apps/finance` 部署后可通过浏览器完成首次配置、初始化、健康检查与首轮任务启动，而不需要手动编辑大量配置文件。
+- 页面 / API：
+  - 页面：`/finance/setup`（Setup Wizard）、`/finance/setup/status`（Setup Status/Admin）
+  - API：
+    - `GET /api/finance/setup/status`
+    - `POST /api/finance/setup/validate`
+    - `POST /api/finance/setup/save-config`
+    - `POST /api/finance/setup/bootstrap`
+    - `POST /api/finance/setup/healthcheck`
+    - `POST /api/finance/setup/demo-run`
+- 配置持久化方案：
+  - 新增 `finance_setup_configs` 表保存 setup version / mode / non-secret / secret / setup completed / updated_at。
+  - 新增 `finance_setup_healthchecks` 表记录 health check 结果历史。
+  - `FinanceSetupService` 统一负责校验、保存、初始化、健康检查与 demo run。
+- secret handling 方案：
+  - setup 保存时将 secret 字段与 non-secret 配置分离。
+  - API 返回仅包含 `secretFields` 字段名，不回显 secret 内容。
+  - server-side 对 secret payload 做简单保护编码（可由 `FINANCE_SETUP_SECRET_KEY` 参与）。
+- 与 framework model-router/model-gateway 接线方式：
+  - setup 仅采集和保存 provider/model/routing policy 的配置数据，不在 finance app 中直连模型 SDK。
+  - healthcheck 通过现有 provider registry / orchestration 路径做可用性探测，保持“app 配置 -> framework 可消费输入层”的边界。
+- 新增测试：
+  - `tests/finance-setup-status.test.mjs`
+  - `tests/finance-setup-validate.test.mjs`
+  - `tests/finance-setup-save-config.test.mjs`
+  - `tests/finance-setup-bootstrap.test.mjs`
+  - `tests/finance-setup-healthcheck.test.mjs`
+  - `tests/finance-setup-wizard.smoke.test.mjs`
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（58/58）。
+
+### Phase F6 封板（bias / timeline / replay / polish）
+- F6 gap list（本次开始前）：
+  - durable queue/scheduler 仅有表结构，缺少可恢复 claim/lease、stale 检测与失败追踪。
+  - prediction_review 对 time/event/manual trigger、window、expired/skipped/inconclusive、幂等保护不完整。
+  - replay-friendly 查询缺少统一入口与诊断聚合。
+  - 持续运行链路虽有 task type，但 candidate/experiment/bias/timeline 语义存在占位。
+- F6 收口动作：
+  - 将 task 运行状态扩展为 `pending/queued/running/succeeded/failed/cancelled/skipped`，补充 `last_error_at`、`next_retry_at` 字段，并在 task 执行失败时写入。
+  - 实现 durable queue（`finance_task_queue`）claim/lease + duplicate consume guard + ack/fail + stale claim 查询。
+  - 实现 durable scheduler（`finance_task_schedule`）持久化与重启后 due 任务恢复入队。
+  - 在 `FinanceTaskAutomationService` 中加入 stale running task 检测与恢复、retry 信息追踪。
+  - `prediction_review` 增强：
+    - 支持 `time_based` / `event_based` / `manual_review_requested` trigger。
+    - review window 判断与 `expired/skipped/inconclusive` 分类。
+    - 同 prediction 已 review 的重复保护。
+    - 同 prediction + outcome run key 幂等记录（`finance_prediction_review_runs`）。
+    - 高置信度高影响预测进入 `manual_review_requested` 队列。
+  - 持续运行链路闭合（自动 enqueue）：
+    - `daily_brief_generation -> prediction_extraction -> prediction_review -> error_pattern_scan -> finance_candidate_generation -> finance_experiment_check -> bias_snapshot_generation -> timeline_rebuild`。
+  - bias snapshot 任务语义改为行为信号 + 结果信号组合，不再仅单一行为指标。
+  - replay 入口增强：新增
+    - `GET /api/finance/replay/query`
+    - `GET /api/finance/replay/diagnostics`
+    并接入页面 `Replay Diagnostics`。
+- F6 封板证据：
+  - BiasAlertPolicy 运行结果可在 dashboard/strategy lab/experiment center 读取 bias snapshot；且 snapshot 由 `bias_snapshot_generation` 自动任务写入。
+  - timeline 与 replay 查询均可从页面/API进入，支持 ticker/portfolio/task_type/date-range 过滤与串联实体查看。
+  - run center summary 返回 queueSize/staleClaims/reviewRuns，任务状态流转与失败可追踪。
+  - 持续运行 smoke 已覆盖从 daily brief 到 timeline rebuild 的自动链路。
+- 新增测试：
+  - `tests/finance-durable-queue-restart-recovery.test.mjs`
+  - `tests/finance-duplicate-consume-guard.test.mjs`
+  - `tests/finance-time-based-review-trigger.test.mjs`
+  - `tests/finance-event-based-review-trigger.test.mjs`
+  - `tests/finance-stale-task-detection.test.mjs`
+  - `tests/finance-candidate-generation-semantic.test.mjs`
+  - `tests/finance-bias-snapshot-task.test.mjs`
+  - `tests/finance-timeline-rebuild-semantic.test.mjs`
+  - `tests/finance-replay-query.integration.test.mjs`
+  - `tests/finance-end-to-end-continuous-run.smoke.test.mjs`
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（68/68）。
+- 尚未完成事项：
+  - 暂未接真实 provider（按当前阶段要求不做）。
+  - setup UI 相关内容已存在，但不属于 F6 本次目标，后续可按阶段计划剥离/冻结。
+
+### Phase R1：AI Runtime Settings（finance app 内配置入口）
+- 页面目标：在 `apps/finance` 内提供 runtime settings 的页面/API 入口，用户可配置 provider/model/routing/guardrails/structured defaults，并由 framework runtime 消费。
+- 页面与 API：
+  - 页面：
+    - `/finance/settings`
+    - `/finance/settings/runtime`
+    - `/finance/settings/runtime/health`
+    - `/finance/settings/runtime/history`
+  - API：
+    - `GET /api/finance/settings/runtime`
+    - `POST /api/finance/settings/runtime/validate`
+    - `POST /api/finance/settings/runtime/save`
+    - `POST /api/finance/settings/runtime/healthcheck`
+    - `GET /api/finance/settings/runtime/history`
+    - `POST /api/finance/settings/runtime/resolve-profile`
+- 配置对象拆分：
+  - Finance App Runtime Preferences：task->intent/impact/routing policy params 等 app 偏好。
+  - Runtime Connection/Provider Config：provider profile/model alias/fallback/reviewer/structured 支持等 runtime 可消费配置。
+  - Secret References：api key ref/token ref/credential ref 单独存储。
+- secret handling 方案：
+  - `finance_runtime_settings.secret_refs_json` 单独字段存储。
+  - `GET /api/finance/settings/runtime` 仅返回 `configured` 状态，不回显 secret 明文。
+  - history 仅记录摘要，不包含 secret 原文。
+- 与 framework model-router/model-gateway 接线方式：
+  - `FinanceRuntimeSettingsService.healthcheck()` 使用 `@stratos/model-router` 做 provider route decision，并使用 `@stratos/model-gateway` + `MockProviderAdapter` 执行 text/json dry-run。
+  - finance app 仅做 settings 采集、校验、映射；不在 app 中重写 router/gateway。
+- 新增测试：
+  - `tests/finance-runtime-settings-read.test.mjs`
+  - `tests/finance-runtime-settings-validate.test.mjs`
+  - `tests/finance-runtime-settings-save.test.mjs`
+  - `tests/finance-runtime-settings-secret-masking.test.mjs`
+  - `tests/finance-runtime-settings-healthcheck.test.mjs`
+  - `tests/finance-runtime-settings-resolve-profile.test.mjs`
+  - `tests/finance-runtime-settings-mapping.test.mjs`
+  - `tests/finance-runtime-settings-task-routing-defaults.test.mjs`
+  - `tests/finance-runtime-settings-page-api.smoke.test.mjs`
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（新增 settings 测试后全量通过）。
+- 尚未完成项：
+  - 暂未接真实 provider runtime（按边界要求本阶段不做）。
+  - runtime history 当前为 app 级配置摘要，不替代 framework replay/audit 主协议。
