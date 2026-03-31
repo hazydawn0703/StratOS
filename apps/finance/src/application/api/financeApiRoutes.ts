@@ -41,5 +41,11 @@ export const financeApiRoutes: FinanceApiRoute[] = [
   { method: 'POST', path: '/api/finance/setup/save-config', purpose: 'save setup config with secret protection' },
   { method: 'POST', path: '/api/finance/setup/bootstrap', purpose: 'initialize app resources from setup' },
   { method: 'POST', path: '/api/finance/setup/healthcheck', purpose: 'run setup health checks' },
-  { method: 'POST', path: '/api/finance/setup/demo-run', purpose: 'enqueue and run setup demo task' }
+  { method: 'POST', path: '/api/finance/setup/demo-run', purpose: 'enqueue and run setup demo task' },
+  { method: 'GET', path: '/api/finance/settings/runtime', purpose: 'read runtime settings summary' },
+  { method: 'POST', path: '/api/finance/settings/runtime/validate', purpose: 'validate runtime settings payload' },
+  { method: 'POST', path: '/api/finance/settings/runtime/save', purpose: 'save runtime settings' },
+  { method: 'POST', path: '/api/finance/settings/runtime/healthcheck', purpose: 'runtime healthcheck via router/gateway path' },
+  { method: 'GET', path: '/api/finance/settings/runtime/history', purpose: 'runtime settings change history' },
+  { method: 'POST', path: '/api/finance/settings/runtime/resolve-profile', purpose: 'resolve runtime profile/model alias' }
 ];

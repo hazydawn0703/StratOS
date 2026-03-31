@@ -191,6 +191,25 @@ CREATE TABLE IF NOT EXISTS finance_setup_healthchecks (
   result_json TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS finance_runtime_settings (
+  id TEXT PRIMARY KEY,
+  mode TEXT NOT NULL,
+  runtime_config_json TEXT NOT NULL,
+  app_preferences_json TEXT NOT NULL,
+  secret_refs_json TEXT NOT NULL,
+  updated_by TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  active INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS finance_runtime_settings_history (
+  id TEXT PRIMARY KEY,
+  settings_id TEXT NOT NULL,
+  changed_by TEXT NOT NULL,
+  changed_at TEXT NOT NULL,
+  changed_fields_json TEXT NOT NULL,
+  previous_summary_json TEXT NOT NULL,
+  new_summary_json TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS finance_timeline_links (
   id TEXT PRIMARY KEY,
   ticker TEXT,

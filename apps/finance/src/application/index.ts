@@ -32,3 +32,4 @@ export * from './providers/providerStats.js';
 export * from './services/FinanceTaskAutomationService.js';
 export * from './services/FinanceIngestService.js';
 export * from './services/FinanceSetupService.js';
+export * from './services/FinanceRuntimeSettingsService.js';

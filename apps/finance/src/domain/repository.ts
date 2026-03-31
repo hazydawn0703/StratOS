@@ -151,6 +151,27 @@ export interface FinanceSetupHealthcheckRecord {
   createdAt: string;
 }
 
+export interface FinanceRuntimeSettingsRecord {
+  id: string;
+  mode: 'mock' | 'real-runtime-configured';
+  runtimeConfig: Record<string, unknown>;
+  appPreferences: Record<string, unknown>;
+  secretRefs: Record<string, unknown>;
+  updatedBy: string;
+  updatedAt: string;
+  active: boolean;
+}
+
+export interface FinanceRuntimeSettingsHistoryRecord {
+  id: string;
+  settingsId: string;
+  changedBy: string;
+  changedAt: string;
+  changedFields: string[];
+  previousSummary: Record<string, unknown>;
+  newSummary: Record<string, unknown>;
+}
+
 export class FinanceRepository {
   private readonly db = new FinanceSQLite();
 
@@ -629,6 +650,79 @@ export class FinanceRepository {
         status: x.status,
         result: JSON.parse(x.result_json),
         createdAt: x.created_at
+      }));
+  }
+
+  saveRuntimeSettings(record: FinanceRuntimeSettingsRecord): FinanceRuntimeSettingsRecord {
+    if (record.active) {
+      this.listRuntimeSettings().forEach((existing) => {
+        if (existing.active && existing.id !== record.id) {
+          this.db.upsert('finance_runtime_settings', existing.id, {
+            mode: existing.mode,
+            runtime_config_json: JSON.stringify(existing.runtimeConfig),
+            app_preferences_json: JSON.stringify(existing.appPreferences),
+            secret_refs_json: JSON.stringify(existing.secretRefs),
+            updated_by: existing.updatedBy,
+            updated_at: existing.updatedAt,
+            active: 0
+          });
+        }
+      });
+    }
+    this.db.upsert('finance_runtime_settings', record.id, {
+      mode: record.mode,
+      runtime_config_json: JSON.stringify(record.runtimeConfig),
+      app_preferences_json: JSON.stringify(record.appPreferences),
+      secret_refs_json: JSON.stringify(record.secretRefs),
+      updated_by: record.updatedBy,
+      updated_at: record.updatedAt,
+      active: record.active ? 1 : 0
+    });
+    return record;
+  }
+
+  listRuntimeSettings(): FinanceRuntimeSettingsRecord[] {
+    return this.db
+      .query<{ id: string; mode: FinanceRuntimeSettingsRecord['mode']; runtime_config_json: string; app_preferences_json: string; secret_refs_json: string; updated_by: string; updated_at: string; active: number }>('SELECT * FROM finance_runtime_settings ORDER BY updated_at DESC;')
+      .map((x) => ({
+        id: x.id,
+        mode: x.mode,
+        runtimeConfig: JSON.parse(x.runtime_config_json),
+        appPreferences: JSON.parse(x.app_preferences_json),
+        secretRefs: JSON.parse(x.secret_refs_json),
+        updatedBy: x.updated_by,
+        updatedAt: x.updated_at,
+        active: x.active === 1
+      }));
+  }
+
+  getActiveRuntimeSettings(): FinanceRuntimeSettingsRecord | undefined {
+    return this.listRuntimeSettings().find((x) => x.active) ?? this.listRuntimeSettings()[0];
+  }
+
+  saveRuntimeSettingsHistory(record: FinanceRuntimeSettingsHistoryRecord): FinanceRuntimeSettingsHistoryRecord {
+    this.db.upsert('finance_runtime_settings_history', record.id, {
+      settings_id: record.settingsId,
+      changed_by: record.changedBy,
+      changed_at: record.changedAt,
+      changed_fields_json: JSON.stringify(record.changedFields),
+      previous_summary_json: JSON.stringify(record.previousSummary),
+      new_summary_json: JSON.stringify(record.newSummary)
+    });
+    return record;
+  }
+
+  listRuntimeSettingsHistory(limit = 20): FinanceRuntimeSettingsHistoryRecord[] {
+    return this.db
+      .query<{ id: string; settings_id: string; changed_by: string; changed_at: string; changed_fields_json: string; previous_summary_json: string; new_summary_json: string }>(`SELECT * FROM finance_runtime_settings_history ORDER BY changed_at DESC LIMIT ${limit};`)
+      .map((x) => ({
+        id: x.id,
+        settingsId: x.settings_id,
+        changedBy: x.changed_by,
+        changedAt: x.changed_at,
+        changedFields: JSON.parse(x.changed_fields_json),
+        previousSummary: JSON.parse(x.previous_summary_json),
+        newSummary: JSON.parse(x.new_summary_json)
       }));
   }
 

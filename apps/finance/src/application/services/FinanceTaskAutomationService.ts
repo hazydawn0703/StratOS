@@ -16,6 +16,7 @@ import { FinanceErrorIntelligenceService } from '../error-intelligence/FinanceEr
 import { FinanceArtifactService } from '../artifacts/FinanceArtifactService.js';
 import { FinancePredictionService } from '../predictions/FinancePredictionService.js';
 import { FinanceEvaluationService } from '../evaluation/FinanceEvaluationService.js';
+import { FinanceRuntimeSettingsService } from './FinanceRuntimeSettingsService.js';
 
 export class FinanceTaskAutomationService {
   private readonly orchestrator: FinanceAppOrchestratorService;
@@ -24,6 +25,7 @@ export class FinanceTaskAutomationService {
   private readonly artifactService: FinanceArtifactService;
   private readonly predictionService: FinancePredictionService;
   private readonly evaluationService: FinanceEvaluationService;
+  private readonly runtimeSettingsService: FinanceRuntimeSettingsService;
 
   constructor(
     private readonly repo = new FinanceRepository(),
@@ -36,6 +38,7 @@ export class FinanceTaskAutomationService {
     this.artifactService = new FinanceArtifactService(repo);
     this.predictionService = new FinancePredictionService(repo);
     this.evaluationService = new FinanceEvaluationService(repo);
+    this.runtimeSettingsService = new FinanceRuntimeSettingsService(repo);
   }
 
   static inMemory(repo = new FinanceRepository()): FinanceTaskAutomationService {
@@ -57,7 +60,9 @@ export class FinanceTaskAutomationService {
       retryCount: 0,
       source,
       idempotencyKey,
-      refs: {},
+      refs: {
+        runtimeDefaults: this.runtimeSettingsService.mapTaskDefaults(taskType)
+      },
       payload,
       createdAt: new Date().toISOString()
     };

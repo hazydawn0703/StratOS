@@ -43,6 +43,10 @@ export class FinanceWebRuntime {
         '/finance/timeline': 'Thesis Timeline',
         '/finance/run-center': 'Task Ops',
         '/finance/replay-diagnostics': 'Replay Diagnostics',
+        '/finance/settings': 'Settings',
+        '/finance/settings/runtime': 'Runtime Settings',
+        '/finance/settings/runtime/health': 'Runtime Health',
+        '/finance/settings/runtime/history': 'Runtime History',
         '/finance/setup': 'Setup Wizard',
         '/finance/setup/status': 'Setup Status'
       };

@@ -3,6 +3,7 @@ import { FinanceRepository } from '../../domain/repository.js';
 import { FinanceBenchmarkService } from '../benchmark/FinanceBenchmarkService.js';
 import { FinanceTaskAutomationService } from '../services/FinanceTaskAutomationService.js';
 import { FinanceSetupService } from '../services/FinanceSetupService.js';
+import { FinanceRuntimeSettingsService } from '../services/FinanceRuntimeSettingsService.js';
 
 export class FinancePagesRuntime {
   private readonly repo = new FinanceRepository();
@@ -10,6 +11,7 @@ export class FinancePagesRuntime {
   private readonly benchmark = new FinanceBenchmarkService(this.repo);
   private readonly taskAutomation = new FinanceTaskAutomationService(this.repo);
   private readonly setup = new FinanceSetupService(this.repo, this.benchmark, this.taskAutomation);
+  private readonly runtimeSettings = new FinanceRuntimeSettingsService(this.repo);
 
   render(page:
     | 'Dashboard'
@@ -24,6 +26,10 @@ export class FinancePagesRuntime {
     | 'Thesis Timeline'
     | 'Task Ops'
     | 'Replay Diagnostics'
+    | 'Settings'
+    | 'Runtime Settings'
+    | 'Runtime Health'
+    | 'Runtime History'
     | 'Setup Wizard'
     | 'Setup Status',
   params: Record<string, string> = {}): string {
@@ -113,6 +119,21 @@ export class FinancePagesRuntime {
         from: params.from,
         to: params.to
       });
+    }
+    if (page === 'Settings') {
+      return {
+        sections: ['Runtime Settings', 'Runtime Health', 'Runtime History'],
+        runtime: this.runtimeSettings.read()
+      };
+    }
+    if (page === 'Runtime Settings') {
+      return this.runtimeSettings.read();
+    }
+    if (page === 'Runtime Health') {
+      return { hint: 'Run POST /api/finance/settings/runtime/healthcheck to perform checks.' };
+    }
+    if (page === 'Runtime History') {
+      return this.runtimeSettings.history();
     }
 
     return this.query.timeline({

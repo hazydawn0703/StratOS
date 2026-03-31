@@ -1144,3 +1144,49 @@
 - 尚未完成事项：
   - 暂未接真实 provider（按当前阶段要求不做）。
   - setup UI 相关内容已存在，但不属于 F6 本次目标，后续可按阶段计划剥离/冻结。
+
+### Phase R1：AI Runtime Settings（finance app 内配置入口）
+- 页面目标：在 `apps/finance` 内提供 runtime settings 的页面/API 入口，用户可配置 provider/model/routing/guardrails/structured defaults，并由 framework runtime 消费。
+- 页面与 API：
+  - 页面：
+    - `/finance/settings`
+    - `/finance/settings/runtime`
+    - `/finance/settings/runtime/health`
+    - `/finance/settings/runtime/history`
+  - API：
+    - `GET /api/finance/settings/runtime`
+    - `POST /api/finance/settings/runtime/validate`
+    - `POST /api/finance/settings/runtime/save`
+    - `POST /api/finance/settings/runtime/healthcheck`
+    - `GET /api/finance/settings/runtime/history`
+    - `POST /api/finance/settings/runtime/resolve-profile`
+- 配置对象拆分：
+  - Finance App Runtime Preferences：task->intent/impact/routing policy params 等 app 偏好。
+  - Runtime Connection/Provider Config：provider profile/model alias/fallback/reviewer/structured 支持等 runtime 可消费配置。
+  - Secret References：api key ref/token ref/credential ref 单独存储。
+- secret handling 方案：
+  - `finance_runtime_settings.secret_refs_json` 单独字段存储。
+  - `GET /api/finance/settings/runtime` 仅返回 `configured` 状态，不回显 secret 明文。
+  - history 仅记录摘要，不包含 secret 原文。
+- 与 framework model-router/model-gateway 接线方式：
+  - `FinanceRuntimeSettingsService.healthcheck()` 使用 `@stratos/model-router` 做 provider route decision，并使用 `@stratos/model-gateway` + `MockProviderAdapter` 执行 text/json dry-run。
+  - finance app 仅做 settings 采集、校验、映射；不在 app 中重写 router/gateway。
+- 新增测试：
+  - `tests/finance-runtime-settings-read.test.mjs`
+  - `tests/finance-runtime-settings-validate.test.mjs`
+  - `tests/finance-runtime-settings-save.test.mjs`
+  - `tests/finance-runtime-settings-secret-masking.test.mjs`
+  - `tests/finance-runtime-settings-healthcheck.test.mjs`
+  - `tests/finance-runtime-settings-resolve-profile.test.mjs`
+  - `tests/finance-runtime-settings-mapping.test.mjs`
+  - `tests/finance-runtime-settings-task-routing-defaults.test.mjs`
+  - `tests/finance-runtime-settings-page-api.smoke.test.mjs`
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（新增 settings 测试后全量通过）。
+- 尚未完成项：
+  - 暂未接真实 provider runtime（按边界要求本阶段不做）。
+  - runtime history 当前为 app 级配置摘要，不替代 framework replay/audit 主协议。

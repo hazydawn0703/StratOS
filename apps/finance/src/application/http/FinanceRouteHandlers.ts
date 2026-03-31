@@ -11,6 +11,7 @@ import { FinanceIngestService } from '../services/FinanceIngestService.js';
 import { getProviderCallStats } from '../providers/providerStats.js';
 import { createFinanceProviderRegistry } from '../providers/registry.js';
 import { FinanceSetupService } from '../services/FinanceSetupService.js';
+import { FinanceRuntimeSettingsService } from '../services/FinanceRuntimeSettingsService.js';
 
 export interface RouteRequest {
   method: 'GET' | 'POST';
@@ -36,6 +37,7 @@ export class FinanceRouteHandlers {
   private readonly taskAutomation = new FinanceTaskAutomationService(this.repo);
   private readonly ingest = new FinanceIngestService(this.repo);
   private readonly setup = new FinanceSetupService(this.repo, this.benchmark, this.taskAutomation);
+  private readonly runtimeSettings = new FinanceRuntimeSettingsService(this.repo);
 
   async handle(req: RouteRequest): Promise<RouteResponse> {
     const start = Date.now();
@@ -318,6 +320,26 @@ export class FinanceRouteHandlers {
     }
     if (req.method === 'POST' && path === '/api/finance/setup/demo-run') {
       return this.done(start, 200, await this.setup.demoRun());
+    }
+
+    if (req.method === 'GET' && path === '/api/finance/settings/runtime') {
+      return this.done(start, 200, this.runtimeSettings.read());
+    }
+    if (req.method === 'POST' && path === '/api/finance/settings/runtime/validate') {
+      return this.done(start, 200, this.runtimeSettings.validate((req.body ?? {}) as never));
+    }
+    if (req.method === 'POST' && path === '/api/finance/settings/runtime/save') {
+      return this.done(start, 200, this.runtimeSettings.save((req.body ?? {}) as never));
+    }
+    if (req.method === 'POST' && path === '/api/finance/settings/runtime/healthcheck') {
+      return this.done(start, 200, await this.runtimeSettings.healthcheck());
+    }
+    if (req.method === 'GET' && path === '/api/finance/settings/runtime/history') {
+      return this.done(start, 200, this.runtimeSettings.history());
+    }
+    if (req.method === 'POST' && path === '/api/finance/settings/runtime/resolve-profile') {
+      const alias = String((req.body?.alias as string | undefined) ?? req.body?.modelAlias ?? '');
+      return this.done(start, 200, this.runtimeSettings.resolveProfile(alias));
     }
 
     return this.done(start, 404, { error: 'route_not_found' });
