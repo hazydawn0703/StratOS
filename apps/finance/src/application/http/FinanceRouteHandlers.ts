@@ -148,7 +148,47 @@ export class FinanceRouteHandlers {
       return this.done(start, 200, this.query.experimentSuggestions());
     }
 
-    if (req.method === 'GET' && path === '/api/finance/metrics') return this.done(start, 200, { metrics: this.repo.getMetricsSummary(), providerStats: getProviderCallStats(), runCenter: this.taskAutomation.runCenterSummary() });
+    if (req.method === 'GET' && path === '/api/finance/metrics') {
+      const metrics = this.repo.getMetricsSummary();
+      const providerStats = getProviderCallStats();
+      const tasks = this.repo.listTasks({ limit: 500 });
+      const routingSummary = tasks.reduce<Record<string, number>>((acc, task) => {
+        const refs = task.refs as Record<string, unknown>;
+        const results = Array.isArray(refs.experimentResults) ? refs.experimentResults as Array<Record<string, unknown>> : [];
+        results.forEach((result) => {
+          const route = String(result.route ?? 'unknown');
+          acc[route] = (acc[route] ?? 0) + 1;
+        });
+        return acc;
+      }, {});
+      const latencyByTaskType = tasks.reduce<Record<string, { count: number; totalMs: number; avgMs: number }>>((acc, task) => {
+        if (!task.startedAt || !task.finishedAt) return acc;
+        const ms = Math.max(new Date(task.finishedAt).getTime() - new Date(task.startedAt).getTime(), 0);
+        const bucket = acc[task.taskType] ?? { count: 0, totalMs: 0, avgMs: 0 };
+        bucket.count += 1;
+        bucket.totalMs += ms;
+        bucket.avgMs = bucket.totalMs / bucket.count;
+        acc[task.taskType] = bucket;
+        return acc;
+      }, {});
+      const providerCallCount = Object.values(providerStats).reduce((sum, value) => sum + Number(value), 0);
+      return this.done(start, 200, {
+        metrics,
+        providerStats,
+        runCenter: this.taskAutomation.runCenterSummary(),
+        observability: {
+          costSummary: {
+            providerCallCount,
+            estimatedCostUnits: providerCallCount
+          },
+          latencySummary: {
+            localLatencyTotalMs: Number(metrics.local_latency_ms ?? 0),
+            taskLatencyByType: latencyByTaskType
+          },
+          routingSummary
+        }
+      });
+    }
 
     if (req.method === 'POST' && path === '/api/finance/benchmark/seed') return this.done(start, 200, { samples: this.benchmark.seedDefaultSamples() });
 

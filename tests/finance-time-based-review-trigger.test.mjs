@@ -29,8 +29,17 @@ test('time-based review trigger creates review when due with outcome', async () 
     evidence: 'Confirmed with earnings release and guidance beat evidence.'
   });
 
-  await svc.enqueue('prediction_review', { triggerType: 'time_based', reviewWindowDays: 30 }, 'manual');
-  const ran = await svc.runNext();
+  await svc.enqueue('prediction_review', { triggerType: 'time_based', reviewWindowDays: 30, nonce: Date.now() }, 'manual');
+  let ran;
+  for (let i = 0; i < 10; i += 1) {
+    const next = await svc.runNext();
+    if (!next) break;
+    if (next.taskType === 'prediction_review') {
+      ran = next;
+      break;
+    }
+  }
+  assert.ok(ran);
   assert.equal(ran.status, 'succeeded');
   assert.ok((ran.refs.reviewed ?? []).length >= 1);
 });
