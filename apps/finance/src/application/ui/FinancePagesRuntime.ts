@@ -23,6 +23,7 @@ export class FinancePagesRuntime {
     | 'Experiment Center'
     | 'Thesis Timeline'
     | 'Task Ops'
+    | 'Replay Diagnostics'
     | 'Setup Wizard'
     | 'Setup Status',
   params: Record<string, string> = {}): string {
@@ -103,6 +104,15 @@ export class FinancePagesRuntime {
     }
     if (page === 'Setup Status') {
       return this.setup.status();
+    }
+    if (page === 'Replay Diagnostics') {
+      return this.query.replayDiagnostics({
+        ticker: params.ticker,
+        portfolioId: params.portfolioId,
+        taskType: params.taskType,
+        from: params.from,
+        to: params.to
+      });
     }
 
     return this.query.timeline({

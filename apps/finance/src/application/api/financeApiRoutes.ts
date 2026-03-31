@@ -34,6 +34,8 @@ export const financeApiRoutes: FinanceApiRoute[] = [
   { method: 'GET', path: '/api/finance/metrics', purpose: 'local observability metrics' },
   { method: 'POST', path: '/api/finance/replay/stu-effect/run', purpose: 'run active STU replay proof' },
   { method: 'GET', path: '/api/finance/replay/stu-effect', purpose: 'list replay proof entries' },
+  { method: 'GET', path: '/api/finance/replay/query', purpose: 'replay-friendly linked query' },
+  { method: 'GET', path: '/api/finance/replay/diagnostics', purpose: 'replay diagnostics summary' },
   { method: 'GET', path: '/api/finance/setup/status', purpose: 'setup status and admin view' },
   { method: 'POST', path: '/api/finance/setup/validate', purpose: 'validate setup wizard payload' },
   { method: 'POST', path: '/api/finance/setup/save-config', purpose: 'save setup config with secret protection' },

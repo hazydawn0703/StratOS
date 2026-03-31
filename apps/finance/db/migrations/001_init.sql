@@ -112,6 +112,8 @@ CREATE TABLE IF NOT EXISTS finance_tasks (
   finished_at TEXT,
   retry_count INTEGER NOT NULL,
   error_summary TEXT,
+  last_error_at TEXT,
+  next_retry_at TEXT,
   source TEXT NOT NULL,
   idempotency_key TEXT NOT NULL,
   refs_json TEXT NOT NULL,

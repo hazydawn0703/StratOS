@@ -117,6 +117,24 @@ export class FinanceRouteHandlers {
         detailId: req.query?.id
       }));
     }
+    if (req.method === 'GET' && path === '/api/finance/replay/query') {
+      return this.done(start, 200, this.query.replayQuery({
+        ticker: req.query?.ticker,
+        portfolioId: req.query?.portfolioId,
+        taskType: req.query?.taskType,
+        from: req.query?.from,
+        to: req.query?.to
+      }));
+    }
+    if (req.method === 'GET' && path === '/api/finance/replay/diagnostics') {
+      return this.done(start, 200, this.query.replayDiagnostics({
+        ticker: req.query?.ticker,
+        portfolioId: req.query?.portfolioId,
+        taskType: req.query?.taskType,
+        from: req.query?.from,
+        to: req.query?.to
+      }));
+    }
 
 
     if (req.method === 'GET' && path === '/api/finance/strategy-lab') {

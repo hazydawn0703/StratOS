@@ -44,12 +44,14 @@ export interface FinanceSTUEffectReplay {
 export interface FinanceTaskRecord {
   id: string;
   taskType: string;
-  status: "pending" | "running" | "succeeded" | "failed" | "cancelled";
+  status: 'pending' | 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'skipped';
   scheduledAt?: string;
   startedAt?: string;
   finishedAt?: string;
   retryCount: number;
   errorSummary?: string;
+  lastErrorAt?: string;
+  nextRetryAt?: string;
   source: "manual" | "schedule" | "replay";
   idempotencyKey: string;
   refs: Record<string, unknown>;
@@ -83,6 +85,38 @@ export interface FinanceReviewCorrection {
   correctedPayload: Record<string, unknown>;
   reason?: string;
   counterevidence?: string;
+  createdAt: string;
+}
+
+export interface FinanceQueueRecord {
+  id: string;
+  taskId: string;
+  taskType: string;
+  payload: Record<string, unknown>;
+  source: FinanceTaskRecord['source'];
+  status: 'queued' | 'claimed' | 'succeeded' | 'failed' | 'cancelled';
+  claimToken?: string;
+  leaseUntil?: string;
+  attemptCount: number;
+  enqueuedAt: string;
+}
+
+export interface FinanceScheduleRecord {
+  id: string;
+  taskType: string;
+  runAt: string;
+  payload: Record<string, unknown>;
+  source: 'schedule';
+  status: 'pending' | 'enqueued' | 'cancelled';
+  createdAt: string;
+}
+
+export interface FinancePredictionReviewRun {
+  id: string;
+  predictionId: string;
+  triggerType: string;
+  outcomeId?: string;
+  runKey: string;
   createdAt: string;
 }
 
@@ -446,6 +480,8 @@ export class FinanceRepository {
       finished_at: task.finishedAt ?? null,
       retry_count: task.retryCount,
       error_summary: task.errorSummary ?? null,
+      last_error_at: task.lastErrorAt ?? null,
+      next_retry_at: task.nextRetryAt ?? null,
       source: task.source,
       idempotency_key: task.idempotencyKey,
       refs_json: JSON.stringify(task.refs),
@@ -461,8 +497,8 @@ export class FinanceRepository {
     if (filters?.taskType) conds.push(`task_type='${filters.taskType}'`);
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
     const limit = filters?.limit ?? 100;
-    return this.db.query<{ id: string; task_type: string; status: FinanceTaskRecord['status']; scheduled_at: string | null; started_at: string | null; finished_at: string | null; retry_count: number; error_summary: string | null; source: FinanceTaskRecord['source']; idempotency_key: string; refs_json: string; payload_json: string; created_at: string; }>(`SELECT * FROM finance_tasks ${where} ORDER BY created_at DESC LIMIT ${limit};`)
-      .map((x) => ({ id: x.id, taskType: x.task_type, status: x.status, scheduledAt: x.scheduled_at ?? undefined, startedAt: x.started_at ?? undefined, finishedAt: x.finished_at ?? undefined, retryCount: x.retry_count, errorSummary: x.error_summary ?? undefined, source: x.source, idempotencyKey: x.idempotency_key, refs: JSON.parse(x.refs_json), payload: JSON.parse(x.payload_json), createdAt: x.created_at }));
+    return this.db.query<{ id: string; task_type: string; status: FinanceTaskRecord['status']; scheduled_at: string | null; started_at: string | null; finished_at: string | null; retry_count: number; error_summary: string | null; last_error_at: string | null; next_retry_at: string | null; source: FinanceTaskRecord['source']; idempotency_key: string; refs_json: string; payload_json: string; created_at: string; }>(`SELECT * FROM finance_tasks ${where} ORDER BY created_at DESC LIMIT ${limit};`)
+      .map((x) => ({ id: x.id, taskType: x.task_type, status: x.status, scheduledAt: x.scheduled_at ?? undefined, startedAt: x.started_at ?? undefined, finishedAt: x.finished_at ?? undefined, retryCount: x.retry_count, errorSummary: x.error_summary ?? undefined, lastErrorAt: x.last_error_at ?? undefined, nextRetryAt: x.next_retry_at ?? undefined, source: x.source, idempotencyKey: x.idempotency_key, refs: JSON.parse(x.refs_json), payload: JSON.parse(x.payload_json), createdAt: x.created_at }));
   }
 
   getTask(id: string): FinanceTaskRecord | undefined {
@@ -501,6 +537,12 @@ export class FinanceRepository {
   listIngestedOutcomes(): FinanceIngestedOutcome[] {
     return this.db.query<{ id: string; prediction_id: string | null; outcome_type: FinanceIngestedOutcome['outcomeType']; outcome_timestamp: string; payload_json: string; created_at: string; }>('SELECT * FROM finance_ingested_outcomes ORDER BY created_at DESC;')
       .map((x) => ({ id: x.id, predictionId: x.prediction_id ?? undefined, outcomeType: x.outcome_type, outcomeTimestamp: x.outcome_timestamp, payload: JSON.parse(x.payload_json), createdAt: x.created_at }));
+  }
+
+  listOutcomes(): PredictionOutcome[] {
+    return this.db
+      .query<{ payload_json: string }>('SELECT payload_json FROM finance_outcome_payloads ORDER BY observed_at DESC;')
+      .map((x) => JSON.parse(x.payload_json));
   }
 
   saveReviewCorrection(correction: FinanceReviewCorrection): FinanceReviewCorrection {
@@ -586,6 +628,101 @@ export class FinanceRepository {
         id: x.id,
         status: x.status,
         result: JSON.parse(x.result_json),
+        createdAt: x.created_at
+      }));
+  }
+
+  saveQueueRecord(record: FinanceQueueRecord): FinanceQueueRecord {
+    this.db.upsert('finance_task_queue', record.id, {
+      task_id: record.taskId,
+      task_type: record.taskType,
+      payload_json: JSON.stringify(record.payload),
+      source: record.source,
+      status: record.status,
+      claim_token: record.claimToken ?? null,
+      lease_until: record.leaseUntil ?? null,
+      attempt_count: record.attemptCount,
+      enqueued_at: record.enqueuedAt
+    });
+    return record;
+  }
+
+  listQueueRecords(status?: FinanceQueueRecord['status']): FinanceQueueRecord[] {
+    const where = status ? `WHERE status='${status}'` : '';
+    return this.db
+      .query<{
+        id: string;
+        task_id: string;
+        task_type: string;
+        payload_json: string;
+        source: FinanceQueueRecord['source'];
+        status: FinanceQueueRecord['status'];
+        claim_token: string | null;
+        lease_until: string | null;
+        attempt_count: number;
+        enqueued_at: string;
+      }>(`SELECT * FROM finance_task_queue ${where} ORDER BY enqueued_at ASC;`)
+      .map((x) => ({
+        id: x.id,
+        taskId: x.task_id,
+        taskType: x.task_type,
+        payload: JSON.parse(x.payload_json),
+        source: x.source,
+        status: x.status,
+        claimToken: x.claim_token ?? undefined,
+        leaseUntil: x.lease_until ?? undefined,
+        attemptCount: x.attempt_count,
+        enqueuedAt: x.enqueued_at
+      }));
+  }
+
+  saveScheduleRecord(record: FinanceScheduleRecord): FinanceScheduleRecord {
+    this.db.upsert('finance_task_schedule', record.id, {
+      task_type: record.taskType,
+      run_at: record.runAt,
+      payload_json: JSON.stringify(record.payload),
+      source: record.source,
+      status: record.status,
+      created_at: record.createdAt
+    });
+    return record;
+  }
+
+  listScheduleRecords(status?: FinanceScheduleRecord['status']): FinanceScheduleRecord[] {
+    const where = status ? `WHERE status='${status}'` : '';
+    return this.db
+      .query<{ id: string; task_type: string; run_at: string; payload_json: string; source: 'schedule'; status: FinanceScheduleRecord['status']; created_at: string }>(`SELECT * FROM finance_task_schedule ${where} ORDER BY run_at ASC;`)
+      .map((x) => ({
+        id: x.id,
+        taskType: x.task_type,
+        runAt: x.run_at,
+        payload: JSON.parse(x.payload_json),
+        source: x.source,
+        status: x.status,
+        createdAt: x.created_at
+      }));
+  }
+
+  savePredictionReviewRun(record: FinancePredictionReviewRun): FinancePredictionReviewRun {
+    this.db.upsert('finance_prediction_review_runs', record.id, {
+      prediction_id: record.predictionId,
+      trigger_type: record.triggerType,
+      outcome_id: record.outcomeId ?? null,
+      run_key: record.runKey,
+      created_at: record.createdAt
+    });
+    return record;
+  }
+
+  listPredictionReviewRuns(): FinancePredictionReviewRun[] {
+    return this.db
+      .query<{ id: string; prediction_id: string; trigger_type: string; outcome_id: string | null; run_key: string; created_at: string }>('SELECT * FROM finance_prediction_review_runs ORDER BY created_at DESC;')
+      .map((x) => ({
+        id: x.id,
+        predictionId: x.prediction_id,
+        triggerType: x.trigger_type,
+        outcomeId: x.outcome_id ?? undefined,
+        runKey: x.run_key,
         createdAt: x.created_at
       }));
   }

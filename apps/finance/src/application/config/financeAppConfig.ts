@@ -22,7 +22,10 @@ export const financeAppConfig: FinanceAppConfig = {
     error_pattern_scan: 'finance-error',
     finance_candidate_generation: 'finance-candidate',
     finance_evaluation_run: 'finance-evaluation',
-    finance_experiment_check: 'finance-experiment'
+    finance_experiment_check: 'finance-experiment',
+    bias_snapshot_generation: 'finance-bias',
+    timeline_rebuild: 'finance-timeline',
+    manual_review_requested: 'finance-manual-review'
   },
   claimAdmission: {
     minConfidence: 0.55,

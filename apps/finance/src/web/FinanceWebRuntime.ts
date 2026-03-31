@@ -42,6 +42,7 @@ export class FinanceWebRuntime {
         '/finance/experiments': 'Experiment Center',
         '/finance/timeline': 'Thesis Timeline',
         '/finance/run-center': 'Task Ops',
+        '/finance/replay-diagnostics': 'Replay Diagnostics',
         '/finance/setup': 'Setup Wizard',
         '/finance/setup/status': 'Setup Status'
       };

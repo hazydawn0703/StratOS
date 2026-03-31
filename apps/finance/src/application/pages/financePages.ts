@@ -10,6 +10,7 @@ export type FinancePageName =
   | 'Experiment Center'
   | 'Thesis Timeline'
   | 'Task Ops'
+  | 'Replay Diagnostics'
   | 'Setup Wizard'
   | 'Setup Status';
 
@@ -30,6 +31,7 @@ export const financePages: FinancePageDefinition[] = [
   { name: 'Experiment Center', keyWidgets: ['experiment-status', 'promotion-gate'] },
   { name: 'Thesis Timeline', keyWidgets: ['artifact-claim-outcome-review-timeline'] },
   { name: 'Task Ops', keyWidgets: ['task-list', 'status-distribution', 'retry-rerun-controls'] },
+  { name: 'Replay Diagnostics', keyWidgets: ['replay-query-filters', 'linked-entity-graph', 'diagnostic-summary'] },
   { name: 'Setup Wizard', keyWidgets: ['mode-select', 'infra-config', 'model-routing-config', 'bootstrap-options', 'healthcheck'] },
   { name: 'Setup Status', keyWidgets: ['deployment-mode', 'dependency-health', 'automation-state', 'healthcheck-history'] }
 ];

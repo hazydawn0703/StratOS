@@ -2,7 +2,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { CliFinanceSqlExecutor, type FinanceSqlExecutor } from '../adapters/FinanceSqlExecutor.js';
 
-const DEFAULT_DB_PATH = resolve(process.cwd(), 'apps/finance/.data/finance-app.db');
+const DEFAULT_DB_PATH = resolve(process.env.FINANCE_DB_PATH ?? resolve(process.cwd(), 'apps/finance/.data/finance-app.db'));
 
 export class FinanceSQLite {
   constructor(
@@ -125,6 +125,8 @@ CREATE TABLE IF NOT EXISTS finance_tasks (
   finished_at TEXT,
   retry_count INTEGER NOT NULL,
   error_summary TEXT,
+  last_error_at TEXT,
+  next_retry_at TEXT,
   source TEXT NOT NULL,
   idempotency_key TEXT NOT NULL,
   refs_json TEXT NOT NULL,

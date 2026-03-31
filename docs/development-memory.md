@@ -1094,3 +1094,53 @@
   - `pnpm build`：通过。
   - `pnpm typecheck`：通过。
   - `pnpm test`：通过（58/58）。
+
+### Phase F6 封板（bias / timeline / replay / polish）
+- F6 gap list（本次开始前）：
+  - durable queue/scheduler 仅有表结构，缺少可恢复 claim/lease、stale 检测与失败追踪。
+  - prediction_review 对 time/event/manual trigger、window、expired/skipped/inconclusive、幂等保护不完整。
+  - replay-friendly 查询缺少统一入口与诊断聚合。
+  - 持续运行链路虽有 task type，但 candidate/experiment/bias/timeline 语义存在占位。
+- F6 收口动作：
+  - 将 task 运行状态扩展为 `pending/queued/running/succeeded/failed/cancelled/skipped`，补充 `last_error_at`、`next_retry_at` 字段，并在 task 执行失败时写入。
+  - 实现 durable queue（`finance_task_queue`）claim/lease + duplicate consume guard + ack/fail + stale claim 查询。
+  - 实现 durable scheduler（`finance_task_schedule`）持久化与重启后 due 任务恢复入队。
+  - 在 `FinanceTaskAutomationService` 中加入 stale running task 检测与恢复、retry 信息追踪。
+  - `prediction_review` 增强：
+    - 支持 `time_based` / `event_based` / `manual_review_requested` trigger。
+    - review window 判断与 `expired/skipped/inconclusive` 分类。
+    - 同 prediction 已 review 的重复保护。
+    - 同 prediction + outcome run key 幂等记录（`finance_prediction_review_runs`）。
+    - 高置信度高影响预测进入 `manual_review_requested` 队列。
+  - 持续运行链路闭合（自动 enqueue）：
+    - `daily_brief_generation -> prediction_extraction -> prediction_review -> error_pattern_scan -> finance_candidate_generation -> finance_experiment_check -> bias_snapshot_generation -> timeline_rebuild`。
+  - bias snapshot 任务语义改为行为信号 + 结果信号组合，不再仅单一行为指标。
+  - replay 入口增强：新增
+    - `GET /api/finance/replay/query`
+    - `GET /api/finance/replay/diagnostics`
+    并接入页面 `Replay Diagnostics`。
+- F6 封板证据：
+  - BiasAlertPolicy 运行结果可在 dashboard/strategy lab/experiment center 读取 bias snapshot；且 snapshot 由 `bias_snapshot_generation` 自动任务写入。
+  - timeline 与 replay 查询均可从页面/API进入，支持 ticker/portfolio/task_type/date-range 过滤与串联实体查看。
+  - run center summary 返回 queueSize/staleClaims/reviewRuns，任务状态流转与失败可追踪。
+  - 持续运行 smoke 已覆盖从 daily brief 到 timeline rebuild 的自动链路。
+- 新增测试：
+  - `tests/finance-durable-queue-restart-recovery.test.mjs`
+  - `tests/finance-duplicate-consume-guard.test.mjs`
+  - `tests/finance-time-based-review-trigger.test.mjs`
+  - `tests/finance-event-based-review-trigger.test.mjs`
+  - `tests/finance-stale-task-detection.test.mjs`
+  - `tests/finance-candidate-generation-semantic.test.mjs`
+  - `tests/finance-bias-snapshot-task.test.mjs`
+  - `tests/finance-timeline-rebuild-semantic.test.mjs`
+  - `tests/finance-replay-query.integration.test.mjs`
+  - `tests/finance-end-to-end-continuous-run.smoke.test.mjs`
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（68/68）。
+- 尚未完成事项：
+  - 暂未接真实 provider（按当前阶段要求不做）。
+  - setup UI 相关内容已存在，但不属于 F6 本次目标，后续可按阶段计划剥离/冻结。

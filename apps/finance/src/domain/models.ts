@@ -8,7 +8,10 @@ export type FinanceTaskType =
   | 'error_pattern_scan'
   | 'finance_candidate_generation'
   | 'finance_evaluation_run'
-  | 'finance_experiment_check';
+  | 'finance_experiment_check'
+  | 'bias_snapshot_generation'
+  | 'timeline_rebuild'
+  | 'manual_review_requested';
 
 export type ArtifactType = 'daily_brief' | 'weekly_review' | 'stock_deep_dive' | 'risk_alert';
 export type PredictionType = 'risk' | 'valuation' | 'event' | 'thesis';
