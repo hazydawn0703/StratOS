@@ -5,6 +5,7 @@ export interface RoutingInput {
   modelLayer: string;
   preferredProvider?: string;
   fallbackProvider?: string;
+  preferredModel?: string;
 }
 
 export interface ProviderAdapter {
@@ -14,5 +15,6 @@ export interface ProviderAdapter {
     prompt: string;
     tools?: unknown[];
     responseFormat?: 'text' | 'json';
+    model?: string;
   }): Promise<ModelResponse>;
 }

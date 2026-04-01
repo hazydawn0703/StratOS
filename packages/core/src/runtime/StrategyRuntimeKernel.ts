@@ -53,12 +53,19 @@ export interface ModelGatewayLike {
       modelLayer: string;
       preferredProvider?: string;
       fallbackProvider?: string;
+      preferredModel?: string;
     }
   ): Promise<ModelResponse>;
 }
 
 export interface RuntimeKernelInput extends Partial<TaskContext> {
   taskType: string;
+  runtimeRouting?: {
+    preferredProvider?: string;
+    fallbackProvider?: string;
+    preferredModel?: string;
+    modelLayer?: string;
+  };
 }
 
 export interface RuntimeKernelRouteConfig {
@@ -133,10 +140,13 @@ export class StrategyRuntimeKernel<
     const pre = this.ruleEngine.runPreGeneration(execution.ruleLayer, execution.taskContext);
     const modelResponse = await this.modelGateway.generateText(execution.promptLayer.join('\n'), {
       taskType: execution.taskContext.taskType,
-      modelLayer: this.defaultRoute.modelLayer ?? 'default',
+      modelLayer: input.runtimeRouting?.modelLayer ?? this.defaultRoute.modelLayer ?? 'default',
       preferredProvider:
-        this.defaultRoute.preferredProvider ?? execution.routingLayer?.providers?.[0],
-      fallbackProvider: this.defaultRoute.fallbackProvider
+        input.runtimeRouting?.preferredProvider ??
+        this.defaultRoute.preferredProvider ??
+        execution.routingLayer?.providers?.[0],
+      fallbackProvider: input.runtimeRouting?.fallbackProvider ?? this.defaultRoute.fallbackProvider,
+      preferredModel: input.runtimeRouting?.preferredModel
     });
     const post = this.ruleEngine.runPostGeneration(execution.ruleLayer, modelResponse, execution.taskContext);
 

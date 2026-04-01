@@ -1,0 +1,109 @@
+import { FinanceArtifactService } from '../artifacts/FinanceArtifactService.js';
+import { FinanceEvaluationService } from '../evaluation/FinanceEvaluationService.js';
+import { FinanceErrorIntelligenceService } from '../error-intelligence/FinanceErrorIntelligenceService.js';
+import { financeAppConfig } from '../config/financeAppConfig.js';
+import { FinancePredictionService } from '../predictions/FinancePredictionService.js';
+import { FinanceReviewService } from '../reviews/FinanceReviewService.js';
+import type { ArtifactType } from '../../domain/models.js';
+import { FinanceRepository } from '../../domain/repository.js';
+
+export interface FinanceEndToEndInput {
+  artifactType: ArtifactType;
+  title: string;
+  body: string;
+  ticker?: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  activeSTUContext?: string[];
+}
+
+export interface FinanceEndToEndResult {
+  artifactId: string;
+  admittedPredictionIds: string[];
+  reviewIds: string[];
+  proposalIds: string[];
+  experimentIds: string[];
+}
+
+export class FinanceAppOrchestratorService {
+  private readonly artifactService: FinanceArtifactService;
+  private readonly predictionService: FinancePredictionService;
+  private readonly reviewService: FinanceReviewService;
+  private readonly errorIntel: FinanceErrorIntelligenceService;
+  private readonly evaluationService: FinanceEvaluationService;
+
+  constructor(private readonly repo = new FinanceRepository()) {
+    this.artifactService = new FinanceArtifactService(this.repo);
+    this.predictionService = new FinancePredictionService(this.repo);
+    this.reviewService = new FinanceReviewService(this.repo);
+    this.errorIntel = new FinanceErrorIntelligenceService(this.repo);
+    this.evaluationService = new FinanceEvaluationService(this.repo);
+  }
+
+  async runMockTask(input: FinanceEndToEndInput): Promise<FinanceEndToEndResult> {
+    const optimizedBody = [input.body, ...(input.activeSTUContext ?? []).map((x) => `STU_CONTEXT:${x}`)].join('\n');
+    const artifact = this.artifactService.generate({
+      taskType:
+        input.artifactType === 'daily_brief'
+          ? 'daily_brief_generation'
+          : input.artifactType === 'weekly_review'
+            ? 'weekly_portfolio_review'
+            : input.artifactType === 'stock_deep_dive'
+              ? 'stock_deep_dive'
+              : 'risk_alert_generation',
+      artifactType: input.artifactType,
+      title: input.title,
+      body: optimizedBody,
+      ticker: input.ticker,
+      evidence: ['mock_market_data', `route=${financeAppConfig.defaultTaskRoute.daily_brief_generation}`]
+    });
+
+    const extracted = this.predictionService.extractFromArtifact(artifact);
+    const reviewIds: string[] = [];
+
+    for (const prediction of extracted.admitted) {
+      const outcome = this.reviewService.registerOutcome({
+        predictionId: prediction.id,
+        outcomeLabel: 'partial',
+        evidence: 'Mock outcome evidence for loop closure'
+      });
+      const review = this.reviewService.reviewPrediction(prediction, outcome);
+      reviewIds.push(review.id);
+      this.repo.saveTimelineLink({
+        id: `tl-${prediction.id}`,
+        ticker: prediction.ticker,
+        reportId: artifact.id,
+        predictionId: prediction.id,
+        reviewId: review.id,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    const reviews = this.reviewService.listReviews();
+    const patterns = this.errorIntel.aggregatePatterns(reviews);
+    const proposals = await this.errorIntel.proposeSTUCandidates(patterns);
+
+    const experimentIds: string[] = [];
+    for (const proposal of proposals) {
+      const result = await this.evaluationService.run(proposal, reviews, input.riskLevel);
+      experimentIds.push(result.experimentId);
+      this.repo.saveTimelineLink({
+        id: `tl-${proposal.id}`,
+        ticker: input.ticker,
+        reportId: artifact.id,
+        errorPatternId: proposal.patternId,
+        candidateId: proposal.id,
+        experimentId: result.experimentId,
+        activeSTUEffect: result.promoted ? 'candidate promoted affects next task context' : 'candidate held',
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    return {
+      artifactId: artifact.id,
+      admittedPredictionIds: extracted.admitted.map((p) => p.id),
+      reviewIds,
+      proposalIds: proposals.map((p) => p.id),
+      experimentIds
+    };
+  }
+}
