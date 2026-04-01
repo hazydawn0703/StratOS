@@ -14,6 +14,19 @@ interface RuntimeSettingsInput {
   changedBy?: string;
 }
 
+export interface RuntimeTaskExecutionConfig {
+  taskType: string;
+  provider: string;
+  fallbackProvider: string;
+  defaultModelAlias: string;
+  reviewerModelAlias?: string;
+  reviewerEnabled: boolean;
+  structuredOutputMode: 'required' | 'preferred';
+  costGuardrail?: number;
+  latencyGuardrailMs?: number;
+  secretRefKeys: string[];
+}
+
 export class FinanceRuntimeSettingsService {
   private readonly router = new ModelRouter();
   private readonly gateway = new ModelGateway([new MockProviderAdapter()]);
@@ -121,6 +134,28 @@ export class FinanceRuntimeSettingsService {
     return taskRouting[taskType] ?? {};
   }
 
+  resolveTaskExecutionConfig(taskType: string): RuntimeTaskExecutionConfig {
+    const active = this.repo.getActiveRuntimeSettings();
+    const runtimeConfig = (active?.runtimeConfig ?? {}) as Record<string, unknown>;
+    const provider = String(runtimeConfig.providerKey ?? 'mock');
+    const structuredMode = runtimeConfig.structuredOutputMode === 'preferred' ? 'preferred' : 'required';
+    const reviewerEnabled = runtimeConfig.reviewerEnabled !== false;
+    return {
+      taskType,
+      provider,
+      fallbackProvider: 'mock',
+      defaultModelAlias: String(runtimeConfig.defaultModelAlias ?? 'mock-model-v1'),
+      reviewerModelAlias: runtimeConfig.reviewerModelAlias
+        ? String(runtimeConfig.reviewerModelAlias)
+        : undefined,
+      reviewerEnabled,
+      structuredOutputMode: structuredMode,
+      costGuardrail: this.toNumberOrUndefined(runtimeConfig.costGuardrail),
+      latencyGuardrailMs: this.toNumberOrUndefined(runtimeConfig.latencyGuardrailMs),
+      secretRefKeys: Object.keys((active?.secretRefs ?? {}) as Record<string, unknown>)
+    };
+  }
+
   private defaultSummary(): Record<string, unknown> {
     return {
       mode: 'mock',
@@ -171,5 +206,10 @@ export class FinanceRuntimeSettingsService {
     if (JSON.stringify(previous.appPreferences) !== JSON.stringify(next.appPreferences)) fields.push('appPreferences');
     if (JSON.stringify(previous.secretRefs) !== JSON.stringify(next.secretRefs)) fields.push('secretRefs');
     return fields.length ? fields : ['no_material_change'];
+  }
+
+  private toNumberOrUndefined(value: unknown): number | undefined {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
   }
 }
