@@ -321,6 +321,9 @@ export class FinanceRouteHandlers {
     if (req.method === 'POST' && path === '/api/finance/setup/demo-run') {
       return this.done(start, 200, await this.setup.demoRun());
     }
+    if (req.method === 'GET' && path === '/api/finance/setup/history') {
+      return this.done(start, 200, this.setup.history(Number(req.query?.limit ?? '20')));
+    }
 
     if (req.method === 'GET' && path === '/api/finance/settings/runtime') {
       return this.done(start, 200, this.runtimeSettings.read());

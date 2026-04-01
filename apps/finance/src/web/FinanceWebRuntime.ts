@@ -48,7 +48,9 @@ export class FinanceWebRuntime {
         '/finance/settings/runtime/health': 'Runtime Health',
         '/finance/settings/runtime/history': 'Runtime History',
         '/finance/setup': 'Setup Wizard',
-        '/finance/setup/status': 'Setup Status'
+        '/finance/setup/status': 'Setup Status',
+        '/finance/setup/health': 'Setup Status',
+        '/finance/setup/history': 'Setup Status'
       };
       const page = viewMap[parsed.pathname];
       if (!page) {

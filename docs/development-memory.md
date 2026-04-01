@@ -1190,3 +1190,44 @@
 - 尚未完成项：
   - 暂未接真实 provider runtime（按边界要求本阶段不做）。
   - runtime history 当前为 app 级配置摘要，不替代 framework replay/audit 主协议。
+
+### Phase D2：部署接入与初始化体验（Setup UI）
+- D2 目标：让 `apps/finance` 部署后可通过浏览器完成首次配置、初始化、健康检查与首轮任务运行，避免手工改大量配置。
+- Setup 页面与 API：
+  - 页面：`/finance/setup`、`/finance/setup/status`，并提供 `/finance/setup/health`、`/finance/setup/history` 映射。
+  - API：
+    - `GET /api/finance/setup/status`
+    - `POST /api/finance/setup/validate`
+    - `POST /api/finance/setup/save-config`
+    - `POST /api/finance/setup/bootstrap`
+    - `POST /api/finance/setup/healthcheck`
+    - `POST /api/finance/setup/demo-run`
+    - `GET /api/finance/setup/history`
+- 配置对象拆分：
+  - App Setup Config：mode、infrastructure、app bootstrap 选项、automation 启用项。
+  - Runtime Config：provider profile、model alias、reviewer/fallback、structured output、guardrails、task routing defaults。
+  - Secret Refs：独立 `secrets` 输入并以 configured/ref 形式映射到 runtime settings。
+- secret handling 方案：
+  - setup 保存时仍做 secret/non-secret 分离，secret 字段仅返回 key 列表。
+  - setup 写入 runtime settings 时只持久化 ref 状态摘要，不回显 secret 原文。
+  - 页面/API读取 secret 仅显示 `configured`。
+- 与 infrastructure / runtime 接线方式：
+  - setup status 读取真实 repo/task/runtime 状态，返回 setupState + missingSteps。
+  - setup save-config 同步写入 `FinanceRuntimeSettingsService`，让 runtime settings 页面与执行链路直接可消费。
+  - healthcheck 通过 task automation + runtime settings healthcheck（router/gateway）做真实连通检查。
+- demo run 与 bootstrap 方式：
+  - bootstrap 初始化 portfolio/watchlist/benchmark，并登记默认任务 schedule 记录。
+  - demo run 执行最小闭环（daily brief -> prediction extraction -> prediction review）并返回 artifacts/predictions/reviews/timeline 摘要。
+- 新增测试：
+  - `tests/finance-setup-demo-run.test.mjs`
+  - `tests/finance-setup-secret-masking.test.mjs`
+  - `tests/finance-setup-page-api.smoke.test.mjs`
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（84/84）。
+- 尚未完成项：
+  - `setup/reset`、`enable-default-tasks` 独立 API 尚未单独暴露（当前由 bootstrap 覆盖默认启用逻辑）。
+  - 当前 health/status 为单 app 部署视角，不扩展为 framework 通用控制台。

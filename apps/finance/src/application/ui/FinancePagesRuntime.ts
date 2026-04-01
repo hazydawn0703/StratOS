@@ -95,7 +95,8 @@ export class FinancePagesRuntime {
           '3. Model & Provider Config',
           '4. Finance App Bootstrap',
           '5. Task Automation Init',
-          '6. Health Check'
+          '6. Health Check',
+          '7. Demo Run / First Run'
         ],
         api: [
           '/api/finance/setup/status',
@@ -103,13 +104,17 @@ export class FinancePagesRuntime {
           '/api/finance/setup/save-config',
           '/api/finance/setup/bootstrap',
           '/api/finance/setup/healthcheck',
-          '/api/finance/setup/demo-run'
+          '/api/finance/setup/demo-run',
+          '/api/finance/setup/history'
         ],
         status: this.setup.status()
       };
     }
     if (page === 'Setup Status') {
-      return this.setup.status();
+      return {
+        ...this.setup.status(),
+        history: this.setup.history(5)
+      };
     }
     if (page === 'Replay Diagnostics') {
       return this.query.replayDiagnostics({
