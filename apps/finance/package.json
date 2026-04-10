@@ -4,9 +4,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "setup": "node ./scripts/install.mjs",
+    "dev": "FINANCE_WEB_AUTOSTART=1 node ./dist/web/FinanceWebRuntime.js",
+    "test": "node --test ../../tests/finance-setup-*.test.mjs ../../tests/finance-setup-*.smoke.test.mjs",
     "typecheck": "tsc -b --pretty false",
     "build": "tsc -b",
-    "clean": "tsc -b --clean"
+    "clean": "tsc -b --clean",
+    "db:init": "node ./scripts/db-init.mjs",
+    "db:migrate": "node ./scripts/db-migrate.mjs",
+    "db:seed": "node ./scripts/db-seed.mjs",
+    "setup:bootstrap": "node ./scripts/setup-bootstrap.mjs",
+    "healthcheck": "node ./scripts/setup-healthcheck.mjs",
+    "demo-run": "node ./scripts/setup-demo-run.mjs"
   },
   "dependencies": {
     "@stratos/core": "workspace:*",

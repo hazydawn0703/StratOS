@@ -12,10 +12,11 @@ export class MockProviderAdapter implements ProviderAdapter {
     prompt: string;
     tools?: unknown[];
     responseFormat?: 'text' | 'json';
+    model?: string;
   }): Promise<ModelResponse> {
     return {
       provider: this.name,
-      model: 'mock-model-v1',
+      model: input.model ?? 'mock-model-v1',
       latencyMs: 1,
       text: input.responseFormat === 'json' ? undefined : `MOCK:${input.prompt}`,
       json: input.responseFormat === 'json' ? { echoedPrompt: input.prompt } : undefined

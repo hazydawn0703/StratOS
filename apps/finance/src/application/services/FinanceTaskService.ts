@@ -4,6 +4,7 @@ import { mapTaskRequest } from '../adapters/taskRequestMapper.js';
 import { mapTaskResponse } from '../adapters/taskResponseMapper.js';
 import { assertValidTaskRequest, validateTaskRequestResult } from '../adapters/validation.js';
 import { financeRuntimeBootstrap } from '../../bootstrap/runtimeBootstrap.js';
+import { FinanceRuntimeSettingsService } from './FinanceRuntimeSettingsService.js';
 
 /**
  * Phase service boundary:
@@ -11,19 +12,22 @@ import { financeRuntimeBootstrap } from '../../bootstrap/runtimeBootstrap.js';
  * while keeping finance business logic out of this layer.
  */
 export class FinanceTaskService {
-  constructor(private readonly runtime = financeRuntimeBootstrap()) {}
+  constructor(
+    private readonly runtime = financeRuntimeBootstrap(),
+    private readonly runtimeSettings = new FinanceRuntimeSettingsService()
+  ) {}
 
   // phase-3 stable surface
   runReportGeneration(input: Omit<FinanceTaskInput, 'taskType'>): Promise<FinanceTaskResult> {
-    return this.runtime.run({ ...input, taskType: 'report_generation' });
+    return this.runWithRuntimeSettings('report_generation', input);
   }
 
   runReviewGeneration(input: Omit<FinanceTaskInput, 'taskType'>): Promise<FinanceTaskResult> {
-    return this.runtime.run({ ...input, taskType: 'review_generation' });
+    return this.runWithRuntimeSettings('review_generation', input);
   }
 
   runExperimentEvaluation(input: Omit<FinanceTaskInput, 'taskType'>): Promise<FinanceTaskResult> {
-    return this.runtime.run({ ...input, taskType: 'experiment_evaluation' });
+    return this.runWithRuntimeSettings('experiment_evaluation', input);
   }
 
   // phase-4 mapped surface
@@ -66,6 +70,21 @@ export class FinanceTaskService {
 
     const response = await this.runExperimentEvaluationMapped(request);
     return { ok: true, response, issues: [] };
+  }
+
+  private runWithRuntimeSettings(
+    taskType: FinanceTaskInput['taskType'],
+    input: Omit<FinanceTaskInput, 'taskType'>
+  ): Promise<FinanceTaskResult> {
+    const taskRuntimeConfig = this.runtimeSettings.resolveTaskExecutionConfig(taskType);
+    return this.runtime.run({
+      ...input,
+      taskType,
+      metadata: {
+        ...(input.metadata ?? {}),
+        runtimeRouting: taskRuntimeConfig
+      }
+    });
   }
 
 }

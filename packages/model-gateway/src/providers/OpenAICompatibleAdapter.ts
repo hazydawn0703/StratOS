@@ -12,6 +12,7 @@ export class OpenAICompatibleAdapter implements ProviderAdapter {
     prompt: string;
     tools?: unknown[];
     responseFormat?: 'text' | 'json';
+    model?: string;
   }): Promise<ModelResponse> {
     throw new Error('OpenAICompatibleAdapter is a placeholder in initialization phase.');
   }
