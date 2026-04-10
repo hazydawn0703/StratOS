@@ -1231,3 +1231,34 @@
 - 尚未完成项：
   - `setup/reset`、`enable-default-tasks` 独立 API 尚未单独暴露（当前由 bootstrap 覆盖默认启用逻辑）。
   - 当前 health/status 为单 app 部署视角，不扩展为 framework 通用控制台。
+
+### Phase D3：README + Installer（可安装、可理解、可启动）
+- README 目标：在 `apps/finance` 目录直接给出可执行安装/初始化/启动/healthcheck/demo-run 指南，降低对 PRD/源码依赖。
+- installer 主入口命令：`pnpm --filter @stratos/finance run setup`。
+- installer 设计：
+  - 环境检查（Node 版本）
+  - 初始化 `.env`（从 `.env.example` 复制）
+  - 执行 DB init/migrate/seed
+  - 输出 setup wizard 与后续 bootstrap/healthcheck/demo-run 指引
+- package.json / scripts 调整：
+  - `apps/finance/package.json` 新增 `setup/dev/test/db:init/db:migrate/db:seed/setup:bootstrap/healthcheck/demo-run`
+  - 根 `package.json` 新增 `finance:setup/finance:setup:bootstrap/finance:healthcheck/finance:demo-run`
+- README 核心章节：
+  - 定位与边界、功能概览、环境要求、Quick Start、Setup Wizard、常用命令、配置拆分、部署流程、限制、故障排查。
+- 与 setup/runtime/run-center 接线：
+  - setup/bootstrap/healthcheck/demo-run 命令均通过 finance app API handler 路径执行。
+  - bootstrap 脚本支持“未配置时自动写入最小 setup config”以减少首次失败。
+- 新增测试：
+  - `tests/finance-installer-command.smoke.test.mjs`
+  - `tests/finance-readme-command-consistency.test.mjs`
+  - `tests/finance-setup-bootstrap-command.smoke.test.mjs`
+  - `tests/finance-healthcheck-command.smoke.test.mjs`
+  - `tests/finance-demo-run-command.smoke.test.mjs`
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（89 tests）。
+- 尚未完成项：
+  - 仍未提供公网分发 CLI（`npx/pnpm dlx`），保持 monorepo app 形态。
