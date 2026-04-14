@@ -14,6 +14,7 @@
     "db:migrate": "node ./scripts/db-migrate.mjs",
     "db:seed": "node ./scripts/db-seed.mjs",
     "setup:bootstrap": "node ./scripts/setup-bootstrap.mjs",
+    "setup:reset": "node ./scripts/setup-reset.mjs",
     "healthcheck": "node ./scripts/setup-healthcheck.mjs",
     "demo-run": "node ./scripts/setup-demo-run.mjs"
   },

@@ -240,6 +240,28 @@ export class FinanceSetupService {
     };
   }
 
+  reset(reason = 'manual_reset'): Record<string, unknown> {
+    const now = new Date().toISOString();
+    const previous = this.repo.getLatestSetupConfig();
+    this.repo.saveSetupConfig({
+      id: `setup-reset-${Date.now().toString(36)}`,
+      setupVersion: 'D2',
+      mode: previous?.mode ?? 'local',
+      nonSecret: {
+        ...(previous?.nonSecret ?? {}),
+        resetReason: reason
+      },
+      secret: {},
+      setupCompleted: false,
+      updatedAt: now
+    });
+    return {
+      reset: true,
+      at: now,
+      reason
+    };
+  }
+
   private requireConfig(): FinanceSetupConfigRecord {
     const config = this.repo.getLatestSetupConfig();
     if (!config) {

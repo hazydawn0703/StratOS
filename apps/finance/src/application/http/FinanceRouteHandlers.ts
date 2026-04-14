@@ -324,6 +324,9 @@ export class FinanceRouteHandlers {
     if (req.method === 'GET' && path === '/api/finance/setup/history') {
       return this.done(start, 200, this.setup.history(Number(req.query?.limit ?? '20')));
     }
+    if (req.method === 'POST' && path === '/api/finance/setup/reset') {
+      return this.done(start, 200, this.setup.reset(String(req.body?.reason ?? 'manual_reset')));
+    }
 
     if (req.method === 'GET' && path === '/api/finance/settings/runtime') {
       return this.done(start, 200, this.runtimeSettings.read());

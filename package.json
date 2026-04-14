@@ -17,6 +17,7 @@
     "finance:db:seed": "node apps/finance/scripts/db-seed.mjs",
     "finance:setup": "pnpm --filter @stratos/finance run setup",
     "finance:setup:bootstrap": "pnpm --filter @stratos/finance run setup:bootstrap",
+    "finance:setup:reset": "pnpm --filter @stratos/finance run setup:reset",
     "finance:healthcheck": "pnpm --filter @stratos/finance run healthcheck",
     "finance:demo-run": "pnpm --filter @stratos/finance run demo-run",
     "finance:db:reset": "node apps/finance/scripts/db-reset.mjs",

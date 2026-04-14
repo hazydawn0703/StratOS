@@ -43,6 +43,7 @@ export const financeApiRoutes: FinanceApiRoute[] = [
   { method: 'POST', path: '/api/finance/setup/healthcheck', purpose: 'run setup health checks' },
   { method: 'POST', path: '/api/finance/setup/demo-run', purpose: 'enqueue and run setup demo task' },
   { method: 'GET', path: '/api/finance/setup/history', purpose: 'setup config + healthcheck history summary' },
+  { method: 'POST', path: '/api/finance/setup/reset', purpose: 'reset setup completion status and require re-bootstrap' },
   { method: 'GET', path: '/api/finance/settings/runtime', purpose: 'read runtime settings summary' },
   { method: 'POST', path: '/api/finance/settings/runtime/validate', purpose: 'validate runtime settings payload' },
   { method: 'POST', path: '/api/finance/settings/runtime/save', purpose: 'save runtime settings' },

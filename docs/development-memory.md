@@ -1262,3 +1262,27 @@
   - `pnpm test`：通过（89 tests）。
 - 尚未完成项：
   - 仍未提供公网分发 CLI（`npx/pnpm dlx`），保持 monorepo app 形态。
+
+### Phase D4：Setup Reset 恢复入口（按 D3 建议推进）
+- 目标：补齐 setup 未完成/配置异常时的一键恢复入口，减少人工清理步骤。
+- 新增能力：
+  - API: `POST /api/finance/setup/reset`
+  - app script: `pnpm --filter @stratos/finance run setup:reset`
+  - root alias: `pnpm finance:setup:reset`
+- 接线方式：
+  - `FinanceSetupService.reset()` 将 setup 状态重置为 `setupCompleted=false`，保留 non-secret 摘要并记录 resetReason。
+  - route handler 与 API route catalog 已接入 reset endpoint。
+- README 变化：
+  - 常用命令加入 `setup:reset`
+  - 故障排查加入 reset 后重跑 setup 流程说明。
+- 新增测试：
+  - `tests/finance-setup-reset-command.smoke.test.mjs`
+  - README command consistency 用例新增 `setup:reset` 校验。
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（90 tests）。
+- 尚未完成项：
+  - setup history 仍是轻量摘要，后续可扩展 reset 审计详情。

@@ -91,6 +91,7 @@ pnpm --filter @stratos/finance run db:init
 pnpm --filter @stratos/finance run db:migrate
 pnpm --filter @stratos/finance run db:seed
 pnpm --filter @stratos/finance run setup:bootstrap
+pnpm --filter @stratos/finance run setup:reset
 pnpm --filter @stratos/finance run healthcheck
 pnpm --filter @stratos/finance run demo-run
 ```
@@ -100,6 +101,7 @@ pnpm --filter @stratos/finance run demo-run
 ```bash
 pnpm finance:setup
 pnpm finance:setup:bootstrap
+pnpm finance:setup:reset
 pnpm finance:healthcheck
 pnpm finance:demo-run
 pnpm finance:db:init
@@ -144,7 +146,7 @@ pnpm finance:db:seed
   - 先执行：`pnpm clean && pnpm build && pnpm typecheck && pnpm test`
 - setup 未完成
   - 查看 `/finance/setup/status` 的 `missingSteps`
-  - 重新执行 save-config / bootstrap / healthcheck / demo-run
+  - 必要时先执行 `pnpm --filter @stratos/finance run setup:reset`，再执行 save-config / bootstrap / healthcheck / demo-run
 - healthcheck 失败
   - 先跑 `pnpm --filter @stratos/finance run healthcheck`
   - 再检查 setup status 与 runtime settings
