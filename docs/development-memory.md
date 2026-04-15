@@ -1286,3 +1286,44 @@
   - `pnpm test`：通过（90 tests）。
 - 尚未完成项：
   - setup history 仍是轻量摘要，后续可扩展 reset 审计详情。
+
+### Phase D5：对外 Installer CLI + Docker Compose 首发方案
+- 为什么 repo 内 bootstrap 不等于对外 installer：
+  - `apps/finance/scripts/install.mjs` 运行前提是“已在 monorepo 源码中”，适合贡献者/from-source 路径；
+  - 对外用户需要零源码前置的入口（`npx` / `pnpm dlx`）与 compose 一键部署说明。
+- 新增 installer CLI 设计：
+  - 新包：`packages/create-finance-app`（`@stratos/create-finance-app`）
+  - `bin` 命令：`create-finance-app`
+  - 支持 mode：`from-source` / `docker-compose`
+  - 支持参数：`--dir`、`--mode`、`--port`、`--demo-data`、`--mock-runtime`、`--dry-run`
+  - 输出 setup URL + bootstrap/healthcheck/demo-run/dev 或 compose logs/down 下一步。
+- Docker Compose 首发方案：
+  - 新增根 `compose.yaml`
+  - 新增根 `.env.example`
+  - 新增 `apps/finance/Dockerfile`
+  - 单服务 `finance-app` + named volumes（sqlite/config）+ healthcheck + 端口映射。
+- README 首页三入口调整：
+  - Docker Compose（服务器）
+  - `npx` / `pnpm dlx` installer（快速体验）
+  - from-source（开发者）
+- package/bin/scripts 调整：
+  - 新增 `packages/create-finance-app/package.json` 与 `bin/create-finance-app.mjs`
+  - 保留 apps/finance from-source bootstrap 与 setup/healthcheck/demo-run 链路
+  - 保留根 alias，并新增 compose/installer 关联说明。
+- 新增测试：
+  - `tests/create-finance-app-cli-help.smoke.test.mjs`
+  - `tests/create-finance-app-from-source-dry-run.test.mjs`
+  - `tests/create-finance-app-docker-mode-dry-run.test.mjs`
+  - `tests/create-finance-app-next-step-output.test.mjs`
+  - `tests/compose-file-validation.test.mjs`
+  - `tests/compose-env-template-consistency.test.mjs`
+  - `tests/finance-readme-quickstart-consistency.test.mjs`
+  - `tests/create-finance-app-installer-command-consistency.test.mjs`
+- 五条 pnpm 命令结果：
+  - `pnpm install --frozen-lockfile`：通过。
+  - `pnpm clean`：通过。
+  - `pnpm build`：通过。
+  - `pnpm typecheck`：通过。
+  - `pnpm test`：通过（98 tests）。
+- 尚未完成项：
+  - CLI 当前以 dry-run/模板引导为主，后续可补真实 release tarball 下载路径与发布流水线。

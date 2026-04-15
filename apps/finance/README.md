@@ -40,9 +40,29 @@
 - 本地可用 SQLite（通过 Node sqlite3 CLI 适配）
 - 支持部署模式：`local` / `staging` / `production`（通过 setup 选择）
 
-## 5) Quick Start（推荐主入口）
+## 5) Quick Start（三入口）
 
-推荐使用 **app 局部命令**（最少步骤）：
+### 路径 A：Docker Compose（推荐给服务器/私有部署）
+
+```bash
+cp .env.example .env
+docker compose up -d
+docker compose logs -f finance-app
+```
+
+访问：`http://127.0.0.1:4310/finance/setup`
+
+### 路径 B：Installer CLI（推荐给本地快速体验）
+
+```bash
+npx @stratos/create-finance-app --mode from-source --dir ./stratos-finance
+# 或
+pnpm dlx @stratos/create-finance-app --mode from-source --dir ./stratos-finance
+```
+
+CLI 会执行环境检查、依赖安装与 setup 引导，并输出 healthcheck/demo-run/dev 下一步。
+
+### 路径 C：From source（推荐给开发者/贡献者）
 
 ```bash
 pnpm install --frozen-lockfile
@@ -50,8 +70,7 @@ pnpm --filter @stratos/finance run setup
 pnpm --filter @stratos/finance run dev
 ```
 
-启动后打开：
-- Setup Wizard: `http://127.0.0.1:4310/finance/setup`
+> 说明：repo 内 `setup` 属于 from-source bootstrap 路径，不等同于对外 installer CLI。
 
 ## 6) Setup Wizard
 
@@ -121,18 +140,19 @@ pnpm finance:db:seed
 
 ## 9) 部署到服务器（最小流程）
 
-1. 准备 Node + pnpm 环境
-2. 运行 installer：`pnpm --filter @stratos/finance run setup`
-3. 启动服务：`pnpm --filter @stratos/finance run dev`
-4. 打开 setup UI：`/finance/setup`
-5. 执行 bootstrap
-6. 运行 healthcheck
-7. 执行 demo run
-8. 验证：
+1. 准备 Node + pnpm + Docker/Compose 环境
+2. 复制环境模板：`cp .env.example .env`
+3. 启动：`docker compose up -d`
+4. 查看日志：`docker compose logs -f finance-app`
+5. 打开 setup UI：`/finance/setup`
+6. 执行 bootstrap / healthcheck / demo run
+7. 验证：
    - Dashboard: `/finance/dashboard`
    - Run Center: `/finance/run-center`
    - Timeline: `/finance/timeline`
    - Runtime Settings: `/finance/settings/runtime`
+
+若不使用 Docker，可改用 installer CLI（`npx @stratos/create-finance-app`）或 from-source 路径。
 
 ## 10) 当前阶段限制
 
