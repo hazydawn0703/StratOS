@@ -1,5 +1,6 @@
 import { MockTaskRuntime, StrategyRuntimeKernel } from '@stratos/core';
 import { ModelGateway, MockProviderAdapter } from '@stratos/model-gateway';
+import { ModelRouter } from '@stratos/model-router';
 import type { RuntimeEffects, RuleExecutionLog } from '@stratos/rule-engine';
 import { RuleExecutionEngine } from '@stratos/rule-engine';
 import type { CompiledStrategyBundle } from '@stratos/strategy-compiler';
@@ -16,6 +17,7 @@ import type { FinanceTaskInput, FinanceTaskResult } from '../application/types.j
 export class FinanceStrategyRuntime {
   private readonly taskRuntime = new MockTaskRuntime();
   private readonly modelGateway = new ModelGateway([new MockProviderAdapter()]);
+  private readonly modelRouter = new ModelRouter();
   private readonly ruleEngine = new RuleExecutionEngine();
   private readonly strategyCompiler = new StrategyCompiler();
   private readonly stuRegistry = new STURegistry();
@@ -32,6 +34,33 @@ export class FinanceStrategyRuntime {
   }
 
   run(input: FinanceTaskInput): Promise<FinanceTaskResult> {
-    return this.kernel.run(input);
+    const runtimeRouting = (input.metadata?.runtimeRouting as Record<string, unknown> | undefined) ?? {};
+    const providerCandidates = [String(runtimeRouting.provider ?? 'mock'), 'mock'];
+    const decision = this.modelRouter.route(
+      { providers: providerCandidates, hints: [] },
+      { allowProviders: providerCandidates }
+    );
+    return this.kernel.run({
+      ...input,
+      runtimeRouting: {
+        preferredProvider: decision.provider,
+        fallbackProvider: String(runtimeRouting.fallbackProvider ?? 'mock'),
+        preferredModel: String(runtimeRouting.defaultModelAlias ?? 'mock-model-v1'),
+        modelLayer: String(runtimeRouting.structuredOutputMode ?? 'default')
+      },
+      metadata: {
+        ...(input.metadata ?? {}),
+        runtimeTrace: {
+          routingDecision: decision,
+          reviewerEnabled: runtimeRouting.reviewerEnabled !== false,
+          reviewerModelAlias: runtimeRouting.reviewerModelAlias ?? null,
+          guardrails: {
+            cost: runtimeRouting.costGuardrail ?? null,
+            latencyMs: runtimeRouting.latencyGuardrailMs ?? null
+          },
+          secretRefs: Array.isArray(runtimeRouting.secretRefKeys) ? runtimeRouting.secretRefKeys : []
+        }
+      }
+    });
   }
 }
