@@ -9,4 +9,8 @@ test('create-finance-app CLI help smoke', () => {
   });
   assert.ok(out.includes('Usage:'));
   assert.ok(out.includes('@stratos/create-finance-app'));
+  assert.ok(out.includes('--repo <git-url>'));
+  assert.ok(out.includes('STRATOS_REPO_URL'));
+  assert.ok(!out.includes('--demo-data'));
+  assert.ok(!out.includes('--mock-runtime'));
 });

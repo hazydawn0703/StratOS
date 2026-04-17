@@ -12,9 +12,15 @@
     "typecheck": "node --version"
   },
   "files": [
-    "bin"
+    "bin",
+    "README.md"
   ],
   "engines": {
     "node": ">=20"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "UNLICENSED"
 }
