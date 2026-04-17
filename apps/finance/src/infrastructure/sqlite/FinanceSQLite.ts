@@ -1,12 +1,11 @@
 import { mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 import { CliFinanceSqlExecutor, type FinanceSqlExecutor } from '../adapters/FinanceSqlExecutor.js';
-
-const DEFAULT_DB_PATH = resolve(process.env.FINANCE_DB_PATH ?? resolve(process.cwd(), 'apps/finance/.data/finance-app.db'));
+import { resolveFinanceDbPath } from './dbPath.js';
 
 export class FinanceSQLite {
   constructor(
-    private readonly dbPath: string = DEFAULT_DB_PATH,
+    private readonly dbPath: string = resolveFinanceDbPath(),
     private readonly sqlExecutor: FinanceSqlExecutor = new CliFinanceSqlExecutor()
   ) {
     mkdirSync(dirname(this.dbPath), { recursive: true });

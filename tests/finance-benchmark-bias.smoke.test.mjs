@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createTestFinanceDbPath } from './helpers/financeTestDb.mjs';
 
-process.env.FINANCE_DB_PATH ??= `/tmp/stratos-${process.pid}-${Math.random().toString(16).slice(2)}.db`;
+process.env.FINANCE_DB_PATH ??= createTestFinanceDbPath('finance-benchmark-bias');
 
 test('finance benchmark seed and evaluation comparison is locally runnable', async () => {
   const { FinanceBenchmarkService } = await import('../apps/finance/dist/application/benchmark/FinanceBenchmarkService.js');

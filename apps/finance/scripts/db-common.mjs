@@ -1,12 +1,25 @@
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
+import { resolveFinanceDbPath } from './db-path.mjs';
 
-export const dbPath = resolve(process.cwd(), 'apps/finance/.data/finance-app.db');
+export const dbPath = resolveFinanceDbPath();
 export const migrationsDir = resolve(process.cwd(), 'apps/finance/db/migrations');
 
-export const runSql = (sql) => execFileSync('sqlite3', [dbPath, sql], { encoding: 'utf8' });
-export const runSqlJson = (sql) => execFileSync('sqlite3', [dbPath, '-json', sql], { encoding: 'utf8' });
+const runWithRetry = (args, retries = 4) => {
+  for (let i = 0; i <= retries; i += 1) {
+    try {
+      return execFileSync('sqlite3', [dbPath, '-cmd', '.timeout 5000', ...args], { encoding: 'utf8' });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      if (!msg.includes('database is locked') || i === retries) throw error;
+    }
+  }
+  return '';
+};
+
+export const runSql = (sql) => runWithRetry([sql]);
+export const runSqlJson = (sql) => runWithRetry(['-json', sql]);
 
 export const ensureDbDir = () => mkdirSync(dirname(dbPath), { recursive: true });
 

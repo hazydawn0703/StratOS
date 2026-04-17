@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { resolve } from 'node:path';
+import { resolveFinanceDbPath } from './db-path.mjs';
 
 const dryRun = process.argv.includes('--dry-run');
 if (dryRun) {
@@ -7,7 +7,7 @@ if (dryRun) {
   process.exit(0);
 }
 
-process.env.FINANCE_DB_PATH ??= resolve(import.meta.dirname, '../.data/finance-app.db');
+process.env.FINANCE_DB_PATH ??= resolveFinanceDbPath(import.meta.dirname);
 const { FinanceRouteHandlers } = await import('../dist/application/http/FinanceRouteHandlers.js');
 const handlers = new FinanceRouteHandlers();
 const status = await handlers.handle({ method: 'GET', path: '/api/finance/setup/status' });
