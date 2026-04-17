@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>From tool-using agents to strategy-evolving systems.</strong>
+  <strong>Turn agent mistakes into controlled strategy improvement.</strong>
 </p>
 
 <p align="center">
@@ -34,21 +34,21 @@
 </p>
 
 <p>
-  <strong>StratOS</strong> is a <em>Strategy Operating System for Agents</em>.
+  <strong>StratOS</strong> is a <em>strategy runtime for agents</em>.
 </p>
 
 <p>
-  Most agent frameworks are built around <strong>skills</strong>, <strong>tools</strong>, and <strong>memory</strong>.
+  Most agent frameworks help agents use <strong>tools</strong>, follow <strong>workflows</strong>, and manage <strong>memory</strong>.
   StratOS is built for the missing layer:
 </p>
 
 <blockquote>
-  <p><strong>Strategy — how an agent decides, learns from failure, and improves over time.</strong></p>
+  <p><strong>Strategy — how an agent makes decisions, learns from mistakes, and improves without losing control.</strong></p>
 </blockquote>
 
 <p>
   It does not replace your agent framework.
-  It gives it a <strong>strategy runtime</strong>.
+  It adds <strong>review, evaluation, and controlled strategy rollout</strong>.
 </p>
 
 <hr />
@@ -64,11 +64,11 @@
   <li>rewrite the prompt</li>
   <li>add another rule</li>
   <li>patch the workflow</li>
-  <li>try again</li>
+  <li>hope the behavior got better</li>
 </ul>
 
 <p>
-  That does not scale.
+  That is not a real improvement system.
 </p>
 
 <p>
@@ -77,12 +77,12 @@
 
 <blockquote>
   <p>
-    a system that can <strong>observe failure, extract patterns, evolve strategy, and apply correction safely</strong>.
+    a runtime that can <strong>observe failure, review outcomes, extract recurring patterns, and apply corrections safely</strong>.
   </p>
 </blockquote>
 
 <p>
-  StratOS exists to make that loop a first-class system.
+  StratOS exists to make that loop a first-class part of the system.
 </p>
 
 <hr />
@@ -90,11 +90,11 @@
 <h2>What StratOS makes possible</h2>
 
 <p>
-  StratOS turns this into runtime infrastructure:
+  StratOS turns strategy improvement into runtime infrastructure:
 </p>
 
 <p>
-  <strong>Action → Outcome → Review → Error → Strategy → Next Action</strong>
+  <strong>Action → Artifact → Claim → Outcome → Review → Error Pattern → Strategy Update → Next Action</strong>
 </p>
 
 <p>
@@ -102,12 +102,12 @@
 </p>
 
 <ul>
-  <li>generate structured decisions</li>
-  <li>evaluate outcomes</li>
-  <li>extract recurring error patterns</li>
+  <li>generate structured decisions instead of disposable outputs</li>
+  <li>track which claims should be reviewed later</li>
+  <li>learn from recurring failure patterns instead of isolated logs</li>
   <li>convert lessons into reusable strategy units</li>
   <li>test changes before rollout</li>
-  <li>improve behavior without losing control</li>
+  <li>improve behavior without uncontrolled drift</li>
 </ul>
 
 <hr />
@@ -125,14 +125,18 @@
     <td valign="top">What an agent can do</td>
   </tr>
   <tr>
+    <td valign="top"><strong>Memory</strong></td>
+    <td valign="top">What an agent can retain</td>
+  </tr>
+  <tr>
     <td valign="top"><strong>Strategy</strong></td>
-    <td valign="top">How an agent decides and improves</td>
+    <td valign="top">How an agent decides, gets reviewed, and improves over time</td>
   </tr>
 </table>
 
 <p>
   StratOS is not another tool layer.
-  It is a <strong>strategy layer</strong> for intelligent systems.
+  It is a <strong>review-driven strategy layer</strong> for intelligent systems.
 </p>
 
 <hr />
@@ -141,20 +145,28 @@
 
 <ul>
   <li>
+    <strong>Strategy Artifact</strong><br />
+    Structured decision output that can be tracked, reviewed, and replayed
+  </li>
+  <li>
+    <strong>Strategy Claim</strong><br />
+    Reviewable assertions extracted from agent output
+  </li>
+  <li>
+    <strong>Outcome Review</strong><br />
+    A formal way to compare what the agent said with what actually happened
+  </li>
+  <li>
+    <strong>Error Pattern</strong><br />
+    Recurring mistakes that can be named, grouped, and corrected
+  </li>
+  <li>
     <strong>Self-Training Units (STU)</strong><br />
     Versioned strategy units derived from failures, reviews, and behavioral patterns
   </li>
   <li>
-    <strong>STU Registry</strong><br />
-    Strategy loading, versioning, activation, and governance
-  </li>
-  <li>
     <strong>Strategy Compiler</strong><br />
     Compiles strategy into Prompt Layer, Rule Layer, and Routing Layer
-  </li>
-  <li>
-    <strong>Rule Execution Engine</strong><br />
-    Executes structured control logic before, during, and after generation
   </li>
   <li>
     <strong>Evaluation & Experiment System</strong><br />
@@ -178,6 +190,9 @@
  └─ Ops Automation
 
 StratOS Core
+ ├─ Artifact / Claim Pipeline
+ ├─ Review Engine
+ ├─ Error Utilization
  ├─ STU Registry
  ├─ Strategy Compiler
  ├─ Rule Engine
@@ -200,8 +215,19 @@ Infrastructure
 
 <p>
   StratOS does not replace your orchestration layer.
-  It gives your system a <strong>strategy runtime</strong>.
+  It gives your system a <strong>strategy runtime for review, controlled improvement, and safe evolution</strong>.
 </p>
+
+<hr />
+
+<h2>What makes StratOS different</h2>
+
+<ul>
+  <li><strong>Not just memory</strong> — past mistakes become structured strategy assets</li>
+  <li><strong>Not just prompt tuning</strong> — improvements are versioned, evaluated, and governed</li>
+  <li><strong>Not just adaptation</strong> — changes can be reviewed, tested, rolled out, and rolled back</li>
+  <li><strong>Not just agent execution</strong> — strategy quality becomes part of the runtime itself</li>
+</ul>
 
 <hr />
 
@@ -261,6 +287,6 @@ Infrastructure
 <blockquote>
   <p>
     Agents should not only act.<br />
-    They should improve how they act.
+    They should improve how they decide.
   </p>
 </blockquote>
