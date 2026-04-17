@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
 
 test('create-finance-app prints next-step commands', () => {
-  const out = execSync('pnpm --filter @stratos/create-finance-app run cli -- --mode from-source --dry-run --dir ./tmp-fin-next', {
+  const out = execSync('pnpm --filter @hazydawn0703/create-finance-app run cli -- --mode from-source --dry-run --dir ./tmp-fin-next', {
     cwd: process.cwd(),
     encoding: 'utf-8'
   });

@@ -5,11 +5,11 @@ import { execSync } from 'node:child_process';
 
 const DEFAULT_REPO_URL = 'https://github.com/hazydawn0703/StratOS.git';
 
-const HELP = `@stratos/create-finance-app
+const HELP = `@hazydawn0703/create-finance-app
 
 Usage:
-  npx @stratos/create-finance-app [options]
-  pnpm dlx @stratos/create-finance-app [options]
+  npx @hazydawn0703/create-finance-app [options]
+  pnpm dlx @hazydawn0703/create-finance-app [options]
 
 Options:
   --mode <from-source|docker-compose>   Install mode (default: from-source)

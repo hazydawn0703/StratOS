@@ -1292,10 +1292,10 @@
   - `apps/finance/scripts/install.mjs` 运行前提是“已在 monorepo 源码中”，适合贡献者/from-source 路径；
   - 对外用户需要零源码前置的入口（`npx` / `pnpm dlx`）与 compose 一键部署说明。
 - 新增 installer CLI 设计：
-  - 新包：`packages/create-finance-app`（`@stratos/create-finance-app`）
+  - 新包：`packages/create-finance-app`（`@hazydawn0703/create-finance-app`）
   - `bin` 命令：`create-finance-app`
   - 支持 mode：`from-source` / `docker-compose`
-  - 支持参数：`--dir`、`--mode`、`--port`、`--demo-data`、`--mock-runtime`、`--dry-run`
+  - 支持参数：`--dir`、`--mode`、`--repo`、`--port`、`--dry-run`
   - 输出 setup URL + bootstrap/healthcheck/demo-run/dev 或 compose logs/down 下一步。
 - Docker Compose 首发方案：
   - 新增根 `compose.yaml`

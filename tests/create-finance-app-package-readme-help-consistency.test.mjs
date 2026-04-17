@@ -6,7 +6,7 @@ import { execSync } from 'node:child_process';
 const readme = readFileSync(new URL('../packages/create-finance-app/README.md', import.meta.url), 'utf-8');
 
 test('create-finance-app package README is npm-focused and aligned with CLI help', () => {
-  const help = execSync('pnpm --filter @stratos/create-finance-app run cli -- --help', {
+  const help = execSync('pnpm --filter @hazydawn0703/create-finance-app run cli -- --help', {
     cwd: process.cwd(),
     encoding: 'utf-8'
   });

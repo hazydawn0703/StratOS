@@ -1,4 +1,4 @@
-# @stratos/create-finance-app
+# @hazydawn0703/create-finance-app
 
 Create and bootstrap a local **StratOS Finance** app from npm.
 
@@ -14,25 +14,25 @@ Create and bootstrap a local **StratOS Finance** app from npm.
 ## Quick start
 
 ```bash
-npx @stratos/create-finance-app --help
+npx @hazydawn0703/create-finance-app --help
 ```
 
 Default install (`from-source`):
 
 ```bash
-npx @stratos/create-finance-app
+npx @hazydawn0703/create-finance-app
 ```
 
 Docker Compose install:
 
 ```bash
-npx @stratos/create-finance-app --mode docker-compose
+npx @hazydawn0703/create-finance-app --mode docker-compose
 ```
 
 ## Usage
 
 ```bash
-npx @stratos/create-finance-app [options]
+npx @hazydawn0703/create-finance-app [options]
 ```
 
 Options:
@@ -49,7 +49,7 @@ Repo override:
 - If `--repo` is not passed, you can override with env var:
 
 ```bash
-STRATOS_REPO_URL=<your-fork-url> npx @stratos/create-finance-app
+STRATOS_REPO_URL=<your-fork-url> npx @hazydawn0703/create-finance-app
 ```
 
 ## Real behavior by mode

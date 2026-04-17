@@ -6,8 +6,8 @@ const pkg = JSON.parse(readFileSync(new URL('../packages/create-finance-app/pack
 const readme = readFileSync(new URL('../apps/finance/README.md', import.meta.url), 'utf-8');
 
 test('installer package name/bin align with README installer commands', () => {
-  assert.equal(pkg.name, '@stratos/create-finance-app');
+  assert.equal(pkg.name, '@hazydawn0703/create-finance-app');
   assert.ok(pkg.bin['create-finance-app']);
-  assert.ok(readme.includes('npx @stratos/create-finance-app'));
-  assert.ok(readme.includes('pnpm dlx @stratos/create-finance-app'));
+  assert.ok(readme.includes('npx @hazydawn0703/create-finance-app'));
+  assert.ok(readme.includes('pnpm dlx @hazydawn0703/create-finance-app'));
 });

@@ -55,9 +55,9 @@ docker compose logs -f finance-app
 ### 路径 B：Installer CLI（推荐给本地快速体验）
 
 ```bash
-npx @stratos/create-finance-app --mode from-source --dir ./stratos-finance
+npx @hazydawn0703/create-finance-app --mode from-source --dir ./stratos-finance
 # 或
-pnpm dlx @stratos/create-finance-app --mode from-source --dir ./stratos-finance
+pnpm dlx @hazydawn0703/create-finance-app --mode from-source --dir ./stratos-finance
 ```
 
 CLI 会执行环境检查、依赖安装与 setup 引导，并输出 healthcheck/demo-run/dev 下一步。
@@ -152,7 +152,7 @@ pnpm finance:db:seed
    - Timeline: `/finance/timeline`
    - Runtime Settings: `/finance/settings/runtime`
 
-若不使用 Docker，可改用 installer CLI（`npx @stratos/create-finance-app`）或 from-source 路径。
+若不使用 Docker，可改用 installer CLI（`npx @hazydawn0703/create-finance-app`）或 from-source 路径。
 
 ## 10) 当前阶段限制
 
