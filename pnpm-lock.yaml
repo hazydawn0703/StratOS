@@ -73,6 +73,8 @@ importers:
         specifier: workspace:*
         version: link:../shared-types
 
+  packages/create-finance-app: {}
+
   packages/error-utilization:
     dependencies:
       '@stratos/review-engine':

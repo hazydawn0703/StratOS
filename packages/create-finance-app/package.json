@@ -1,0 +1,26 @@
+{
+  "name": "@hazydawn0703/create-finance-app",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "StratOS finance installer CLI (from-source + docker-compose onboarding)",
+  "bin": {
+    "create-finance-app": "./bin/create-finance-app.mjs"
+  },
+  "scripts": {
+    "cli": "node ./bin/create-finance-app.mjs",
+    "typecheck": "node --version"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "UNLICENSED"
+}

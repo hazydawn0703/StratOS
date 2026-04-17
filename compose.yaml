@@ -1,0 +1,28 @@
+services:
+  finance-app:
+    build:
+      context: .
+      dockerfile: apps/finance/Dockerfile
+    container_name: stratos-finance-app
+    env_file:
+      - .env
+    environment:
+      FINANCE_WEB_AUTOSTART: "1"
+      FINANCE_WEB_PORT: "4310"
+      FINANCE_DB_PATH: /var/lib/stratos/finance-app.db
+    ports:
+      - "${FINANCE_PORT:-4310}:4310"
+    volumes:
+      - finance_sqlite:/var/lib/stratos
+      - finance_config:/workspace/StratOS/apps/finance/.config
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:4310/finance/setup >/dev/null || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  finance_sqlite:
+  finance_config:

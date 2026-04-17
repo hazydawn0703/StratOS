@@ -13,7 +13,11 @@ export class ModelGateway {
   }
 
   async generateText(prompt: string, routing: RoutingInput): Promise<ModelResponse> {
-    return this.resolveProvider(routing).generate({ prompt, responseFormat: 'text' });
+    return this.resolveProvider(routing).generate({
+      prompt,
+      responseFormat: 'text',
+      model: routing.preferredModel
+    });
   }
 
   async generateStructuredJson(prompt: string, routing: RoutingInput): Promise<ModelResponse> {
@@ -22,7 +26,7 @@ export class ModelGateway {
       throw new Error(`Provider ${provider.name} does not support structured json.`);
     }
 
-    return provider.generate({ prompt, responseFormat: 'json' });
+    return provider.generate({ prompt, responseFormat: 'json', model: routing.preferredModel });
   }
 
   async generateWithTools(
@@ -30,6 +34,11 @@ export class ModelGateway {
     tools: unknown[],
     routing: RoutingInput
   ): Promise<ModelResponse> {
-    return this.resolveProvider(routing).generate({ prompt, tools, responseFormat: 'text' });
+    return this.resolveProvider(routing).generate({
+      prompt,
+      tools,
+      responseFormat: 'text',
+      model: routing.preferredModel
+    });
   }
 }
