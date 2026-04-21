@@ -1,0 +1,17 @@
+# StratOS × Hermes example configuration
+bridge:
+  enabled: true
+  trackable_task_types:
+    - analysis
+    - planning
+    - scheduled_report
+  strat_os_endpoint: "http://localhost:8080"
+  api_key: "replace-with-real-key"
+hints:
+  enabled: true
+  timeout_ms: 800
+events:
+  emit_task_started: true
+  emit_task_completed: true
+  emit_task_feedback: true
+  emit_outcome_available: true
