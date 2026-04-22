@@ -1,0 +1,13 @@
+{
+  "task_type": "analysis",
+  "raw_output": {
+    "title": "APAC Risk Scan",
+    "summary": "Risk highest in segment B.",
+    "sections": [
+      {
+        "heading": "Findings",
+        "content": "Demand volatility increased."
+      }
+    ]
+  }
+}

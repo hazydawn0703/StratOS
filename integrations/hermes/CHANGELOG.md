@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## v0.1.2 - 2026-04-22
+
+### Added
+
+- 新增 `adapters/artifact/` 最小可运行实现：
+  - 输出格式识别（text/markdown/object/json-string）
+  - `task_type -> artifact_type` 映射
+  - artifact schema/metadata 构建
+  - adaptation failure fallback（保留 raw output + failure record）
+- 新增 artifact adapter 单元测试：`tests/hermes-artifact-adapter.test.mjs`。
+- 扩充 `testdata/sample-outputs/`：
+  - analysis x3
+  - planning x3
+  - scheduled_report x3
+  - 模糊输出 x2
+  - 不可适配输出 x2
+- 在 `examples/analysis-task/`、`examples/planning-task/`、`examples/scheduled-report/` 中补充 raw output 与 artifact 示例。
+
+### Known limitations
+
+- 目前 fallback record 为适配层输出，尚未接入统一持久化故障队列。
+- claim preset 与 hints endpoint 在后续 Phase 继续实现。
+
 ## v0.1.1 - 2026-04-22
 
 ### Added

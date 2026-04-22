@@ -1,0 +1,13 @@
+{
+  "task_type": "planning",
+  "raw_output": {
+    "title": "Q3 Plan",
+    "summary": "Prioritize retention motion first.",
+    "sections": [
+      {
+        "heading": "Step 1",
+        "content": "Run cohort diagnosis."
+      }
+    ]
+  }
+}

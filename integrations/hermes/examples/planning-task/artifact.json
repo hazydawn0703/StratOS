@@ -1,0 +1,16 @@
+{
+  "artifact_id": "hermes_artifact_task_planning_example_001",
+  "source_framework": "hermes",
+  "source_task_id": "task_planning_example_001",
+  "artifact_type": "strategy_plan_artifact",
+  "schema_version": "hermes.artifact.v0.1",
+  "title": "planning artifact from task_planning_example_001",
+  "summary": "# Plan\n\n## Next Steps\n\n1. Prioritize retention campaigns\n2. Stage rollout by segment",
+  "source_refs": [],
+  "runtime_metadata": {
+    "detected_format": "markdown"
+  },
+  "integration_metadata": {
+    "example": true
+  }
+}
