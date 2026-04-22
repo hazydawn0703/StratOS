@@ -11,18 +11,18 @@ if ! command -v curl >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[1/2] POST /v1/bridge/events"
+echo "[1/2] POST /integrations/hermes/events"
 curl -sS -o /tmp/hermes_event_resp.json -w "%{http_code}" \
-  -X POST "$BASE_URL/v1/bridge/events" \
+  -X POST "$BASE_URL/integrations/hermes/events" \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   --data-binary "@$EVENT_FILE" > /tmp/hermes_event_code.txt
 EVENT_CODE="$(cat /tmp/hermes_event_code.txt)"
 echo "status=$EVENT_CODE"
 
-echo "[2/2] GET /v1/bridge/strategy-hints"
+echo "[2/2] GET /integrations/hermes/strategy-hints"
 curl -sS -o /tmp/hermes_hint_resp.json -w "%{http_code}" \
-  "$BASE_URL/v1/bridge/strategy-hints?tenant_id=demo&task_type=analysis" \
+  "$BASE_URL/integrations/hermes/strategy-hints?framework=hermes&actor_id=agent_001&task_type=analysis" \
   -H "Authorization: Bearer $API_KEY" > /tmp/hermes_hint_code.txt
 HINT_CODE="$(cat /tmp/hermes_hint_code.txt)"
 echo "status=$HINT_CODE"

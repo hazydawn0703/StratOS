@@ -1,20 +1,27 @@
 {
+  "schema_version": "hermes.events.v0.1",
   "event_id": "evt_demo_001",
   "event_type": "task.completed",
   "occurred_at": "2026-04-22T12:00:00Z",
-  "source": "hermes.bridge",
+  "framework": "hermes",
   "tenant_id": "demo",
   "task_id": "task_demo_001",
   "session_id": "sess_demo_001",
+  "actor_id": "agent_001",
+  "channel": "default",
   "payload": {
+    "task_type": "analysis",
     "status": "success",
-    "output": {
+    "raw_output_inline": {
       "summary": "Market risk remains elevated in APAC segment.",
       "confidence": 0.81
     },
-    "metadata": {
+    "model_metadata": {
       "model": "gpt",
       "latency_ms": 923
+    },
+    "timestamps": {
+      "completed_at": "2026-04-22T12:00:00Z"
     }
   }
 }

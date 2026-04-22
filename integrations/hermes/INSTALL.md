@@ -1,51 +1,57 @@
 # INSTALL
 
-This guide bootstraps the StratOS × Hermes bridge in local development.
+本文档用于在本地或受控测试环境安装 Hermes ↔ StratOS 集成桥接。
 
-## Prerequisites
+## Baseline versions
 
-- Hermes runtime available in your environment
-- Reachable StratOS API endpoint
-- A service token/API key with bridge ingest permission
-- `bash`, `curl`, and `jq`
+- bridge version: `hermes-bridge.v0.1`
+- event schema version: `hermes.events.v0.1`
+- hint response version: `hermes.hints.v0.1`
 
-## 1) Prepare configuration
+## 前置条件
+
+- 可运行的 Hermes 实例
+- 可访问的 StratOS 服务地址
+- 可用的 API key（Bearer token）
+- `bash`、`curl`、`jq`
+
+## 1) 准备配置
 
 ```bash
 cp integrations/hermes/CONFIG.example.yaml /tmp/hermes-stratos.yaml
 ```
 
-Edit:
+至少修改：
 
 - `bridge.strat_os_endpoint`
 - `bridge.api_key`
 - `bridge.trackable_task_types`
 
-## 2) Validate endpoint connectivity
+## 2) 校验 StratOS 可达性
 
 ```bash
+export STRATOS_BASE="http://localhost:8080"
 curl -sS "$STRATOS_BASE/health" | jq .
 ```
 
-## 3) Register bridge in Hermes runtime
+## 3) 在 Hermes 注册桥接
 
-Implementation-specific, but minimally Hermes should:
+Hermes 侧需实现最小桥接动作：
 
-- load YAML configuration
-- call bridge eligibility check before task execution
-- emit task events after lifecycle milestones
-- request strategy hints before eligible tasks
+1. 在任务开始/完成/反馈/结果可用时发送事件到
+   - `POST /integrations/hermes/events`
+2. 在可追踪任务执行前（可选）拉取 hints：
+   - `GET /integrations/hermes/strategy-hints`
+3. 保持 fail-open：StratOS 不可达时不阻断 Hermes 原任务执行。
 
-## 4) Verify with smoke test
-
-Run the script from this repository:
+## 4) 运行 smoke test
 
 ```bash
 bash integrations/hermes/scripts/smoke/run_local_smoke.sh
 ```
 
-## 5) Next steps
+## 5) 建议的下一步
 
-- tune trackable task list
-- configure retry policy and dead-letter queue
-- enable observability dashboards for ingest and hint latency
+- 从 `analysis` 任务开始接入，再扩展到 `planning` 与 `scheduled_report`
+- 打开 ingest 与 hints 的日志追踪
+- 配置 retry/backoff 与 dead-letter 处理
