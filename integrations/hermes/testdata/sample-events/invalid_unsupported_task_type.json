@@ -1,0 +1,17 @@
+{
+  "schema_version": "hermes.events.v0.1",
+  "event_id": "evt_invalid_002",
+  "event_type": "task.completed",
+  "occurred_at": "2026-04-22T08:20:00Z",
+  "framework": "hermes",
+  "tenant_id": "demo",
+  "task_id": "task_invalid_002",
+  "session_id": "sess_invalid_002",
+  "actor_id": "agent_invalid",
+  "channel": "default",
+  "payload": {
+    "task_type": "chat",
+    "status": "success",
+    "raw_output_inline": "hi"
+  }
+}

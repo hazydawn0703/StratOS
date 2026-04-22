@@ -30,3 +30,14 @@ bash integrations/hermes/scripts/smoke/run_local_smoke.sh
 ## 失败排查
 
 见 [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md)。
+
+## Mock event scripts
+
+可分别发送四类事件：
+
+```bash
+bash integrations/hermes/scripts/mocks/send_task_started.sh
+bash integrations/hermes/scripts/mocks/send_task_completed.sh
+bash integrations/hermes/scripts/mocks/send_task_feedback.sh
+bash integrations/hermes/scripts/mocks/send_outcome_available.sh
+```

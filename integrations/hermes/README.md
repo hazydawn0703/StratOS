@@ -68,6 +68,7 @@
 ## 当前状态
 
 - ✅ Phase H0 文档与接口基线已统一
-- ⏳ Phase H1-H6 适配器与脚本实现逐步推进
+- ✅ Phase H1 ingest adapter 最小实现已落地
+- ⏳ Phase H2-H6 持续推进
 
 更新记录见 [`CHANGELOG.md`](./CHANGELOG.md)。
