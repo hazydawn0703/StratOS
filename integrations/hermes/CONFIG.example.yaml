@@ -1,0 +1,32 @@
+# StratOS × Hermes bridge configuration example
+bridge:
+  enabled: true
+  mode: sidecar
+  strat_os_endpoint: "http://localhost:8080"
+  api_key: "replace-with-real-key"
+  request_timeout_ms: 1500
+  retry:
+    max_attempts: 3
+    backoff_ms: 200
+  trackable_task_types:
+    - analysis
+    - planning
+    - scheduled_report
+
+hints:
+  enabled: true
+  prefetch: false
+  max_hints: 3
+  timeout_ms: 800
+
+events:
+  enabled: true
+  include_raw_output: false
+  emit_task_started: true
+  emit_task_completed: true
+  emit_task_feedback: true
+  emit_outcome_available: true
+
+safety:
+  pii_redaction: true
+  deny_unclassified_task_types: true

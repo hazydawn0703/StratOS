@@ -1,0 +1,10 @@
+{
+  "hints": [
+    {
+      "hint_id": "hint_risk_001",
+      "priority": 10,
+      "content": "Include downside scenario and explicit uncertainty range.",
+      "expires_at": "2026-05-01T00:00:00Z"
+    }
+  ]
+}
