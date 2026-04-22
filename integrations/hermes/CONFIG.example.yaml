@@ -1,13 +1,25 @@
-# StratOS × Hermes bridge configuration example
+# StratOS × Hermes bridge config
+versions:
+  bridge: hermes-bridge.v0.1
+  event_schema: hermes.events.v0.1
+  hints_response: hermes.hints.v0.1
+  artifact_preset: hermes.artifact.v0.1
+  claim_preset: hermes.claim-preset.v0.1
+
 bridge:
   enabled: true
   mode: sidecar
+  fail_open: true
+  framework: hermes
   strat_os_endpoint: "http://localhost:8080"
   api_key: "replace-with-real-key"
   request_timeout_ms: 1500
   retry:
     max_attempts: 3
     backoff_ms: 200
+  endpoints:
+    ingest_events: "/integrations/hermes/events"
+    strategy_hints: "/integrations/hermes/strategy-hints"
   trackable_task_types:
     - analysis
     - planning
