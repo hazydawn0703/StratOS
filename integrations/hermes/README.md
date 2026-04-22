@@ -1,110 +1,75 @@
-# StratOS × Hermes
+# StratOS × Hermes Integration Kit
 
-Hermes-native bridge for **review-driven strategy governance**.
+`integrations/hermes/` 提供一个**可选启用、低侵入、fail-open** 的桥接层，让 Hermes 的部分高价值任务进入 StratOS 治理闭环。
 
-This integration is an **optional, external bridge** that allows selected Hermes tasks to enter StratOS governance without rewriting Hermes core runtime.
+## Integration baseline (Phase H0)
 
-## Scope and goals
+- bridge version: `hermes-bridge.v0.1`
+- event schema version: `hermes.events.v0.1`
+- hint response version: `hermes.hints.v0.1`
+- artifact adaptation preset version: `hermes.artifact.v0.1`
+- claim preset version: `hermes.claim-preset.v0.1`
 
-- Keep Hermes runtime behavior unchanged for normal tasks.
-- Track only high-value, reviewable task types in v0.
-- Emit a minimal event set to StratOS.
-- Enable hint retrieval before eligible task execution.
-- Keep governance logic (claims/reviews/promotion) in StratOS.
+## 目标与边界
 
-## Directory map
+### Hermes 继续负责
 
-```text
-integrations/hermes/
-├─ README.md
-├─ INSTALL.md
-├─ CONFIG.example.yaml
-├─ TASK_TYPE_GUIDE.md
-├─ EVENT_SCHEMA.md
-├─ API_SPEC.md
-├─ SMOKE_TEST.md
-├─ TROUBLESHOOTING.md
-├─ CHANGELOG.md
-├─ docs/
-│  ├─ concept-note.md
-│  ├─ bridge-architecture.md
-│  ├─ security-and-sandboxing.md
-│  └─ upstream-friendly-notes.md
-├─ adapters/
-│  ├─ ingest/
-│  ├─ artifact/
-│  ├─ claim-preset/
-│  └─ hints/
-├─ examples/
-│  ├─ analysis-task/
-│  ├─ planning-task/
-│  └─ scheduled-report/
-├─ scripts/
-│  ├─ smoke/
-│  ├─ mocks/
-│  └─ setup/
-└─ testdata/
-   ├─ sample-events/
-   ├─ sample-outputs/
-   └─ sample-hints/
-```
+- agent execution
+- tools / skills / memory
+- sessions / channels / cron
+- runtime UX and orchestration
 
-## Bridge boundaries
+### StratOS 继续负责
 
-### Hermes remains responsible for
+- TaskContext / StrategyArtifact / StrategyClaim
+- OutcomeReview / ErrorPattern / STU lifecycle
+- Evaluation / Experiment / Promotion / Rollback
 
-- execution lifecycle
-- tools/toolsets
-- skills and memory
-- sessions/channels/scheduling
+### 本集成目录负责
 
-### StratOS remains responsible for
+- Hermes ingest adapter（事件接入）
+- Hermes artifact adapter（输出到 artifact）
+- Hermes claim extractor preset（最小 claim 抽取预设）
+- Hermes hint serving endpoint（任务前策略提示）
 
-- strategy artifacts and claims
-- delayed outcome review
-- recurring error pattern detection
-- STU generation and lifecycle
-- evaluation, promotion, rollback
+> 本目录不改 Hermes core，不改 StratOS core schema 语义，不在 `apps/*` 放置 Hermes 逻辑。
 
-### Bridge responsibilities
+## v0 task types（统一命名）
 
-- eligibility decision per task
-- event emission (`task.started`, `task.completed`, `task.feedback`, `outcome.available`)
-- optional hint retrieval (`GET /strategy-hints`)
-- minimal UX-facing status
+- `analysis`
+- `planning`
+- `scheduled_report`
 
-## v0 task selection
+详见 [`TASK_TYPE_GUIDE.md`](./TASK_TYPE_GUIDE.md)。
 
-See [`TASK_TYPE_GUIDE.md`](./TASK_TYPE_GUIDE.md) for full policy.
+## v0 event types（统一命名）
 
-Recommended inclusions:
+- `task.started`
+- `task.completed`
+- `task.feedback`
+- `outcome.available`
 
-- analysis tasks
-- planning tasks
-- scheduled report tasks
+详见 [`EVENT_SCHEMA.md`](./EVENT_SCHEMA.md)。
 
-Recommended exclusions:
+## API 概览
 
-- casual chat / one-off Q&A
-- pure tool execution and file movement
-- tasks without reviewable future outcomes
+- ingest endpoint: `POST /integrations/hermes/events`
+- hints endpoint: `GET /integrations/hermes/strategy-hints`
 
-## Quick start
+详见 [`API_SPEC.md`](./API_SPEC.md)。
 
-1. Copy config:
-   - `cp integrations/hermes/CONFIG.example.yaml /path/to/runtime/hermes-stratos.yaml`
-2. Review API contract:
-   - [`API_SPEC.md`](./API_SPEC.md)
-3. Validate event payload shape:
-   - [`EVENT_SCHEMA.md`](./EVENT_SCHEMA.md)
-4. Run smoke workflow:
-   - [`SMOKE_TEST.md`](./SMOKE_TEST.md)
+## 快速开始
 
-## Current maturity
+1. 复制配置模板：
+   - `cp integrations/hermes/CONFIG.example.yaml /tmp/hermes-stratos.yaml`
+2. 按 [`INSTALL.md`](./INSTALL.md) 配置 endpoint / api key。
+3. 按 [`SMOKE_TEST.md`](./SMOKE_TEST.md) 运行 smoke 脚本。
 
-- ✅ Skeleton docs and directory layout
-- ✅ Example config and smoke script
-- ✅ Mock payloads in `testdata/`
-- ⏳ Adapter implementation pending
+## 当前状态
 
-See [`CHANGELOG.md`](./CHANGELOG.md) for update history.
+- ✅ Phase H0 文档与接口基线已统一
+- ✅ Phase H1 ingest adapter 最小实现已落地
+- ✅ Phase H2 artifact adapter 最小实现已落地
+- ⏳ Phase H3-H6 持续推进
+
+更新记录见 [`CHANGELOG.md`](./CHANGELOG.md)。

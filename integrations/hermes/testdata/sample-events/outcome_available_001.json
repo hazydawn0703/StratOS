@@ -1,0 +1,21 @@
+{
+  "schema_version": "hermes.events.v0.1",
+  "event_id": "evt_outcome_001",
+  "event_type": "outcome.available",
+  "occurred_at": "2026-04-24T08:00:00Z",
+  "framework": "hermes",
+  "tenant_id": "demo",
+  "task_id": "task_analysis_001",
+  "session_id": "sess_001",
+  "actor_id": "agent_001",
+  "channel": "default",
+  "payload": {
+    "task_type": "analysis",
+    "outcome_type": "kpi_movement",
+    "outcome_value": {
+      "metric": "revenue_growth",
+      "delta": -0.02
+    },
+    "recorded_at": "2026-04-24T08:00:00Z"
+  }
+}

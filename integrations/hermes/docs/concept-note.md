@@ -1,15 +1,28 @@
 # Concept Note
 
-The Hermes bridge is designed as a governance boundary, not a runtime merge.
+## 为什么做 Hermes × StratOS 桥接
 
-## Design intent
+Hermes 擅长任务执行与编排，StratOS 擅长策略治理与可回放评审。桥接的目的不是“二选一”，而是让两者在各自强项上协作：
 
-- Preserve Hermes execution model and plugin ecosystem.
-- Route only eligible, reviewable tasks into StratOS.
-- Keep strategy evolution auditable and reversible.
+- Hermes 保持执行效率与产品体验
+- StratOS 提供可追踪、可复核、可演化的治理闭环
 
-## Non-goals
+## 为什么不做深度合并
 
-- replacing Hermes memory, skills, or task engine
-- forcing all task traffic through StratOS
-- embedding promotion logic into Hermes core
+深度合并会带来高耦合成本：
+
+1. Hermes 升级可能被 StratOS 协议牵制
+2. StratOS 核心 schema 容易被宿主运行时细节污染
+3. 问题定位边界不清，回滚困难
+
+因此，本集成采用外部桥接层，最大化可替换性与故障隔离。
+
+## 为什么必须 fail-open
+
+桥接的优先级低于 Hermes 主任务执行。若 StratOS 暂时不可用：
+
+- Hermes 任务仍要继续执行
+- 桥接错误应被记录和告警
+- 后续可通过重放或补发恢复治理链路
+
+这确保“治理增强”不会变成“执行单点故障”。

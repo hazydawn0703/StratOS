@@ -1,0 +1,12 @@
+{
+  "task_type": "scheduled_report",
+  "source_task_id": "task_report_example_001",
+  "raw_output": {
+    "title": "Weekly Governance Report",
+    "summary": "Most KPIs are stable; one risk item escalated.",
+    "sections": [
+      { "heading": "Highlights", "content": "Conversion improved 1.1%." },
+      { "heading": "Risks", "content": "Vendor lead time still volatile." }
+    ]
+  }
+}
