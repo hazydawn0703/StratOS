@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## v0.1.3 - 2026-04-22
+
+### Added
+
+- 新增 `adapters/claim-preset/` 最小可运行实现：
+  - task-type-aware claim extraction
+  - claim type classification（judgment/recommendation/risk/prioritization）
+  - minimal admission rules（空 statement、小聊句、task_type 白名单、reviewability 判定）
+  - review_due_at 默认生成
+  - extractor fallback（失败记录 + artifact 快照）
+- 新增 claim preset 单元测试：`tests/hermes-claim-preset.test.mjs`。
+- 在三个 examples 目录中补充 `claims.json` 和 `claims-explained.md`，说明 claims 可追踪原因。
+
+### Known limitations
+
+- 当前 extraction 规则为启发式最小实现，后续可替换为更强抽取器。
+- 还未接入完整 ClaimAdmissionPolicy（保持 integration 层轻量）。
+
 ## v0.1.2 - 2026-04-22
 
 ### Added

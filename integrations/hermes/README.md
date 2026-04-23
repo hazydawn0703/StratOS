@@ -70,6 +70,7 @@
 - ✅ Phase H0 文档与接口基线已统一
 - ✅ Phase H1 ingest adapter 最小实现已落地
 - ✅ Phase H2 artifact adapter 最小实现已落地
-- ⏳ Phase H3-H6 持续推进
+- ✅ Phase H3 claim extractor preset 最小实现已落地
+- ⏳ Phase H4-H6 持续推进
 
 更新记录见 [`CHANGELOG.md`](./CHANGELOG.md)。
