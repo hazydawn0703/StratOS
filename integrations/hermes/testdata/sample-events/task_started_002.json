@@ -1,0 +1,17 @@
+{
+  "schema_version": "hermes.events.v0.1",
+  "event_id": "evt_started_002",
+  "event_type": "task.started",
+  "occurred_at": "2026-04-22T08:05:00Z",
+  "framework": "hermes",
+  "tenant_id": "demo",
+  "task_id": "task_plan_001",
+  "session_id": "sess_002",
+  "actor_id": "agent_002",
+  "channel": "slack",
+  "payload": {
+    "task_type": "planning",
+    "raw_input_summary": "Create Q3 execution plan with risks.",
+    "model_metadata": {"model": "gpt"}
+  }
+}

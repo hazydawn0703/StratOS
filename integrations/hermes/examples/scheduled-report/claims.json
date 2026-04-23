@@ -1,0 +1,19 @@
+{
+  "artifact_id": "hermes_artifact_task_report_example_001",
+  "claims": [
+    {
+      "claim_id": "hermes_artifact_task_report_example_001_claim_1",
+      "claim_type": "judgment_claim",
+      "statement": "Most KPIs are stable this week.",
+      "reviewability": "reviewable",
+      "review_due_at": "2026-05-02T00:00:00Z"
+    },
+    {
+      "claim_id": "hermes_artifact_task_report_example_001_claim_2",
+      "claim_type": "risk_claim",
+      "statement": "Vendor lead time remains a material operational risk.",
+      "reviewability": "reviewable",
+      "review_due_at": "2026-04-25T00:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "hermes.events.v0.1",
+  "event_id": "evt_feedback_002",
+  "event_type": "task.feedback",
+  "occurred_at": "2026-04-22T10:05:00Z",
+  "framework": "hermes",
+  "tenant_id": "demo",
+  "task_id": "task_plan_001",
+  "session_id": "sess_002",
+  "actor_id": "agent_002",
+  "channel": "slack",
+  "payload": {
+    "task_type": "planning",
+    "feedback_type": "operator",
+    "signal": "neutral",
+    "notes": "Need more explicit resource assumptions."
+  }
+}

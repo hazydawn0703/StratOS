@@ -1,0 +1,11 @@
+{
+  "task_type": "analysis",
+  "source_task_id": "task_analysis_example_001",
+  "raw_output": {
+    "title": "APAC Exposure Analysis",
+    "summary": "Supplier concentration risk increased in Q2.",
+    "sections": [
+      { "heading": "Key Risk", "content": "Single-vendor exposure > 45%." }
+    ]
+  }
+}

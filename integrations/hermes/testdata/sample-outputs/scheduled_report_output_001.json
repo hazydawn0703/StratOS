@@ -1,0 +1,13 @@
+{
+  "task_type": "scheduled_report",
+  "raw_output": {
+    "title": "Weekly Strategy Report",
+    "summary": "Execution stable with one risk exception.",
+    "sections": [
+      {
+        "heading": "KPIs",
+        "content": "On track."
+      }
+    ]
+  }
+}
