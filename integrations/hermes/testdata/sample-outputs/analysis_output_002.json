@@ -1,0 +1,10 @@
+{
+  "task_type": "analysis",
+  "raw_output": {
+    "summary": "Competitor pressure rising in enterprise segment.",
+    "signals": [
+      "pricing",
+      "churn"
+    ]
+  }
+}

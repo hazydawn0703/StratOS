@@ -1,0 +1,13 @@
+{
+  "version": "hermes.hints.v0.1",
+  "hints": [
+    {
+      "hint_id": "hint_analysis_002",
+      "priority": 7,
+      "content": "Attach confidence bands to metric projections.",
+      "expires_at": "2026-05-03T00:00:00Z"
+    }
+  ],
+  "active_stu_refs": [],
+  "route_flags": ["prefer_risk_checklist", "route_finance_review"]
+}

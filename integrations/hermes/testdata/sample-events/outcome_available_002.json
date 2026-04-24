@@ -1,0 +1,21 @@
+{
+  "schema_version": "hermes.events.v0.1",
+  "event_id": "evt_outcome_002",
+  "event_type": "outcome.available",
+  "occurred_at": "2026-04-24T09:30:00Z",
+  "framework": "hermes",
+  "tenant_id": "demo",
+  "task_id": "task_report_001",
+  "session_id": "sess_003",
+  "actor_id": "agent_003",
+  "channel": "cron",
+  "payload": {
+    "task_type": "scheduled_report",
+    "outcome_type": "distribution_status",
+    "outcome_value": {
+      "delivered": true,
+      "recipients": 12
+    },
+    "recorded_at": "2026-04-24T09:30:00Z"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "version": "hermes.hints.v0.1",
+  "hints": [
+    {
+      "hint_id": "hint_planning_001",
+      "priority": 9,
+      "content": "Prioritize retention work before expansion.",
+      "expires_at": "2026-05-02T00:00:00Z"
+    },
+    {
+      "hint_id": "hint_planning_002",
+      "priority": 6,
+      "content": "Include owner and dependency per action item.",
+      "expires_at": "2026-05-02T00:00:00Z"
+    }
+  ],
+  "active_stu_refs": [],
+  "route_flags": []
+}
