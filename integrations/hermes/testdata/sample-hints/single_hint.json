@@ -1,0 +1,13 @@
+{
+  "version": "hermes.hints.v0.1",
+  "hints": [
+    {
+      "hint_id": "hint_analysis_001",
+      "priority": 10,
+      "content": "For risk analysis include downside scenario ranges.",
+      "expires_at": "2026-05-01T00:00:00Z"
+    }
+  ],
+  "active_stu_refs": [],
+  "route_flags": []
+}

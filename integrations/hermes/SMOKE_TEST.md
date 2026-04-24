@@ -41,3 +41,11 @@ bash integrations/hermes/scripts/mocks/send_task_completed.sh
 bash integrations/hermes/scripts/mocks/send_task_feedback.sh
 bash integrations/hermes/scripts/mocks/send_outcome_available.sh
 ```
+
+## Hint pull smoke scripts
+
+```bash
+bash integrations/hermes/scripts/smoke/request_analysis_hints.sh
+bash integrations/hermes/scripts/smoke/request_planning_hints.sh
+bash integrations/hermes/scripts/smoke/request_empty_hints.sh
+```

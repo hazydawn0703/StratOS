@@ -1,0 +1,13 @@
+{
+  "version": "hermes.hints.v0.1",
+  "hints": [
+    {
+      "hint_id": "hint_report_001",
+      "priority": 8,
+      "content": "Report unresolved operational risks explicitly.",
+      "expires_at": "2026-05-03T00:00:00Z"
+    }
+  ],
+  "active_stu_refs": ["stu_2026_04_ops_risk"],
+  "route_flags": []
+}

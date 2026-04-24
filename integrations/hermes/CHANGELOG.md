@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## v0.1.4 - 2026-04-23
+
+### Added
+
+- 新增 `adapters/hints/` 最小可运行实现：
+  - hint request parser
+  - task_type/actor/domain filter
+  - active hints resolver
+  - response builder（固定 `version/hints/active_stu_refs/route_flags`）
+  - invalid request fail-open 返回空结构
+- 新增 hints adapter 单元测试：`tests/hermes-hints-adapter.test.mjs`。
+- 扩充 `testdata/sample-hints/`：
+  - empty hints
+  - single hint
+  - multi hints
+  - hints + active_stu_refs
+  - hints + route_flags
+- 新增 hints smoke 脚本：
+  - `scripts/smoke/request_analysis_hints.sh`
+  - `scripts/smoke/request_planning_hints.sh`
+  - `scripts/smoke/request_empty_hints.sh`
+
+### Known limitations
+
+- 当前 hints resolver 使用本地内存数据源示例，未接入正式策略存储。
+- 未返回 STU 全对象，仅返回轻量 `active_stu_refs`。
+
 ## v0.1.3 - 2026-04-22
 
 ### Added
